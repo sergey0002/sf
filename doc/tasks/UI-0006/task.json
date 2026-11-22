@@ -68,7 +68,7 @@
       "statement": "Все тесты завода проходят после изменений"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc.architecture.md",
@@ -123,5 +123,8 @@
   "rollback_plan": null,
   "research_docs": [],
   "assumptions": [],
-  "evidence": []
+  "evidence": [],
+  "status": "done",
+  "branch": "bugfix/UI-0006",
+  "release_branch": "main"
 }

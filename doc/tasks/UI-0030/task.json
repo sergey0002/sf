@@ -45,7 +45,7 @@
     "AC-6: Для каждого конфликта CLI показывает ключ, фактическую фазу, путь и поле, нарушенное правило и безопасный следующий шаг. Повторная проверка подтверждает исправление без автоматической переклассификации, переоткрытия или изменения истории."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не переписывать раздел tier'ов и шаблонов плана в doc/skills/plan-task/: он принадлежит UI-0032-0003; правки UI-0030-0002 ограничены выбором типа ребёнка",
@@ -146,5 +146,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0030",
+  "release_branch": "main"
 }

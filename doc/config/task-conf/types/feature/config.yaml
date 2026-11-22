@@ -44,5 +44,5 @@ plan:
     profile: implementation
     rules:
     - {kind: case_min, min: 1}
-    - {kind: case_min, min: 2, when: 'contract_or_storage'}
+    - {kind: case_min, min: 2, when: [contract_change, storage_change]}
     - {kind: command, command: 'arch validate --brief'}

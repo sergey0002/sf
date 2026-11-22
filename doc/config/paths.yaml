@@ -107,41 +107,7 @@ allowed_paths:
   - "{config}/task-registry.json"
   # Конфиги типов задач (иерархическая структура, использует task_conf root)
   - "{task_conf}/plan-defaults.yaml"
-  - "{task_conf}/types/audit/plan/full.md"
-  - "{task_conf}/types/audit/plan/micro.md"
-  - "{task_conf}/types/audit/plan/standard.md"
-  - "{task_conf}/types/bugfix/plan/full.md"
-  - "{task_conf}/types/bugfix/plan/micro.md"
-  - "{task_conf}/types/bugfix/plan/standard.md"
-  - "{task_conf}/types/docs/plan/full.md"
-  - "{task_conf}/types/docs/plan/micro.md"
-  - "{task_conf}/types/docs/plan/standard.md"
-  - "{task_conf}/types/feature/plan/full.md"
-  - "{task_conf}/types/feature/plan/micro.md"
-  - "{task_conf}/types/feature/plan/standard.md"
-  - "{task_conf}/types/incident/plan/full.md"
-  - "{task_conf}/types/incident/plan/micro.md"
-  - "{task_conf}/types/incident/plan/standard.md"
-  - "{task_conf}/types/jira-incoming/plan/full.md"
-  - "{task_conf}/types/jira-incoming/plan/micro.md"
-  - "{task_conf}/types/jira-incoming/plan/standard.md"
-  - "{task_conf}/types/migration/plan/full.md"
-  - "{task_conf}/types/migration/plan/micro.md"
-  - "{task_conf}/types/migration/plan/standard.md"
-  - "{task_conf}/types/planning/plan/full.md"
-  - "{task_conf}/types/planning/plan/micro.md"
-  - "{task_conf}/types/planning/plan/standard.md"
-  - "{task_conf}/types/refactor/plan/full.md"
-  - "{task_conf}/types/refactor/plan/micro.md"
-  - "{task_conf}/types/refactor/plan/standard.md"
-  - "{task_conf}/types/research/plan/micro.md"
-  - "{task_conf}/types/research/plan/standard.md"
-  - "{task_conf}/types/scaffold/plan/micro.md"
-  - "{task_conf}/types/spike/plan/micro.md"
-  - "{task_conf}/types/spike/plan/standard.md"
-  - "{task_conf}/types/subtask/plan/full.md"
-  - "{task_conf}/types/subtask/plan/micro.md"
-  - "{task_conf}/types/subtask/plan/standard.md"
+  - "{task_conf}/types/{type}/plan/{tier}.md"
   - "{task_conf}/types/{type}/config.yaml"
   - "{task_conf}/types/{type}/prompt.md"
   - "{task_conf}/types/{type}/flow-selection.yaml"
@@ -362,8 +328,6 @@ project:
     - priority
     - stage_history
     - target_release
-    - branch
-    - release_branch
 
   # CLI настройки
   cli:
@@ -415,6 +379,10 @@ project:
   # release_branch — ветка, в которую задача мержится (по умолчанию main, или release-ветка из конфига).
   release:
     default_branch: "main"
+    default_release: "0.1.0"
+    # enforce: true включает обязательность target_release/branch/release_branch.
+    # Контракт Git-операций принадлежит UI-0027; поля карточки обязательны здесь.
+    enforce: true
     branch_patterns:
       jira: "futures/{task_number}"
       ui: "bugfix/{task_key}"

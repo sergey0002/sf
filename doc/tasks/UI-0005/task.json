@@ -55,7 +55,7 @@
       "verification": "doc/tests/run.sh — все pass"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc.architecture.md",
@@ -115,5 +115,8 @@
   "owner": "unset",
   "priority": "unset",
   "stage_history": [],
-  "implementation_plan": "Оценить task.json, определить недостающие поля, обновить примеры, добавить валидацию и тесты"
+  "implementation_plan": "Оценить task.json, определить недостающие поля, обновить примеры, добавить валидацию и тесты",
+  "status": "done",
+  "branch": "bugfix/UI-0005",
+  "release_branch": "main"
 }

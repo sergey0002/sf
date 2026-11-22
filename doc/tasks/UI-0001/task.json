@@ -61,7 +61,7 @@
       "verification": "Run `doc/tests/run.sh` and inspect the task-key CLI cases."
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc/architecture/system/architecture-contract.md"
@@ -115,5 +115,8 @@
   "stage_history": [],
   "flow": "minimal-scaffold",
   "complexity": "low",
-  "research_docs": []
+  "research_docs": [],
+  "status": "done",
+  "branch": "bugfix/UI-0001",
+  "release_branch": "main"
 }

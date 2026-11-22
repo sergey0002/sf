@@ -48,7 +48,7 @@
     "AC-1: Повторный ввод связывается с тем же снимком или выдаёт конфликт; устаревание диагностируется.",
     "AC-2: Ручной intake остаётся рабочим; необходимость обратной записи оценивается отдельно."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -136,5 +136,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0023",
+  "release_branch": "main"
 }

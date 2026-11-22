@@ -50,7 +50,7 @@
     "AC-1: Багфикс проходит возврат verify → fix; docs-only завершается коротким путём без детей.",
     "AC-2: Неизвестный вход, конфликт правил, циклы и битые ссылки дают явные причины; отклонённое событие не меняет состояние."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -172,5 +172,8 @@
       "status": "completed",
       "result": "Исправлены порядок flow, синхронизация записи при закрытии, обязательность таблицы выбора, UNSUPPORTED-FLOW, replay event и процессные правила; целевые и итоговые проверки пройдены."
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0017",
+  "release_branch": "main"
 }

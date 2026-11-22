@@ -182,25 +182,41 @@ def snapshot_problems(root: Path, entries: Any, plan: Path) -> list[str]:
     return snapshot_status(root, entries, plan)["problems"]
 
 
+def _plan_policy_for(root: Any, task: dict[str, Any]) -> tuple[dict[str, Any] | None, list[str]]:
+    """Resolve the type plan policy from either a ProjectConfig or a project root path."""
+    if root is None or not task.get("task_type"):
+        return None, []
+    from .plan_policy import resolve_plan_policy
+    from .project_config import ProjectConfig, load_project_config
+
+    if isinstance(root, ProjectConfig):
+        config = root
+    else:
+        config, errors = load_project_config(Path(root))
+        if config is None:
+            return None, errors
+    if not (config.task_conf_root / "plan-defaults.yaml").is_file():
+        return None, []
+    return resolve_plan_policy(config, str(task["task_type"]))
+
+
 def acceptance_state(
-    root: Path, directory: Path, task: dict[str, Any], stage: str | None, *, check_evidence: bool = True,
+    root: Any, directory: Path, task: dict[str, Any], stage: str | None, *, check_evidence: bool = True,
 ) -> tuple[bool, list[str]]:
-    """Return the plan readiness and closure blockers for an opted-in task."""
+    """Return the plan readiness and closure blockers for an opted-in task.
+
+    ``root`` may be a ``ProjectConfig`` or a project root ``Path``; both resolve the
+    same type plan policy so the check cannot silently fall back to global defaults.
+    """
     if stage is None:
         return False, ["acceptance: create a stage with a plan and verification.json"]
     path = directory / stage / "verification.json"
     try:
         if not (path.parent / "plan.md").is_file():
             raise ValueError("plan.md is missing")
-        policy = None
-        if root is not None and task.get("task_type"):
-            from .plan_policy import evaluate_rules, resolve_plan_policy
-            from .project_config import ProjectConfig
-            config = root if isinstance(root, ProjectConfig) else None
-            if config is not None:
-                policy, policy_errors = resolve_plan_policy(config, str(task["task_type"]))
-                if policy_errors:
-                    raise ValueError("; ".join(policy_errors))
+        policy, policy_errors = _plan_policy_for(root, task)
+        if policy_errors:
+            raise ValueError("; ".join(policy_errors))
         if tier_problems := plan_tier_problems(path.parent / "plan.md", task, policy):
             raise ValueError("; ".join(tier_problems))
         evidence = json.loads(path.read_text(encoding="utf-8"))
@@ -209,7 +225,10 @@ def acceptance_state(
         planned = planned_case_ids(evidence, criterion_ids(task))
         if policy is not None:
             from .plan_policy import evaluate_rules
-            if rule_problems := evaluate_rules((path.parent / "plan.md").read_text(encoding="utf-8"), policy, case_count=len(planned)):
+            if rule_problems := evaluate_rules(
+                (path.parent / "plan.md").read_text(encoding="utf-8"), policy,
+                case_count=len(planned), task=task,
+            ):
                 raise ValueError("; ".join(rule_problems))
     except (OSError, ValueError) as exc:
         return False, [f"acceptance {stage}: {exc}"]

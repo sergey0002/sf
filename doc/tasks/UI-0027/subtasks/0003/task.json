@@ -17,16 +17,29 @@
   "kind": "feature",
   "intent": "Добавить опциональную интеграцию верхнеуровневой задачи и зафиксировать границы будущих дочерних веток по CASE-9–CASE-10 родителя.",
   "scope": {
-    "in": ["Предпросмотр цели интеграции, проверка результата, наследование ветки родителя и контракт отдельного режима"],
-    "out": ["Реализация отдельных дочерних веток, force-push, внешние CI"],
-    "allowed_files_modules": ["doc/config/", "doc/tools/arch/", "doc/skills/", "doc/tests/", "doc/architecture/"]
+    "in": [
+      "Предпросмотр цели интеграции, проверка результата, наследование ветки родителя и контракт отдельного режима"
+    ],
+    "out": [
+      "Реализация отдельных дочерних веток, force-push, внешние CI"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/skills/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
   },
   "current_behavior": null,
   "evidence": [],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: Интеграция меняет только согласованную цель и только после проверки результата.", "AC-2: По умолчанию дети используют ветку родителя без публикации; будущий отдельный режим ограничен веткой родителя."],
+  "acceptance_criteria": [
+    "AC-1: Интеграция меняет только согласованную цель и только после проверки результата.",
+    "AC-2: По умолчанию дети используют ветку родителя без публикации; будущий отдельный режим ограничен веткой родителя."
+  ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [],
   "assumptions": [],
@@ -57,5 +70,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0027",
+  "release_branch": "main"
 }

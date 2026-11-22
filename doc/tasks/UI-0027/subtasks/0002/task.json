@@ -17,16 +17,29 @@
   "kind": "feature",
   "intent": "Добавить скилл git-workflow, шаги публикации и CLI-подтверждение commit + push по CASE-5–CASE-8 родителя.",
   "scope": {
-    "in": ["Политика публикации, предпросмотр, подтверждение снимка, восстановление после сбоя push"],
-    "out": ["Мердж в целевую ветку, реальные remote"],
-    "allowed_files_modules": ["doc/config/", "doc/tools/arch/", "doc/skills/", "doc/tests/", "doc/architecture/"]
+    "in": [
+      "Политика публикации, предпросмотр, подтверждение снимка, восстановление после сбоя push"
+    ],
+    "out": [
+      "Мердж в целевую ветку, реальные remote"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/skills/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
   },
   "current_behavior": null,
   "evidence": [],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: Типовой flow предлагает публикацию только при разрешающей политике и не пишет без точного подтверждения.", "AC-2: Повтор после сбоя push использует тот же коммит; устаревшее подтверждение не применяется."],
+  "acceptance_criteria": [
+    "AC-1: Типовой flow предлагает публикацию только при разрешающей политике и не пишет без точного подтверждения.",
+    "AC-2: Повтор после сбоя push использует тот же коммит; устаревшее подтверждение не применяется."
+  ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [],
   "assumptions": [],
@@ -57,5 +70,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0027",
+  "release_branch": "main"
 }

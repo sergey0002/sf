@@ -48,7 +48,7 @@
     "AC-1: Чистая установка, старая задача, миграция и откат проходят контрольные проверки.",
     "AC-2: Пакет содержит версии, provenance, changelog и инструкцию; решение о публикации остаётся владельцу."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -124,5 +124,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0025",
+  "release_branch": "main"
 }

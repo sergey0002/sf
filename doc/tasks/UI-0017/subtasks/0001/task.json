@@ -50,7 +50,7 @@
   "acceptance_criteria": [
     "AC-1: Ошибочные ссылки, неоднозначные правила и недостижимые состояния видны в диагностике."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -138,5 +138,8 @@
       "status": "completed",
       "result": "Добавлены схемы flow и выбора, два контрольных flow и диагностика ссылок, недостижимости и неоднозначности."
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0017",
+  "release_branch": "main"
 }

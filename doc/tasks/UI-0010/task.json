@@ -66,7 +66,7 @@
     "AC-6: arch index check проходит; каждый документ в index.json содержит boolean implemented",
     "AC-7: документация ссылается на фактический путь CLI doc/tools/arch/__main__.py"
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc/architecture/system/architecture-contract.md",
@@ -172,5 +172,8 @@
         "python3 doc/tools/arch/__main__.py index check -> Index is current"
       ]
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0010",
+  "release_branch": "main"
 }

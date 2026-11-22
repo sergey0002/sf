@@ -38,6 +38,39 @@
 | `doc/architecture/system/cli-command-map.md` | изменить |
 | `doc/architecture/system/cli-package.md` | изменить |
 
+## Источники
+
+- `doc/skills/plan-task/SKILL.md` — текущая таблица tier'ов и правило одного шаблона.
+- `doc/architecture/domains/task-lifecycle/entities/verification-evidence.md` — контракт tier'ов.
+- `doc/architecture/system/cli-command-map.md`, `cli-validation-rules.md`, `cli-package.md` — карта команд и принципы валидации.
+- `doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md` — каталог правил и таксономия.
+
+## Затронутые документы
+
+- `doc/skills/plan-task/SKILL.md` — маршрутизация через `plan-policy` и правила приёмки.
+- `doc/architecture/domains/task-lifecycle/entities/verification-evidence.md` — источник политики.
+- `doc/architecture/system/implementation-spec.md` — описание `acceptance_plan_ready`.
+- `doc/architecture/system/cli-validation-rules.md` — проверки task-conf.
+- `doc/architecture/system/cli-command-map.md` — команда `plan-policy`.
+- `doc/architecture/system/cli-package.md` — конфиг-driven перечень.
+
+## Проверка путей и ссылок
+
+```bash
+arch validate --brief
+arch index check
+arch docs paths --check
+```
+
+- Каждая новая ссылка указывает на существующий ID или путь; индекс пересобирается только через CLI.
+- Противоречия с новым контрактом удаляются, а не дублируются: жёсткое соответствие tier→complexity заменяется ссылкой на политику.
+
+## Риски
+
+- Документация может разойтись с кодом при последующих правках: контроль — `validate` и чтение разрешённой политики.
+- Смысловые разделы вне политики легко затронуть: правки точечные, diff проверяется владельцем.
+
+
 ## Приёмка
 
 | CASE | AC | Дано | Действие | Ожидание и проверка | Ребёнок |

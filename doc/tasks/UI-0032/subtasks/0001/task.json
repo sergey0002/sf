@@ -80,7 +80,7 @@
     "AC-6: Удаление каталога типа при сохранённой записи в paths.yaml и удаление типа из paths.yaml при существующей карточке дают диагностику и не меняют дерево; карточка с типом, отсутствующим в paths.yaml, отвергается validate."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не менять имена tier'ов и маркер <!-- plan-tier: ... -->",
@@ -147,5 +147,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0032",
+  "release_branch": "main"
 }

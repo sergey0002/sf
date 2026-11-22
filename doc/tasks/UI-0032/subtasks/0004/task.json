@@ -55,7 +55,7 @@
     "AC-5: arch validate --brief, arch index check, arch docs paths --check и bash doc/tests/run.sh --brief проходят на итоговом снимке."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не менять реальные карточки задач",
@@ -69,9 +69,16 @@
   "open_questions": [],
   "risk": "medium",
   "authority": {
-    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
-    "forbidden": ["Правки карточек, ослабление проверок, внешняя запись"],
-    "approval_required": ["Начало реализации", "Приёмка итогового diff владельцем"]
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Правки карточек, ослабление проверок, внешняя запись"
+    ],
+    "approval_required": [
+      "Начало реализации",
+      "Приёмка итогового diff владельцем"
+    ]
   },
   "approvals": [],
   "task_type": "refactor",
@@ -79,7 +86,12 @@
   "complexity": "medium",
   "estimate_hours": 8,
   "subtasks": [],
-  "depends_on": ["UI-0032-0001", "UI-0032-0002", "UI-0032-0003", "UI-0032-0005"],
+  "depends_on": [
+    "UI-0032-0001",
+    "UI-0032-0002",
+    "UI-0032-0003",
+    "UI-0032-0005"
+  ],
   "phase": "intake",
   "rollback_plan": "Вернуть тесты и вспомогательные правки CLI к снимку; конфиги, резолвер, документы и новые типы предыдущих срезов оставить.",
   "implementation_plan": [
@@ -88,14 +100,33 @@
     "Проверить изоляцию политики от snapshot_files",
     "Прогнать итоговый гейт на стабильном снимке"
   ],
-  "related_docs": ["ENT-verification-evidence", "SPEC-cli-implementation", "REG-cli-validation-rules"],
+  "related_docs": [
+    "ENT-verification-evidence",
+    "SPEC-cli-implementation",
+    "REG-cli-validation-rules"
+  ],
   "related_tests": [
-    {"test_id": "plan-policy-compat", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"},
-    {"test_id": "factory-brief", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}
+    {
+      "test_id": "plan-policy-compat",
+      "location": "doc/tests/test_plan_policy.py",
+      "command": "python3 -m unittest doc.tests.test_plan_policy -q"
+    },
+    {
+      "test_id": "factory-brief",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
   ],
   "research_docs": [],
-  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0032",
+  "release_branch": "main"
 }

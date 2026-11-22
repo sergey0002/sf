@@ -55,7 +55,7 @@
     "AC-5: Пилот закрытия задачи проходит на публичных командах без регрессий старого CLI; подтверждены качество выбора источника и снижение объёма выдачи относительно исходного маршрута по методике плана. Справка и тестируемые примеры согласованы с реализацией."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "doc/architecture/system/cli-command-map.md#commands",
     "doc/architecture/system/implementation-spec.md",
@@ -171,5 +171,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0026",
+  "release_branch": "main"
 }

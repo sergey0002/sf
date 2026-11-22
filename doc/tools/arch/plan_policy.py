@@ -83,15 +83,27 @@ def _section(text: str, name: str) -> str:
     return "\n".join(lines[start + 1:end])
 
 
-def evaluate_rules(plan_text: str, policy: dict[str, Any], *, case_count: int = 0) -> list[str]:
-    """Return structural rule failures. Semantic oracle quality is intentionally not judged."""
+def _when_matches(when: Any, task: dict[str, Any]) -> bool:
+    """A conditional rule applies when any named task flag is truthy."""
+    keys = [when] if isinstance(when, str) else when if isinstance(when, list) else []
+    return any(bool(task.get(key)) for key in keys if isinstance(key, str))
+
+
+def evaluate_rules(
+    plan_text: str, policy: dict[str, Any], *, case_count: int = 0, task: dict[str, Any] | None = None,
+) -> list[str]:
+    """Return structural rule failures. Semantic oracle quality is intentionally not judged.
+
+    A rule with ``when`` applies only if the named task flag (or any flag in the list)
+    is truthy, e.g. ``when: [contract_change, storage_change]``.
+    """
     rules = ((policy.get("acceptance") or {}).get("rules") or [])
     problems = []
     for rule in rules:
         if not isinstance(rule, dict) or rule.get("kind") not in RULE_KINDS:
             problems.append(f"unknown acceptance rule {rule!r}")
             continue
-        if rule.get("when"):
+        if rule.get("when") is not None and not _when_matches(rule["when"], task or {}):
             continue
         kind, section = rule["kind"], str(rule.get("section") or "")
         if kind == "section_present" and not any(section.casefold() in heading.casefold() for heading in _headings(plan_text)):

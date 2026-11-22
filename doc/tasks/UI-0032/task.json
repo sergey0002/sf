@@ -23,7 +23,7 @@
       "Блок plan и acceptance для всех десяти имеющихся типов: audit, bugfix, docs, feature, jira-incoming, planning, refactor, research, scaffold, subtask",
       "Шаблоны types/<type>/plan/<tier>.md для каждого tier из complexity_allowed: 27 файлов, включая профильные разделы research, audit, planning, bugfix, refactor, docs, intake и scaffold",
       "Декларативные правила приёмки из каталога (section_present, section_min_items, link_min, table_column, case_min, command) и их проверка общим оценщиком",
-      "Разрешение политики по цепочке type → defaults с семантикой слияния (скаляры переопределяются, списки заменяются целиком) и режимом plan_policy: inherit|replace",
+      "Разрешение политики по цепочке type → defaults с семантикой слияния (скаляры переопределяются, обычные списки заменяются, required_sections объединяются с дефолтными) и режимом plan_policy: inherit|replace",
       "Перенос PLAN_TIERS, TIER_COMPLEXITY, TIER_SECTIONS и MICRO_MAX_LINES из doc/tools/arch/acceptance.py в конфиг-driven резолвер; acceptance_state и plan_tier_problems работают по разрешённой политике",
       "Новая read-only команда arch task plan-policy --type <type> --json и отражение источника политики в diagnose",
       "Проверки task-conf: схема, существование шаблона, покрытие complexity_allowed tier'ами, уникальность tier'ов, положительный лимит, известность ссылок на правила, каталог без config.yaml, конфиг без id, несовпадение id и каталога, сверка обнаруженных типов с paths.yaml project.task_types",
@@ -81,7 +81,7 @@
     "REG-cli-validation-rules: обязательные поля = базовые из paths.yaml + типовые из task-conf",
     "REG-cli-command-map: публичные read-only команды не пишут состояние; diagnose показывает машинные блокировки",
     "Инвариант совместимости: карточка без блока plan и без estimate_hours сохраняет текущее поведение и acceptance_plan_ready",
-    "Инвариант слияния: списки политики заменяются целиком, а не конкатенируются; порядок разрешения type → defaults фиксирован",
+    "Инвариант слияния: скалярные поля политики переопределяются, обычные списки заменяются целиком; required_sections объединяются с дефолтными (safety floor), чтобы типовой профиль не терял базовые разделы; порядок разрешения type → defaults фиксирован",
     "Инвариант единственного источника: политика плана объявляется на уровне типа; flow её не переопределяет, как и политики иерархии по UI-0030",
     "Инвариант evidence: политика плана не входит в SHA-256 снимка и не инвалидирует уже записанные доказательства",
     "Инвариант схемы: task-conf.schema.json — единая форма конфигов типов; UI-0030 добавляет в неё children_policy и parent_policy, не создавая второй схемы",
@@ -103,7 +103,7 @@
     "AC-11: Итоговый гейт validate --brief, index check, docs paths --check и bash doc/tests/run.sh --brief проходит; существующие задачи без блока plan сохраняют acceptance_plan_ready и evidence_freshness, а политика не участвует в хешах снимка."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Сохранить имена tier'ов, маркер <!-- plan-tier: ... --> и смысл micro|standard|full",
@@ -269,5 +269,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0032",
+  "release_branch": "main"
 }

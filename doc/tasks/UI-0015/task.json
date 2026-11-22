@@ -48,7 +48,7 @@
     "AC-1: Все четыре скилла видны из каталога с условиями выбора и ссылками.",
     "AC-2: Учебный сценарий воспроизводим из чистой сессии; замер и ограничения записаны."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -137,5 +137,8 @@
         "doc/tasks/UI-0015/stage1/verification.json"
       ]
     }
-  ]
+  ],
+  "status": "review",
+  "branch": "bugfix/UI-0015",
+  "release_branch": "main"
 }

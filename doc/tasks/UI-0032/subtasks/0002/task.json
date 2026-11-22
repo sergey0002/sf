@@ -68,7 +68,7 @@
     "AC-5: diagnose показывает источник политики, не меняя существующие поля; карточка без блока plan сохраняет acceptance_plan_ready и evidence_freshness."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Команда plan-policy только читает состояние",
@@ -85,9 +85,15 @@
   "open_questions": [],
   "risk": "medium",
   "authority": {
-    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
-    "forbidden": ["Правки конфигов типов и шаблонов, переименование tier'ов, политика на уровне flow, внешняя запись"],
-    "approval_required": ["Начало реализации"]
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Правки конфигов типов и шаблонов, переименование tier'ов, политика на уровне flow, внешняя запись"
+    ],
+    "approval_required": [
+      "Начало реализации"
+    ]
   },
   "approvals": [],
   "task_type": "refactor",
@@ -95,7 +101,9 @@
   "complexity": "medium",
   "estimate_hours": 16,
   "subtasks": [],
-  "depends_on": ["UI-0032-0001"],
+  "depends_on": [
+    "UI-0032-0001"
+  ],
   "phase": "intake",
   "rollback_plan": "Удалить plan_policy.py и команду plan-policy, вернуть acceptance.py, task_ops.py, task.py и тесты к снимку; конфиги и шаблоны из UI-0032-0001 оставить.",
   "implementation_plan": [
@@ -105,13 +113,29 @@
     "Добавить команду plan-policy и источник политики в diagnose",
     "Покрыть разрешение, правила, отказы и интеграцию тестами"
   ],
-  "related_docs": ["ENT-verification-evidence", "REG-cli-command-map", "REG-cli-validation-rules", "SPEC-cli-implementation"],
+  "related_docs": [
+    "ENT-verification-evidence",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-implementation"
+  ],
   "related_tests": [
-    {"test_id": "plan-policy-resolver", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+    {
+      "test_id": "plan-policy-resolver",
+      "location": "doc/tests/test_plan_policy.py",
+      "command": "python3 -m unittest doc.tests.test_plan_policy -q"
+    }
   ],
   "research_docs": [],
-  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0032",
+  "release_branch": "main"
 }

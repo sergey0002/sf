@@ -50,7 +50,7 @@
   "acceptance_criteria": [
     "AC-1: Fixtures покрывают повторный переход, блокировки и короткий путь."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -133,5 +133,8 @@
       "status": "completed",
       "result": "Добавлены flow.transitioned, task advance, зависимости детей, ready/blocked и fixtures отказов без записи."
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0017",
+  "release_branch": "main"
 }

@@ -25,7 +25,7 @@
   "evidence": [],
   "contracts_and_invariants": [],
   "acceptance_criteria": [],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [],
   "assumptions": [],
@@ -54,5 +54,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "done",
+  "branch": "bugfix/UI-0009",
+  "release_branch": "main"
 }

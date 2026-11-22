@@ -46,7 +46,7 @@
     "AC-1: diagnose и close указывают один отсутствующий ID; отказ и dry-run сохраняют исходную запись побайтно.",
     "AC-2: Совместимая валидная задача без обязательных детей закрывается; CLI-тест проверяет код процесса и JSON."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -150,5 +150,8 @@
         "stage1/verification.json"
       ]
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0011",
+  "release_branch": "main"
 }

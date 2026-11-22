@@ -48,7 +48,7 @@
     "AC-1: Некорректный пакет и конфликт обнаруживаются до записи; прерывание обнаруживается и восстанавливается по документированному сценарию.",
     "AC-2: Старые вызовы и форматы сохраняют семантику; тесты проверяют нормальный и отказный выход."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -162,5 +162,8 @@
       "status": "verification"
     }
   ],
-  "acceptance_policy": "case-coverage-v1"
+  "acceptance_policy": "case-coverage-v1",
+  "status": "done",
+  "branch": "bugfix/UI-0013",
+  "release_branch": "main"
 }

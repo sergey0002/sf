@@ -21,7 +21,7 @@ from .acceptance import (
     CASE_COVERAGE, acceptance_state, read_plan_tier, snapshot_problems, snapshot_status,
 )
 from .cli.errors import EXIT_CONFLICT, EXIT_ERROR, EXIT_NOT_FOUND
-from .constants import TASK_KEY_RE, TASK_NUMBER_RE
+from .constants import PROJECT_RELEASE_KEY, TASK_KEY_RE, TASK_NUMBER_RE
 from .flows import (
     FLOW_SCHEMA_VERSION,
     FlowError,
@@ -55,6 +55,56 @@ from .validation import (
 )
 
 TASK_MD_ERROR = "task.md exists; manifest requires task.json as the only canonical input"
+
+
+def _release_defaults(
+    project_config: ProjectConfig, task_key: str, task_number: str, source_type: str,
+) -> dict[str, str]:
+    """Resolve branch, merge branch and release for a new card from project config.
+
+    The scaffold must be valid for ``task validate`` immediately: a required field
+    that defaults to ``unset`` would make ``task init``/``task new`` produce an
+    invalid card. Values come from ``project.release`` in paths.yaml.
+    """
+    project = project_config.get_project_section() if project_config else {}
+    release = project.get(PROJECT_RELEASE_KEY) if isinstance(project, dict) else None
+    if not isinstance(release, dict):
+        release = {}
+    patterns = release.get("branch_patterns")
+    pattern = patterns.get(source_type) if isinstance(patterns, dict) else None
+    if not isinstance(pattern, str) or not pattern:
+        pattern = "task/{task_key}"
+    default_branch = release.get("default_branch")
+    default_release = release.get("default_release")
+    return {
+        "branch": pattern.format(task_key=task_key, task_number=task_number),
+        "release_branch": (
+            default_branch if isinstance(default_branch, str) and default_branch else "main"
+        ),
+        "target_release": (
+            default_release if isinstance(default_release, str) and default_release else "0.1.0"
+        ),
+    }
+
+
+def _apply_release_defaults(
+    data: dict[str, Any],
+    defaults: dict[str, str],
+    *,
+    inherit: dict[str, Any] | None = None,
+) -> None:
+    """Fill release fields, inheriting valid parent values before config defaults.
+
+    Children work in the parent branch by default (UI-0027 AC-5); only empty or
+    ``unset`` fields are filled, so explicit values are never overwritten.
+    """
+    for field in ("branch", "release_branch", "target_release"):
+        value = (inherit or {}).get(field)
+        if isinstance(value, str) and value and value != "unset":
+            data[field] = value
+    for field, value in defaults.items():
+        if data.get(field) in (None, "", "unset"):
+            data[field] = value
 
 
 class TaskOpsError(Exception):
@@ -284,6 +334,10 @@ def init_task(
         stage_dir.mkdir(parents=True, exist_ok=True)
         scaffold = json.loads(
             scaffold_task_json(task_key, task_number, source_type, source_prefix)
+        )
+        _apply_release_defaults(
+            scaffold,
+            _release_defaults(project_config, task_key, task_number, source_type),
         )
         if title is not None:
             scaffold["title"] = title
@@ -1100,6 +1154,13 @@ def _decompose_locked(
                 child["depends_on"] = [
                     f"{task_key}-{dep}" for dep in entry.get("depends_on", [])
                 ]
+                _apply_release_defaults(
+                    child,
+                    _release_defaults(
+                        project_config, f"{task_key}-{entry['id']}", entry["id"], "ui"
+                    ),
+                    inherit=data,
+                )
                 write_json_record(stjson, child)
             created.append({
                 "subtask_id": entry["id"], "title": entry["title"],
@@ -1639,16 +1700,21 @@ def _subtask_init(
         )
     try:
         (stdir / "stage1").mkdir(parents=True, exist_ok=True)
-        write_json_record(
-            stjson,
-            json.loads(scaffold_subtask_json(
-                parent_task_key, subtask_id,
-                task_type=shape.get("task_type"),
-                flow=shape.get("flow"),
-                complexity=shape.get("complexity"),
-                estimate_hours=shape.get("estimate_hours"),
-            )),
+        child = json.loads(scaffold_subtask_json(
+            parent_task_key, subtask_id,
+            task_type=shape.get("task_type"),
+            flow=shape.get("flow"),
+            complexity=shape.get("complexity"),
+            estimate_hours=shape.get("estimate_hours"),
+        ))
+        _apply_release_defaults(
+            child,
+            _release_defaults(
+                project_config, f"{parent_task_key}-{subtask_id}", subtask_id, "ui"
+            ),
+            inherit=load_task(project_config, parent_task_key),
         )
+        write_json_record(stjson, child)
     except OSError as exc:
         stjson.unlink(missing_ok=True)
         raise TaskOpsError(

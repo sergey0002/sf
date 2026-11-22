@@ -50,7 +50,7 @@
     "AC-1: Сбой, повтор и конфликт ревизии покрыты проверками."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -126,5 +126,8 @@
       "stage_id": "stage1",
       "status": "verification"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0016",
+  "release_branch": "main"
 }

@@ -53,7 +53,7 @@
   "acceptance_criteria": [
     "AC-1: Тесты фиксируют выбор конфига, корень разрешения и ошибки неверных путей."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -133,5 +133,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0012",
+  "release_branch": "main"
 }

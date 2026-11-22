@@ -52,7 +52,7 @@
   "acceptance_criteria": [
     "AC-1: CLI запускается из чистой установки и сообщает версию пакета."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -128,5 +128,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0014",
+  "release_branch": "main"
 }

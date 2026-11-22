@@ -41,7 +41,7 @@
     "AC-3: Impact показывает изменённый раздел и объявленных потребителей без обещания полного покрытия."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "До интеграции согласовать стык с UI-0019; общий контекст стадии вне scope."
@@ -86,5 +86,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0026",
+  "release_branch": "main"
 }

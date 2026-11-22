@@ -64,7 +64,7 @@
     "AC-6: validate --brief, index check, docs paths --check и doc/tests/run.sh --brief проходят; смысловое содержание существующих документов не переписано — меняются только реестр типов, форматы, enum статусов, схемы и тесты."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не менять тип существующих документов и их смысловые разделы",
@@ -135,5 +135,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "review",
+  "branch": "bugfix/UI-0031",
+  "release_branch": "main"
 }

@@ -17,16 +17,31 @@
   "kind": "bugfix",
   "intent": "Находить последствия изменения task-conf во всех состояниях задач и показывать агенту точный безопасный маршрут исправления.",
   "scope": {
-    "in": ["Read-only скан всего корпуса, диагностика с fix-hints, гейт тестового прогона, документирование маршрута исправления"],
-    "out": ["Автоисправление, запись в существующие задачи, фоновые наблюдатели"],
-    "allowed_files_modules": ["doc/tools/arch/", "doc/tests/", "doc/architecture/system/", "doc/skills/arch-cli/"]
+    "in": [
+      "Read-only скан всего корпуса, диагностика с fix-hints, гейт тестового прогона, документирование маршрута исправления"
+    ],
+    "out": [
+      "Автоисправление, запись в существующие задачи, фоновые наблюдатели"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/architecture/system/",
+      "doc/skills/arch-cli/"
+    ]
   },
   "current_behavior": "В CLI есть отдельные области scan tasks и task-conf; требуется явная гарантия сквозной проверки изменений YAML по всем фазам и отчёта для исправления.",
-  "evidence": ["arch scan --help: доступны scopes tasks и task-conf и флаг --fix-hints", "Текущий arch scan --scope tasks --brief --fix-hints: OK на рабочем дереве"],
+  "evidence": [
+    "arch scan --help: доступны scopes tasks и task-conf и флаг --fix-hints",
+    "Текущий arch scan --scope tasks --brief --fix-hints: OK на рабочем дереве"
+  ],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: Скан выявляет несовместимые изменения типа у открытых, завершённых и дочерних записей и блокирует итоговый прогон.", "AC-2: Отчёт указывает поля, источники правил и безопасные действия; повтор подтверждает исправление. Скан не пишет данные и не выдаёт смену дефолта за поломку сохранённой записи."],
+  "acceptance_criteria": [
+    "AC-1: Скан выявляет несовместимые изменения типа у открытых, завершённых и дочерних записей и блокирует итоговый прогон.",
+    "AC-2: Отчёт указывает поля, источники правил и безопасные действия; повтор подтверждает исправление. Скан не пишет данные и не выдаёт смену дефолта за поломку сохранённой записи."
+  ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [],
   "assumptions": [],
@@ -48,8 +63,14 @@
   ],
   "phase": "intake",
   "rollback_plan": "Откатить свой срез скана, тестового гейта и документации целиком без изменений карточек или task-conf.",
-  "implementation_plan": ["Подготовить чистые фикстуры разных фаз, переиспользовать проверку политик из 0001, расширить scan и включить гейт, закрепить маршрут исправления в runbook."],
-  "related_docs": ["REG-cli-command-map", "ARCH-contract", "ENT-task-record"],
+  "implementation_plan": [
+    "Подготовить чистые фикстуры разных фаз, переиспользовать проверку политик из 0001, расширить scan и включить гейт, закрепить маршрут исправления в runbook."
+  ],
+  "related_docs": [
+    "REG-cli-command-map",
+    "ARCH-contract",
+    "ENT-task-record"
+  ],
   "related_tests": [],
   "research_docs": [],
   "changed_files": {
@@ -59,5 +80,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0030",
+  "release_branch": "main"
 }

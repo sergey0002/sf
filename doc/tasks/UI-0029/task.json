@@ -55,7 +55,7 @@
     "AC-5: По запросу «задокументируй флоу» и при завершении затронутой задачи применяется одна сверка относительно известной базы. Подтверждённая дельта и результаты привязаны к проверенному снимку; вне задачи нет автоматической регистрации. При закрытии битая обязательная ссылка или отсутствующее/устаревшее обязательное evidence по уже связанному изменению блокирует запись; незатронутая задача сохраняет прежнее поведение. Неизвестная база и пробелы обозначаются, а не объявляются успехом."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "doc/architecture/system/addressable-contracts.md",
     "doc/architecture/system/architecture-contract.md",
@@ -164,5 +164,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0029",
+  "release_branch": "main"
 }

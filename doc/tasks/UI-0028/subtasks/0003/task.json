@@ -54,7 +54,7 @@
     "AC-10: scan классифицирует avoid как error, неофициальный синоним как warning, неизвестный и необъявленный термин как info; --suggest возвращает кандидатов terms_add без записи; скан не изменяет ни один файл."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "doc/architecture/system/cli-command-map.md",
     "doc/architecture/system/cli-validation-rules.md",
@@ -112,5 +112,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0028",
+  "release_branch": "main"
 }

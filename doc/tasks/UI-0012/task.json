@@ -52,7 +52,7 @@
     "AC-1: list/show/index/validate/paths и diagnose работают для стандартного, перенесённого и игнорируемого Git корня.",
     "AC-2: Повреждённый конфиг и выход за корень дают ошибку до записи; выбор конфига воспроизводится из другого cwd."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -177,5 +177,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0012",
+  "release_branch": "main"
 }

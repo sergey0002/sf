@@ -17,16 +17,31 @@
   "kind": "bugfix",
   "intent": "Исправить неявный тип дочерней карточки и проверять обе стороны связи до записи.",
   "scope": {
-    "in": ["Политики типов, публичные команды постановки и валидации, тесты журнала"],
-    "out": ["Правки реальных карточек и скиллов"],
-    "allowed_files_modules": ["doc/config/task-conf/", "doc/config/paths.yaml", "doc/tools/arch/", "doc/tests/"]
+    "in": [
+      "Политики типов, публичные команды постановки и валидации, тесты журнала"
+    ],
+    "out": [
+      "Правки реальных карточек и скиллов"
+    ],
+    "allowed_files_modules": [
+      "doc/config/task-conf/",
+      "doc/config/paths.yaml",
+      "doc/tools/arch/",
+      "doc/tests/"
+    ]
   },
   "current_behavior": "Обе команды создают subtask без flow по умолчанию; правила входящей связи не заданы.",
-  "evidence": ["doc/config/task-conf/types/subtask/config.yaml", "doc/tests/test_task_identity.py"],
+  "evidence": [
+    "doc/config/task-conf/types/subtask/config.yaml",
+    "doc/tests/test_task_identity.py"
+  ],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: CLI сохраняет выбранный тип и допустимый flow в обеих командах и отвергает отсутствие типа, legacy-тип и несовместимый flow до записи.", "AC-2: Корень, ребёнок и допустимость дочерних карточек проверяются раздельно, а восстановление пакета защищено от изменения заявки, порчи журнала и конкуренции."],
+  "acceptance_criteria": [
+    "AC-1: CLI сохраняет выбранный тип и допустимый flow в обеих командах и отвергает отсутствие типа, legacy-тип и несовместимый flow до записи.",
+    "AC-2: Корень, ребёнок и допустимость дочерних карточек проверяются раздельно, а восстановление пакета защищено от изменения заявки, порчи журнала и конкуренции."
+  ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [],
   "assumptions": [],
@@ -46,9 +61,20 @@
   "depends_on": [],
   "phase": "intake",
   "rollback_plan": "Откатить свой срез CLI, тестов и конфигов до интеграции с миграцией.",
-  "implementation_plan": ["Реализовать политику на контексте роли и единый preflight; сохранить точное восстановление старых пакетов."],
-  "related_docs": ["ARCH-contract", "FLOW-cli-subtask-lifecycle"],
-  "related_tests": [{"test_id":"task-identity","location":"doc/tests/test_task_identity.py","command":"python3 -m unittest discover -s doc/tests -p test_task_identity.py"}],
+  "implementation_plan": [
+    "Реализовать политику на контексте роли и единый preflight; сохранить точное восстановление старых пакетов."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "FLOW-cli-subtask-lifecycle"
+  ],
+  "related_tests": [
+    {
+      "test_id": "task-identity",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py"
+    }
+  ],
   "research_docs": [],
   "changed_files": {
     "added": [],
@@ -57,5 +83,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0030",
+  "release_branch": "main"
 }

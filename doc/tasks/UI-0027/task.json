@@ -17,13 +17,34 @@
   "kind": "feature",
   "intent": "Подготавливать ветку задачи через Arch CLI и выполнять согласованные Git-операции по проверенному снимку независимо от клиентской агентной среды.",
   "scope": {
-    "in": ["Git-политика в конфиге каждого типа; параметры репозитория, релизов и грязной копии во внутреннем проектном конфиге", "CLI-подготовка рабочей ветки и подключение к go-to-task", "Скилл git-workflow, подтверждаемая публикация commit + push и опциональная интеграция верхнеуровневой задачи", "Работа детей в ветке родителя по умолчанию и контракт будущих отдельных дочерних веток"],
-    "out": ["Реализация отдельной дочерней ветки в этом срезе", "Интеграция с Kilo или другим вендором, Git-hosted автоматизация, деплой", "Подключение реального remote для приёмки и очистка чужих правок"],
-    "allowed_files_modules": ["doc/config/", "doc/tools/arch/", "doc/tools/tests/", "doc/tests/", "doc/architecture/", "doc/skills/", "doc/tasks/UI-0027/"]
+    "in": [
+      "Git-политика в конфиге каждого типа; параметры репозитория, релизов и грязной копии во внутреннем проектном конфиге",
+      "CLI-подготовка рабочей ветки и подключение к go-to-task",
+      "Скилл git-workflow, подтверждаемая публикация commit + push и опциональная интеграция верхнеуровневой задачи",
+      "Работа детей в ветке родителя по умолчанию и контракт будущих отдельных дочерних веток"
+    ],
+    "out": [
+      "Реализация отдельной дочерней ветки в этом срезе",
+      "Интеграция с Kilo или другим вендором, Git-hosted автоматизация, деплой",
+      "Подключение реального remote для приёмки и очистка чужих правок"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/architecture/",
+      "doc/skills/",
+      "doc/tasks/UI-0027/"
+    ]
   },
   "current_behavior": "task workspace только читает карточку и выводит жёстко заданный branch_hint. go-to-task не разворачивает ветку; управляемой публикации и интеграции нет.",
   "evidence": [],
-  "contracts_and_invariants": ["Шаблоны настраиваются для каждого типа, не зашиты в Python или скилл; workspace остаётся read-only", "Ни один переход не сбрасывает, не прячет и не переносит чужие правки", "Закрытие задачи и одобрение публикации не взаимозаменяемы; конфиг не выдаёт согласие"],
+  "contracts_and_invariants": [
+    "Шаблоны настраиваются для каждого типа, не зашиты в Python или скилл; workspace остаётся read-only",
+    "Ни один переход не сбрасывает, не прячет и не переносит чужие правки",
+    "Закрытие задачи и одобрение публикации не взаимозаменяемы; конфиг не выдаёт согласие"
+  ],
   "acceptance_criteria": [
     "AC-1: CLI берёт шаблоны ветки и коммита и режимы публикации/мерджа из конфига типа, а remote, основную ветку, релизы и политику грязной копии из проектного конфига; невалидная политика диагностируется до Git-записи.",
     "AC-2: Переход к задаче готовит локальную или удалённую ветку либо создаёт её от известной базы, выдаёт путь, ветку, base SHA и политику; ask по умолчанию, block и отдельный worktree сохраняют исходные данные. Переход не запускает реализацию.",
@@ -32,16 +53,31 @@
     "AC-5: Ребёнок по умолчанию работает в ветке родителя без собственного коммита и push; контракт отдельного режима предусматривает ветку от SHA родителя и интеграцию только обратно в родителя, без реализации этого режима в текущей задаче."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
-  "project_context_refs": ["doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md", "doc/architecture/system/manifest.md", "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md", "doc/architecture/system/constraints-risks.md"],
-  "constraints": ["Приёмка через временные локальные Git-репозитории и bare remote, без внешней сети и публикации реального рабочего дерева"],
-  "assumptions": ["Имена новых команд в плане проектные; стабилизировать их в карте CLI и справке при реализации"],
+  "target_release": "0.1.0",
+  "project_context_refs": [
+    "doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md",
+    "doc/architecture/system/manifest.md",
+    "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md",
+    "doc/architecture/system/constraints-risks.md"
+  ],
+  "constraints": [
+    "Приёмка через временные локальные Git-репозитории и bare remote, без внешней сети и публикации реального рабочего дерева"
+  ],
+  "assumptions": [
+    "Имена новых команд в плане проектные; стабилизировать их в карте CLI и справке при реализации"
+  ],
   "open_questions": [],
   "risk": "high",
   "authority": {
-    "allowed": ["После отдельного поручения: изменения в scope и Git-операции только внутри тестовых фикстур"],
-    "forbidden": ["Публикация, слияние или смена веток реального рабочего дерева в рамках регистрации; destructive reset, stash и force-push"],
-    "approval_required": ["Запуск реализации; отдельное точное подтверждение любых реальных commit, push или merge"]
+    "allowed": [
+      "После отдельного поручения: изменения в scope и Git-операции только внутри тестовых фикстур"
+    ],
+    "forbidden": [
+      "Публикация, слияние или смена веток реального рабочего дерева в рамках регистрации; destructive reset, stash и force-push"
+    ],
+    "approval_required": [
+      "Запуск реализации; отдельное точное подтверждение любых реальных commit, push или merge"
+    ]
   },
   "approvals": [],
   "task_type": "feature",
@@ -76,9 +112,25 @@
   "depends_on": [],
   "phase": "intake",
   "rollback_plan": "Отключить публикацию и интеграцию в конфиге типа, убрать новые шаги и команды отдельным исправлением, сохранив read-only workspace. Уже опубликованное не переписывать; исправлять отдельным согласованным изменением.",
-  "related_docs": ["MAN-software-factory", "FLOW-cli-task-lifecycle", "FLOW-task-lifecycle", "ENT-verification-evidence", "VIEW-open-constraints"],
-  "implementation_plan": ["0001: схема конфигов и безопасная подготовка ветки", "0002: скилл, flow и подтверждаемая публикация", "0003: опциональная интеграция и проектный контракт дочерних веток"],
-  "related_tests": [{"test_id": "git-workflow-acceptance", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}],
+  "related_docs": [
+    "MAN-software-factory",
+    "FLOW-cli-task-lifecycle",
+    "FLOW-task-lifecycle",
+    "ENT-verification-evidence",
+    "VIEW-open-constraints"
+  ],
+  "implementation_plan": [
+    "0001: схема конфигов и безопасная подготовка ветки",
+    "0002: скилл, flow и подтверждаемая публикация",
+    "0003: опциональная интеграция и проектный контракт дочерних веток"
+  ],
+  "related_tests": [
+    {
+      "test_id": "git-workflow-acceptance",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
   "research_docs": [],
   "changed_files": {
     "added": [],
@@ -87,5 +139,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0027",
+  "release_branch": "main"
 }

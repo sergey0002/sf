@@ -1,14 +1,96 @@
 {
-  "schema_version":"draft-0.2","task_id":null,"task_key":"UI-0029-0003","task_number":"0003",
-  "source":{"type":"ui","native_id":null,"provenance":"UI-0029, AC-4–AC-5, CASE-7–CASE-10","revision":null,"captured_at":"2026-11-22","attachments":[],"comments":[],"history":[]},
-  "title":"Сверка флоу в задачах, аудитах и тестах","kind":"feature",
-  "intent":"Использовать продуктовую карту при постановке задач, аудите и подготовке тестов; связать документирование и закрытие с одной проверкой доказательств на том же снимке.",
-  "scope":{"in":["Скиллы и правила рабочих маршрутов, интеграция закрытия, сквозная приёмка на фикстуре"],"out":["Разработка нового индекса, изменение внутренних task-conf, автоматическое объявление семантической полноты"],"allowed_files_modules":["doc/skills/","doc/tools/arch/","doc/tools/tests/","doc/tests/","doc/architecture/"]},
-  "current_behavior":"Приёмка проверяет доказательства задачи, но не использует отдельную привязку продуктовой ветки к доказательству на проверенном снимке.",
-  "acceptance_criteria":["AC-1: На одном diff агент оставляет трассировку ветка → AC → CASE → evidence и отдельно отмечает непокрытые изменения, не пропуская отказ, повтор и соседний модуль.","AC-2: «Задокументируй флоу» и закрытие используют одну проверку; вне задачи карточка не создаётся; неизвестная база не выдаётся за чистую сверку.","AC-3: Применимый отказ закрытия не меняет карточку и журнал; актуальный снимок разблокирует операцию; несвязанная задача сохраняет прежний результат."],
-  "acceptance_policy":"case-coverage-v1","target_release":"unset","project_context_refs":["doc/architecture/system/addressable-contracts.md","doc/architecture/domains/task-lifecycle/entities/verification-evidence.md"],"constraints":["Воздействие определяется по базе, фактическому diff и объявленным связям, не по changed_files в одиночку"],"assumptions":[],"open_questions":[],"risk":"high",
-  "authority":{"allowed":["Локальная интеграция и тесты после поручения"],"forbidden":["Публикация и изменение истории, закрытие реальных задач в приёмочных тестах"],"approval_required":["Начало реализации"]},"approvals":[],
-  "task_type":"subtask","flow":null,"complexity":"high","estimate_hours":16,"subtasks":[],"depends_on":["UI-0029-0002"],"phase":"intake",
-  "rollback_plan":"Снять дополнительный гейт и инструкции, сохранив сохранённые версии флоу и доказательства.",
-  "implementation_plan":["Подключить общий контекст и проверку к скиллам, затем локальный гейт и сквозные сценарии"],"related_docs":["CAP-addressable-contracts","ENT-verification-evidence","FLOW-create-task","FLOW-verify-task"],"related_tests":[],"research_docs":[],"changed_files":{"added":[],"modified":[],"deleted":[]},"owner":"unset","priority":"unset","stage_history":[]
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0029-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0029, AC-4–AC-5, CASE-7–CASE-10",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Сверка флоу в задачах, аудитах и тестах",
+  "kind": "feature",
+  "intent": "Использовать продуктовую карту при постановке задач, аудите и подготовке тестов; связать документирование и закрытие с одной проверкой доказательств на том же снимке.",
+  "scope": {
+    "in": [
+      "Скиллы и правила рабочих маршрутов, интеграция закрытия, сквозная приёмка на фикстуре"
+    ],
+    "out": [
+      "Разработка нового индекса, изменение внутренних task-conf, автоматическое объявление семантической полноты"
+    ],
+    "allowed_files_modules": [
+      "doc/skills/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
+  },
+  "current_behavior": "Приёмка проверяет доказательства задачи, но не использует отдельную привязку продуктовой ветки к доказательству на проверенном снимке.",
+  "acceptance_criteria": [
+    "AC-1: На одном diff агент оставляет трассировку ветка → AC → CASE → evidence и отдельно отмечает непокрытые изменения, не пропуская отказ, повтор и соседний модуль.",
+    "AC-2: «Задокументируй флоу» и закрытие используют одну проверку; вне задачи карточка не создаётся; неизвестная база не выдаётся за чистую сверку.",
+    "AC-3: Применимый отказ закрытия не меняет карточку и журнал; актуальный снимок разблокирует операцию; несвязанная задача сохраняет прежний результат."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "0.1.0",
+  "project_context_refs": [
+    "doc/architecture/system/addressable-contracts.md",
+    "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md"
+  ],
+  "constraints": [
+    "Воздействие определяется по базе, фактическому diff и объявленным связям, не по changed_files в одиночку"
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "high",
+  "authority": {
+    "allowed": [
+      "Локальная интеграция и тесты после поручения"
+    ],
+    "forbidden": [
+      "Публикация и изменение истории, закрытие реальных задач в приёмочных тестах"
+    ],
+    "approval_required": [
+      "Начало реализации"
+    ]
+  },
+  "approvals": [],
+  "task_type": "subtask",
+  "flow": null,
+  "complexity": "high",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": [
+    "UI-0029-0002"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Снять дополнительный гейт и инструкции, сохранив сохранённые версии флоу и доказательства.",
+  "implementation_plan": [
+    "Подключить общий контекст и проверку к скиллам, затем локальный гейт и сквозные сценарии"
+  ],
+  "related_docs": [
+    "CAP-addressable-contracts",
+    "ENT-verification-evidence",
+    "FLOW-create-task",
+    "FLOW-verify-task"
+  ],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0029",
+  "release_branch": "main"
 }

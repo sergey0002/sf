@@ -46,7 +46,7 @@
     "AC-1: Пилот проводится в согласованных границах с проверенным восстановлением.",
     "AC-2: Отчёт фиксирует версии, выборку, корректность, стоимость и разброс; выводы ограничены сценарием."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -121,5 +121,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0022",
+  "release_branch": "main"
 }

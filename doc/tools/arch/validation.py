@@ -325,24 +325,35 @@ def validate_task_json(data: dict[str, Any], task_key: str, project_config: Proj
 
     # --- release config --------------------------------------------------------
     release = project.get(PROJECT_RELEASE_KEY, {}) if isinstance(project, dict) else {}
-    default_branch = release.get("default_branch", "main") if isinstance(release, dict) else "main"
+    if not isinstance(release, dict):
+        release = {}
+    default_branch = release.get("default_branch", "main")
+    # Enforcement is opt-in: the branch contract belongs to UI-0027 and must not
+    # block the existing corpus until the migration is explicitly enabled.
+    enforce_branches = release.get("enforce", False) is True
 
-    # --- target_release (обязательное, не "unset") -----------------------------
+    # --- target_release (обязательное при enforce) -----------------------------
     target_release = data.get("target_release")
-    if not isinstance(target_release, str) or target_release == "unset":
+    if enforce_branches and (not isinstance(target_release, str) or target_release == "unset"):
         errors.append("task.json: target_release must be set (not 'unset')")
 
-    # --- branch (рабочая ветка задачи, обязательное) --------------------------
+    # --- branch (рабочая ветка задачи) ----------------------------------------
     branch = data.get("branch")
-    if not isinstance(branch, str) or branch == "unset":
-        errors.append("task.json: branch must be set (not 'unset')")
+    if branch in (None, "unset"):
+        if enforce_branches:
+            errors.append("task.json: branch must be set (not 'unset')")
+    elif not isinstance(branch, str):
+        errors.append("task.json: branch must be a string")
     elif not BRANCH_RE.fullmatch(branch):
         errors.append(f"task.json: branch must be a valid git branch name, got {branch!r}")
 
-    # --- release_branch (ветка для мерджа, обязательное) ----------------------
+    # --- release_branch (ветка для мерджа) ------------------------------------
     release_branch = data.get("release_branch")
-    if not isinstance(release_branch, str) or release_branch == "unset":
-        errors.append("task.json: release_branch must be set (not 'unset')")
+    if release_branch in (None, "unset"):
+        if enforce_branches:
+            errors.append("task.json: release_branch must be set (not 'unset')")
+    elif not isinstance(release_branch, str):
+        errors.append("task.json: release_branch must be a string")
     elif not BRANCH_RE.fullmatch(release_branch):
         errors.append(f"task.json: release_branch must be a valid git branch name, got {release_branch!r}")
 

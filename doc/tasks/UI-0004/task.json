@@ -71,7 +71,7 @@
       "verification": "doc/tests/run.sh — 13/13 pass"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc.architecture.md",
@@ -132,5 +132,8 @@
   "flow": "docs-only",
   "complexity": "low",
   "research_docs": [],
-  "implementation_plan": "Добавить task init/validate/workspace/status команды, не аллоцировать task_number, не создавать task.md, добавить тесты"
+  "implementation_plan": "Добавить task init/validate/workspace/status команды, не аллоцировать task_number, не создавать task.md, добавить тесты",
+  "status": "done",
+  "branch": "bugfix/UI-0004",
+  "release_branch": "main"
 }

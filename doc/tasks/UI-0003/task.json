@@ -51,7 +51,7 @@
       "verification": "Запустить doc/tests/run.sh — 13/13 pass"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc.architecture.md",
@@ -109,5 +109,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "done",
+  "branch": "bugfix/UI-0003",
+  "release_branch": "main"
 }

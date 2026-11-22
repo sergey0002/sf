@@ -43,7 +43,7 @@
       "verification": "Запустить doc/tests/run.sh и unittest discover — 13/13 pass"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
     "../../../doc.architecture.md",
@@ -102,5 +102,8 @@
   "owner": "unset",
   "priority": "unset",
   "stage_history": [],
-  "implementation_plan": "Создать arch.py исполняемым, проверить validate + index check, создать README, прогнать 13 тестов"
+  "implementation_plan": "Создать arch.py исполняемым, проверить validate + index check, создать README, прогнать 13 тестов",
+  "status": "done",
+  "branch": "bugfix/UI-0002",
+  "release_branch": "main"
 }

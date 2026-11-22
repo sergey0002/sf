@@ -48,7 +48,7 @@
     "AC-1: Критерий связан с дельтой, diff и результатом проверки; все относительные ссылки разрешаются.",
     "AC-2: Свежая база принимается, устаревшая Git или локальная база диагностируется без записи."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -137,5 +137,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0018",
+  "release_branch": "main"
 }

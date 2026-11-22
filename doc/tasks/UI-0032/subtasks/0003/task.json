@@ -58,7 +58,7 @@
     "AC-3: arch validate --brief, arch index check и arch docs paths --check проходят; план UI-0031 остаётся принятым без изменений."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не менять смысловые разделы документов вне политики плана",
@@ -72,9 +72,15 @@
   "open_questions": [],
   "risk": "low",
   "authority": {
-    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
-    "forbidden": ["Правки кода и конфигов, переписывание существующих планов, внешняя запись"],
-    "approval_required": ["Начало реализации"]
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Правки кода и конфигов, переписывание существующих планов, внешняя запись"
+    ],
+    "approval_required": [
+      "Начало реализации"
+    ]
   },
   "approvals": [],
   "task_type": "docs",
@@ -82,7 +88,9 @@
   "complexity": "medium",
   "estimate_hours": 8,
   "subtasks": [],
-  "depends_on": ["UI-0032-0002"],
+  "depends_on": [
+    "UI-0032-0002"
+  ],
   "phase": "intake",
   "rollback_plan": "Вернуть скилл и затронутые архитектурные записи к снимку и пересобрать индекс.",
   "implementation_plan": [
@@ -91,13 +99,30 @@
     "Синхронизировать пять архитектурных записей",
     "Пересобрать индекс и прогнать проверки"
   ],
-  "related_docs": ["ENT-verification-evidence", "SPEC-cli-implementation", "REG-cli-validation-rules", "REG-cli-command-map", "VIEW-cli-package"],
+  "related_docs": [
+    "ENT-verification-evidence",
+    "SPEC-cli-implementation",
+    "REG-cli-validation-rules",
+    "REG-cli-command-map",
+    "VIEW-cli-package"
+  ],
   "related_tests": [
-    {"test_id": "factory-brief", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}
+    {
+      "test_id": "factory-brief",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
   ],
   "research_docs": [],
-  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0032",
+  "release_branch": "main"
 }

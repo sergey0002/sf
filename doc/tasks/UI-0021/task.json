@@ -48,7 +48,7 @@
     "AC-1: Настроенный прогон имеет ограниченные ресурсы и восстанавливается после прерывания.",
     "AC-2: Результат связан с проверенной ревизией и версией проверок; защищённые критерии остаются доступны независимой приёмке."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -138,5 +138,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0021",
+  "release_branch": "main"
 }

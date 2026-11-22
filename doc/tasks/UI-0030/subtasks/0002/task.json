@@ -41,7 +41,7 @@
     "AC-2: Применимые инструкции согласованы с CLI и различают создание, чтение legacy и восстановление; выбор типа следует результату, а не источнику или типу родителя."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Не переписывать маршрутизацию tier'ов и не дублировать таблицу tier'ов"
@@ -90,5 +90,8 @@
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [],
+  "status": "open",
+  "branch": "bugfix/UI-0030",
+  "release_branch": "main"
 }

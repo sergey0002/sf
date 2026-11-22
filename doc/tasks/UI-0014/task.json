@@ -56,7 +56,7 @@
     "AC-1: Из установленного пакета доступны CLI и runtime-ресурсы; версия совпадает с метаданными пакета.",
     "AC-2: Локальный gate ловит устаревший индекс до пересборки и проверяет воспроизводимость в отдельном дереве; CI/CD и Git-hosted workflow запрещены."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -160,5 +160,8 @@
       "stage_id": "stage1",
       "status": "completed"
     }
-  ]
+  ],
+  "status": "review",
+  "branch": "bugfix/UI-0014",
+  "release_branch": "main"
 }

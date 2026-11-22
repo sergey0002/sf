@@ -48,7 +48,7 @@
     "AC-1: Новая сессия находит актуальный контракт и доказательства по ссылкам из компактного JSON.",
     "AC-2: Неактуальное и неполное evidence различается; зафиксированы вызовы, объём контекста и токены."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -137,5 +137,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0019",
+  "release_branch": "main"
 }

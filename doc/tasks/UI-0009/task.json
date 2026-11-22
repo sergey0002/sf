@@ -62,7 +62,7 @@
     "AC-10: Задача не закрывается, если есть незакрытые подзадачи (контроль на уровне CLI)"
   ],
   "implementation_plan": "Создать task-conf иерархию (типы + флоу), конфиг путей, скилл архитектурной документации, CLI валидатор путей, исследовательскую папку research/. Задача разбита на подзадачи 0001 и 0002.",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Никакого автоматического выделения task_number",
@@ -237,5 +237,8 @@
         "doc/tools/arch/cli.py"
       ]
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0009",
+  "release_branch": "main"
 }

@@ -48,7 +48,7 @@
     "AC-1: Короткая правка проходит без фиктивных детей и лишних артефактов.",
     "AC-2: Исследовательский путь сохраняет источники и решения; повторный вход восстанавливает состояние."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -137,5 +137,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0020",
+  "release_branch": "main"
 }

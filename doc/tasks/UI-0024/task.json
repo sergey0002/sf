@@ -44,7 +44,7 @@
     "AC-1: Для каждого расширения есть наблюдаемая предпосылка и решение о постановке или откладывании.",
     "AC-2: Выбранные расширения имеют измеримую гипотезу, границы и следующую задачу."
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -117,5 +117,8 @@
       "stage_id": "stage1",
       "status": "planned"
     }
-  ]
+  ],
+  "status": "open",
+  "branch": "bugfix/UI-0024",
+  "release_branch": "main"
 }

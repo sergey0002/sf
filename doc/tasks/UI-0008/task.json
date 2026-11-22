@@ -85,7 +85,7 @@
       "verification": "Проверено при приведении к новому формате"
     }
   ],
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [],
   "constraints": [
     "Никакого автоматического выделения task_number",
@@ -200,5 +200,8 @@
   "flow": "docs-only",
   "complexity": "low",
   "research_docs": [],
-  "implementation_plan": "Добавить JSON Schema валидацию тел документов, команду docs related, поле implemented, обновить существующие документы"
+  "implementation_plan": "Добавить JSON Schema валидацию тел документов, команду docs related, поле implemented, обновить существующие документы",
+  "status": "done",
+  "branch": "bugfix/UI-0008",
+  "release_branch": "main"
 }

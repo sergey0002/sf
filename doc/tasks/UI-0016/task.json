@@ -49,7 +49,7 @@
     "AC-2: Повтор события не создаёт вторую запись, конфликт ревизии отклоняется, replay восстанавливает состояние."
   ],
   "acceptance_policy": "case-coverage-v1",
-  "target_release": "unset",
+  "target_release": "0.1.0",
   "project_context_refs": [
     "nextplan.md",
     "doc/architecture/system/architecture-contract.md",
@@ -153,5 +153,8 @@
       "status": "verification",
       "result": "Реализованы версионированная запись, миграция, журнал переходов и replay; целевые и итоговые проверки пройдены."
     }
-  ]
+  ],
+  "status": "done",
+  "branch": "bugfix/UI-0016",
+  "release_branch": "main"
 }
