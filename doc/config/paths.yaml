@@ -115,6 +115,7 @@ allowed_paths:
   # Навыки агентов (использует skills root)
   - "{skills}/README.md"
   - "{skills}/{skill_id}/SKILL.md"
+  - "{skills}/{skill_id}/references/{slug}.md"
 
   # Задачи — шаблон: {tasks}/{task_key}/...
   - "{tasks}/{task_key}/task.json"
@@ -123,12 +124,14 @@ allowed_paths:
   - "{tasks}/{task_key}/.arch-write-journal.json"
   - "{tasks}/{task_key}/stage{stage}/plan.md"
   - "{tasks}/{task_key}/stage{stage}/verification.json"
+  - "{tasks}/{task_key}/stage{stage}/baseline.json"
   - "{tasks}/{task_key}/baseline-{slug}.json"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/task.json"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/state.json"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/events.jsonl"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/plan.md"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/verification.json"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/baseline.json"
   # Исследования задачи — свободные md-документы, привязанные к таску
   - "{tasks}/{task_key}/research/{slug}.md"
 
@@ -138,6 +141,7 @@ allowed_paths:
   - "doc/tests/run.sh"
   - "doc/tests/test_task_identity.py"
   - "doc/tests/test_doc_contracts.py"
+  - "doc/tests/test_doc_type_registry.py"
   # Baseline замеры (тестовые артефакты)
   - "doc/tests/baseline/{slug}.json"
 
@@ -178,7 +182,6 @@ allowed_paths:
   - "doc/tools/arch/session_audit.py"
   - "doc/tools/tests/test_arch.py"
   - "doc/tools/tests/test_session_audit.py"
-  - "doc/tools/tests/test_session_audit.py"
   - "doc/tools/tests/test_sections.py"
 
 # ---------------------------------------------------------------------------
@@ -191,44 +194,50 @@ project:
     document_id: "^[A-Za-z][A-Za-z0-9._:-]*$"
     subtask_id: "^[0-9]{4}$"
 
-  # Допустимые типы документов архитектуры
+  # Допустимые типы документов архитектуры.
+  # Единственный источник истины: реестр ARCH-contract §5.5 и frontmatter
+  # документов сверяются с этим списком тестом doc/tests/test_doc_type_registry.py.
   document_types:
+    # Система и точки зрения
+    - system
     - system-overview
+    - system-context
+    - component-view
     - architecture-view
-    - domain
-    - capability-spec
-    - glossary
-    - entity
     - data-view
-    - flow
+    # Домен и знания
+    - domain
+    - capability
+    - capability-spec
+    - entity
+    - glossary
     - rule-set
+    # Поведение и интеграции
+    - flow
     - integration
     - cross-cutting-concept
-    - decision
+    # Качество, безопасность, ограничения
+    - quality-attributes
     - quality-view
     - security-view
     - deployment-operations-view
     - constraints-risks
+    # Решения и проверка
+    - decision
     - verification-map
-    - component-view
-    - rule-set
-    - system-context
-    - quality-attributes
-    - system
-    - capability
-    - implementation-spec
     - testing-spec
-    - examples
+    - implementation-spec
+    # Служебное
     - runbook
+    - examples
 
-  # Допустимые статусы документов
+  # Допустимые статусы документа. Статус решения (decision_status) задаётся отдельно.
   document_statuses:
     - draft
     - current
+    - accepted
     - deprecated
     - superseded
-    - accepted
-    - rejected
 
   # Допустимые task_type (синхронизированы с doc/config/task-conf/types/*/config.yaml)
   task_types:

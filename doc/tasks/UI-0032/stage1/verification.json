@@ -1,0 +1,79 @@
+{
+  "task_key": "UI-0032",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": ["AC-1"],
+      "expected": "plan-defaults.yaml валиден по task-conf.schema.json; tier'ы, разделы и лимит micro 60 совпадают с текущим поведением; карточка без блока plan проверяется идентично."
+    },
+    {
+      "id": "CASE-2",
+      "covers": ["AC-1"],
+      "expected": "Карточка без блока plan и без estimate_hours сохраняет acceptance_plan_ready и evidence_freshness."
+    },
+    {
+      "id": "CASE-3",
+      "covers": ["AC-2"],
+      "expected": "Все десять конфигов валидны; профильные типы отличаются от дефолта; scaffold только micro; subtask помечен legacy и не выбирается для постановки."
+    },
+    {
+      "id": "CASE-4",
+      "covers": ["AC-3"],
+      "expected": "27 шаблонов непусты; для каждого разрешённого tier шаблон есть; все объявленные разделы присутствуют; у scaffold один, у research два."
+    },
+    {
+      "id": "CASE-5",
+      "covers": ["AC-4"],
+      "expected": "Каждый из десяти типов даёт exit 0 с полной политикой и правилами; неизвестный тип даёт exit != 0 со списком; дерево не меняется."
+    },
+    {
+      "id": "CASE-6",
+      "covers": ["AC-4"],
+      "expected": "Два вызова plan-policy дают идентичный JSON; результат не зависит от порядка файлов и запусков."
+    },
+    {
+      "id": "CASE-7",
+      "covers": ["AC-5"],
+      "expected": "Нарушение section_present, section_min_items, link_min, table_column, case_min или command даёт acceptance_plan_ready: false с файлом, разделом и правилом; неизвестное правило обнаруживается валидацией; смысл оракула не подменяется."
+    },
+    {
+      "id": "CASE-8",
+      "covers": ["AC-6"],
+      "expected": "Отсутствие типовых разделов даёт acceptance_plan_ready: false, наличие — true; неизвестный tier блокирует; лимит micro берётся из политики."
+    },
+    {
+      "id": "CASE-9",
+      "covers": ["AC-7"],
+      "expected": "Невалидная схема, отсутствующий шаблон, непокрытый complexity, дубль tier'ов, лимит 0 и неизвестное правило дают диагностику с путём и полем; текущее дерево проходит."
+    },
+    {
+      "id": "CASE-10",
+      "covers": ["AC-8"],
+      "expected": "docs paths --check и scan --scope paths проходят; новые файлы политики, шаблонов и типов не помечены мусором; срез UI-0031 сохранён."
+    },
+    {
+      "id": "CASE-11",
+      "covers": ["AC-9"],
+      "expected": "Скилл и архитектурные записи описывают политику типа, каталог правил и plan-policy; UI-0031 остаётся готовым."
+    },
+    {
+      "id": "CASE-12",
+      "covers": ["AC-10"],
+      "expected": "spike, migration и incident доступны в task types, имеют flow, шаблоны и правила, разрешаются plan-policy и проходят проверки; фаза 2 и отклонённые кандидаты описаны без реализации."
+    },
+    {
+      "id": "CASE-13",
+      "covers": ["AC-7"],
+      "expected": "Каталог без config.yaml, несовпадение id и каталога, тип только в paths.yaml, каталог без записи и карточка удалённого типа диагностируются без изменения дерева."
+    },
+    {
+      "id": "CASE-14",
+      "covers": ["AC-11"],
+      "expected": "validate, index check, docs paths --check и run.sh --brief зелёные; корпус без блока plan сохраняет готовность; политика отсутствует в snapshot_files."
+    }
+  ]
+}

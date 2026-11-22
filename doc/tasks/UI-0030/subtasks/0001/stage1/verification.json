@@ -1,0 +1,9 @@
+{
+  "task_key":"UI-0030-0001", "stage_id":"stage1", "status":"not_run", "checked_revision":null, "checks":[],
+  "planned_checks":[
+    {"id":"CASE-1","covers":["AC-1"],"expected":"Ребёнок research создан с допустимым flow."},
+    {"id":"CASE-2","covers":["AC-1","AC-2"],"expected":"Ошибки формы не меняют дерево."},
+    {"id":"CASE-3","covers":["AC-2"],"expected":"Политика учитывает роль и запрещённые связи."},
+    {"id":"CASE-4","covers":["AC-2"],"expected":"Точный повтор сходится; отказ не оставляет записи."}
+  ]
+}

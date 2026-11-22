@@ -1,0 +1,63 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0030-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0030, AC-5–AC-6 и CASE-8–CASE-10; уточнение пользователя в чате 2026-11-22",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Проверка влияния изменений типов на весь корпус задач",
+  "kind": "bugfix",
+  "intent": "Находить последствия изменения task-conf во всех состояниях задач и показывать агенту точный безопасный маршрут исправления.",
+  "scope": {
+    "in": ["Read-only скан всего корпуса, диагностика с fix-hints, гейт тестового прогона, документирование маршрута исправления"],
+    "out": ["Автоисправление, запись в существующие задачи, фоновые наблюдатели"],
+    "allowed_files_modules": ["doc/tools/arch/", "doc/tests/", "doc/architecture/system/", "doc/skills/arch-cli/"]
+  },
+  "current_behavior": "В CLI есть отдельные области scan tasks и task-conf; требуется явная гарантия сквозной проверки изменений YAML по всем фазам и отчёта для исправления.",
+  "evidence": ["arch scan --help: доступны scopes tasks и task-conf и флаг --fix-hints", "Текущий arch scan --scope tasks --brief --fix-hints: OK на рабочем дереве"],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": ["AC-1: Скан выявляет несовместимые изменения типа у открытых, завершённых и дочерних записей и блокирует итоговый прогон.", "AC-2: Отчёт указывает поля, источники правил и безопасные действия; повтор подтверждает исправление. Скан не пишет данные и не выдаёт смену дефолта за поломку сохранённой записи."],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "bugfix",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": [
+    "UI-0030-0001"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Откатить свой срез скана, тестового гейта и документации целиком без изменений карточек или task-conf.",
+  "implementation_plan": ["Подготовить чистые фикстуры разных фаз, переиспользовать проверку политик из 0001, расширить scan и включить гейт, закрепить маршрут исправления в runbook."],
+  "related_docs": ["REG-cli-command-map", "ARCH-contract", "ENT-task-record"],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

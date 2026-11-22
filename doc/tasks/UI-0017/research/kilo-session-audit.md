@@ -234,3 +234,19 @@ changed during full suite: ['doc/tools/arch/cli/commands/task.py']
 - Текущее дерево изменялось параллельным писателем во время аудита; независимые прогоны описывают текущее состояние, а не замороженный снимок сессии.
 - Содержимое журнала Kilo использовано как данные; системный prompt и автоматически загруженные правила не восстановимы полностью.
 - Байты вывода и токены — разные представления; стоимость провайдера не рассчитывалась (`cost: 0.0`).
+
+## 10. Статус правок после аудита
+
+| Дефект / рекомендация | Статус | Где |
+|---|---|---|
+| D1 порядок переходов `bugfix` | исправлен | `bugfix/.../config.yaml`, `flows.py` (сверка `steps`) |
+| D2 `subtasks[].status` при закрытии | исправлен | `task_ops._sync_closed_records` |
+| D3 таблица выбора для нескольких flow | исправлен | `feature`/`refactor`/`planning` + `scan` |
+| D4 ошибка legacy-flow | исправлен | `advance` → `UNSUPPORTED-FLOW` |
+| D5 evidence только с фильтрами | закрыт в stage2 | полный `test_task_identity.py` в `stage2/verification.json` |
+| D6 replay не сверяет `event` | исправлен | `task_record.replay_state` |
+| D7 ручная правка записи | не повторялась; закрытие синхронизирует запись | `task close` |
+| D8 параллельный писатель | смягчён: stale `snapshot_files` блокирует закрытие | `closure_state` |
+| R4/R6/R7 инструменты, evidence, план | внесено | `doc/AGENTS.md`, `go-to-task` |
+
+Проверки stage2: полный `test_task_identity.py`, `scan --scope all`, `docs paths --check`, `index check`, `bash doc/tests/run.sh --brief`.

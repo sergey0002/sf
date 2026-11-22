@@ -12,6 +12,73 @@ CASE_COVERAGE = "case-coverage-v1"
 CRITERION = re.compile(r"^(AC-[1-9][0-9]*):\s*\S")
 CASE_ID = re.compile(r"^CASE-[1-9][0-9]*$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+PLAN_TIER = re.compile(r"<!--\s*plan-tier:\s*([a-z]+)\s*-->")
+PLAN_TIERS = ("micro", "standard", "full")
+MICRO_MAX_LINES = 60
+TIER_COMPLEXITY = {
+    "micro": ("low",),
+    "standard": ("low", "medium"),
+    "full": ("low", "medium", "high", "critical"),
+}
+TIER_SECTIONS = {
+    "micro": ("Приёмка", "Проверка"),
+    "standard": ("Цель", "Приёмка", "Оценка", "Проверка"),
+    "full": ("Цель", "Правила проекта", "Решения", "Риск", "Приёмка", "Оценка", "Проверка"),
+}
+
+
+def read_plan_tier(plan: Path) -> str | None:
+    """Return the declared plan tier, or None when absent or unreadable."""
+    try:
+        match = PLAN_TIER.search(plan.read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    return match.group(1) if match else None
+
+
+def plan_tier_problems(plan: Path, task: dict[str, Any]) -> list[str]:
+    """Check the declared plan tier against complexity and required sections.
+
+    A marker is mandatory only once ``estimate_hours`` is set, so records that
+    predate the tier contract keep their existing behaviour.
+    """
+    try:
+        text = plan.read_text(encoding="utf-8")
+    except OSError as exc:
+        return [f"plan.md: {exc}"]
+    match = PLAN_TIER.search(text)
+    if match is None:
+        if task.get("estimate_hours") is not None:
+            return ["plan.md: declare <!-- plan-tier: micro|standard|full --> when estimate_hours is set"]
+        return []
+    tier = match.group(1)
+    if tier not in PLAN_TIERS:
+        return [f"plan.md: unknown plan tier {tier!r}; use micro, standard or full"]
+    complexity = task.get("complexity") or "low"
+    if complexity not in TIER_COMPLEXITY[tier]:
+        return [
+            f"plan.md: tier {tier!r} is not allowed for complexity {complexity!r}; "
+            f"allowed: {', '.join(TIER_COMPLEXITY[tier])}"
+        ]
+    problems: list[str] = []
+    headings = [
+        line.lstrip("#").strip()
+        for line in text.splitlines()
+        if line.startswith("#")
+    ]
+    missing = [
+        keyword for keyword in TIER_SECTIONS[tier]
+        if not any(keyword.casefold() in heading.casefold() for heading in headings)
+    ]
+    if missing:
+        problems.append(f"plan.md: tier {tier!r} requires sections: {', '.join(missing)}")
+    if tier == "micro":
+        lines = sum(1 for line in text.splitlines() if line.strip())
+        if lines > MICRO_MAX_LINES:
+            problems.append(
+                f"plan.md: micro plan has {lines} non-empty lines; limit is {MICRO_MAX_LINES}, use standard"
+            )
+    return problems
 
 
 def criterion_ids(task: dict[str, Any]) -> set[str]:
@@ -68,10 +135,22 @@ def snapshot_file(root: Path, name: str) -> tuple[Path, str]:
     return target, checksum.hexdigest()
 
 
-def snapshot_problems(root: Path, entries: Any, plan: Path) -> list[str]:
+def snapshot_status(root: Path, entries: Any, plan: Path) -> dict[str, Any]:
+    """Classify recorded snapshot inputs against the current tree.
+
+    ``missing`` means no usable manifest was recorded, ``stale`` means at least
+    one recorded input differs or is gone, and ``current`` means every input
+    still matches its recorded SHA-256.
+    """
     if not isinstance(entries, list) or not entries:
-        return ["snapshot_files must identify the verified files by SHA-256"]
-    problems = []
+        problems = ["snapshot_files must identify the verified files by SHA-256"]
+        return {
+            "status": "missing", "problems": problems,
+            "stale_files": [], "missing_files": [],
+        }
+    problems: list[str] = []
+    stale: list[str] = []
+    missing: list[str] = []
     seen = set()
     for entry in entries:
         path = entry.get("path") if isinstance(entry, dict) else None
@@ -85,12 +164,23 @@ def snapshot_problems(root: Path, entries: Any, plan: Path) -> list[str]:
                 raise ValueError("path is duplicate")
             seen.add(target)
             if actual != digest:
+                stale.append(path)
                 problems.append(f"snapshot is stale: {path}")
         except (OSError, ValueError, RuntimeError) as exc:
+            missing.append(path)
             problems.append(f"snapshot file {path}: {exc}")
     if plan.resolve() not in seen:
         problems.append("snapshot_files must include the stage plan")
-    return problems
+    return {
+        "status": "stale" if problems else "current",
+        "problems": problems,
+        "stale_files": sorted(set(stale)),
+        "missing_files": sorted(set(missing)),
+    }
+
+
+def snapshot_problems(root: Path, entries: Any, plan: Path) -> list[str]:
+    return snapshot_status(root, entries, plan)["problems"]
 
 
 def acceptance_state(
@@ -103,6 +193,8 @@ def acceptance_state(
     try:
         if not (path.parent / "plan.md").is_file():
             raise ValueError("plan.md is missing")
+        if tier_problems := plan_tier_problems(path.parent / "plan.md", task):
+            raise ValueError("; ".join(tier_problems))
         evidence = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(evidence, dict) or evidence.get("task_key") != task.get("task_key") or evidence.get("stage_id") != stage:
             raise ValueError("verification.json must identify this task and stage")

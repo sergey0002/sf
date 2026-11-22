@@ -423,12 +423,13 @@ arch task validate <task_key>
 ### 9.9 Команда task workspace
 
 ```
-arch task workspace <task_key>
+arch task workspace <task_key> [--json]
 ```
 
 - Читает task.json, валидирует
 - Выводит target_release, branch_hint, directory, task_json пути
 - branch_hint: "futures/<number>" для jira, "bugfix/<key>" для других
+- `preflight` сравнивает незакоммиченные пути из `git status --porcelain` с `changed_files`, необязательным `scope.write_files` и `scope.allowed_files_modules`. `status: clean` означает отсутствие пересечений, `review` — изменения в разрешённых модулях без объявленного пересечения, `isolate` — другой писатель изменил объявленный файл, `unknown` — Git недоступен. Возвращаются `dirty_files`, `intersections`, `module_overlaps`, `foreign_changes` и `recommendation`. Команда только читает дерево и не выполняет checkout. `scope.write_files` — планируемые пути записи; `changed_files` остаётся фактическим результатом.
 
 ### 9.10 Команда task status
 
@@ -442,7 +443,7 @@ arch task status <task_key>
 ### 9.11 Команда task decompose
 
 ```
-arch task decompose <task_key> --subtask-id NNNN --subtask-title "..." [--subtask-id NNNN --subtask-title "..." ...] [--subtask-depends-on ID=DEP[,DEP] ...] [--subtask-type ID=TYPE ...] [--subtask-flow ID=FLOW ...] [--subtask-complexity ID=LEVEL ...] [--subtask-estimate ID=HOURS ...]
+arch task decompose <task_key> --subtask-id NNNN --subtask-title "..." [--subtask-id NNNN --subtask-title "..." ...] [--subtask-depends-on ID=DEP[,DEP] ...] [--subtask-type ID=TYPE ...] [--subtask-flow ID=FLOW ...] [--subtask-complexity ID=LEVEL ...] [--subtask-estimate ID=HOURS ...] [--json]
 ```
 
 - Читает родительский task.json; требует, чтобы `subtasks` был массивом, а `task.md` отсутствовал. Остальные поля родителя проверяет `task validate`, чтобы decompose не блокировал первый пакет из-за ещё не заполненных семантических полей
@@ -462,7 +463,9 @@ arch task diagnose <task_key> [--json] [--brief]
 
 - Проверяет карточку и объединение объявленных детей с непосредственными каталогами. `can_close` отражает машинные предусловия.
 - Разрешает `depends_on` через настроенный корень задач, включая ключи детей. `dependencies` содержит `task_key`, `required_by`, `state` и доступную фазу. Краткий режим ограничивает список тремя строками. Эти же зависимости применяет `close`.
-- При `acceptance_policy: case-coverage-v1` сверяет связанные кейсы и хеши заявленных входов. `acceptance_plan_ready` сообщает о структурной готовности текущей стадии. Формат и правила описаны в [записи доказательств](../domains/task-lifecycle/entities/verification-evidence.md).
+- При `acceptance_policy: case-coverage-v1` сверяет tier плана, связанные кейсы и хеши заявленных входов. `acceptance_plan_ready` сообщает о структурной готовности текущей стадии. Tier проверяется по маркеру `<!-- plan-tier: ... -->`, допустимости для `complexity` и обязательным разделам; `micro` ограничен 60 непустыми строками. Формат и правила описаны в [записи доказательств](../domains/task-lifecycle/entities/verification-evidence.md).
+- `evidence_freshness` отделяет историческое закрытие от текущей проверенности дерева: `stage`, `status` (`current`/`stale`/`missing`/`unknown`), `stale_files`, `missing_files` и `checked_revision`. Для `phase: completed` при несовпадении добавляется `note`, что закрытие записано, а текущее дерево отличается от проверенного снимка. Это не отменяет блокировку закрытия на устаревшем снимке.
+- Если карточка объявляет `scope.write_files`, `diagnose` добавляет `write_scope` с тем же `preflight`, что `task workspace`: пересечение незакоммиченных путей с планируемыми файлами и разрешёнными модулями.
 - Полный ответ включает сведения о детях и блокировки. Каждый ребёнок содержит `ready`, `readiness` (`ready`/`blocked`/`completed`) и `blocked_by`. `subtasks_ready`, `subtasks_blocked` и `subtasks_completed` дают сводку. `--brief` сохраняет счётчики, показывает до трёх блокировок и возвращает `refs` к карточке и существующим артефактам последней по номеру стадии.
 - `flow_state` и `available_transitions` вычисляются из версионированного flow. Для flow без `schema_version: flow-1` эти поля пусты и задача продолжает работать по прежним правилам.
 
@@ -487,6 +490,26 @@ arch task advance <task_key> --event <event> --expected-revision N [--id ID] [--
 - Повтор того же `--id` с тем же событием и ревизией возвращает `duplicate: true` без второй записи. Другая ревизия даёт конфликт exit 5.
 - Успешная запись добавляет событие `flow.transitioned` в журнал, обновляет `state.json` и возвращает сводку `diagnose` с блоком `transition`.
 
+### 9.12c Команда task doctor
+
+```
+arch task doctor <task_key> [--json] [--brief]
+```
+
+- Только чтение. Объединяет `diagnose` и `workspace_info` в одну сводку: `phase`, `can_close`, `close_blockers`, `acceptance_plan_ready`, `evidence_freshness`, `incomplete_write`, `dependencies`, счётчики детей и `preflight`.
+- `--brief` не раскрывает полный список блокировок. Ошибки валидации карточки возвращаются в `workspace_errors`, не скрывая остальную диагностику.
+- Смысл оракула и одобрение команда не оценивает.
+
+### 9.12d Команда task baseline
+
+```
+arch task baseline <task_key> --file <path> [--file <path> ...] --run <command> <args>
+```
+
+- Записывает `stageN/baseline.json` с `task_key`, `stage_id`, `command`, целочисленным `exit_code`, `result` и хешами входов `files: [{path, sha256}]`. `<key>` принимает и ключ ребёнка.
+- Фиксирует pre-change состояние: входы хешируются до запуска и повторно после. Если файл изменился во время команды, результат отклоняется и `baseline.json` не создаётся.
+- Команда не заменяет `task evidence`: baseline не подтверждает AC и не блокирует закрытие. Она сохраняет исходный результат для сравнения и аудита.
+
 ### 9.13 Команда task close {#task-close}
 
 ```
@@ -505,6 +528,7 @@ arch task close <task_key> [--json] [--dry-run]
 - `fs_atomic.atomic_write_text` пишет временный файл в каталоге цели, вызывает `fsync` и заменяет цель через `os.replace`. При исключении временный файл удаляется. Завершение процесса до замены может оставить файл из зарезервированного пространства имён `.<имя-цели>.<суффикс>.tmp`.
 - `decompose`, фактический `close` и `subtask init` под одним родителем используют неблокирующий advisory `flock` каталога задачи. Занятый писатель даёт exit 5 до записи. Гарантия относится к этим операциям CLI на поддерживающей `flock` локальной POSIX ФС. Для восстановления проверяется прерывание процесса. Сохранность после отключения питания и координация прямого редактирования файлов находятся за этой границей.
 - Составная запись публикует `.arch-write-journal.json` со `schema_version: 1`, `kind: decompose`, `task_key` и упорядоченным пакетом `subtasks: [{id, title}]`. Родитель дополняется после детей, временные остатки убираются перед удалением журнала.
+- Повтор сверяется с журналом по ID, заголовку, зависимостям и форме ребёнка. Отсутствующий список зависимостей означает пустой список, а не любое значение. Повтор с добавленной зависимостью, оценкой или изменённым `flow` получает exit 5 до записи. Сверка с журналом выполняется раньше проверки формы и графа зависимостей, поэтому конфликт пакета всегда даёт exit 5.
 
 | Состояние | Поведение CLI |
 |---|---|
@@ -517,9 +541,9 @@ arch task close <task_key> [--json] [--dry-run]
 ### 9.15 Команда task subtask
 
 ```
-arch task subtask init <parent_key> <subtask_id> [--task-type TYPE] [--flow FLOW] [--complexity LEVEL] [--estimate-hours N]
-arch task subtask validate <parent_key> <subtask_id>
-arch task subtask status <parent_key> <subtask_id>
+arch task subtask init <parent_key> <subtask_id> [--task-type TYPE] [--flow FLOW] [--complexity LEVEL] [--estimate-hours N] [--json]
+arch task subtask validate <parent_key> <subtask_id> [--json]
+arch task subtask status <parent_key> <subtask_id> [--json]
 ```
 
 - init: создаёт subtask директорию с task.json. `--task-type` по умолчанию `subtask`, `--complexity` наследует сложность родителя, `--flow` и `--estimate-hours` необязательны; CLI проверяет выбранную форму по task-conf
@@ -552,13 +576,15 @@ arch task-key --source ui --next
 ```
 arch task new [--source ui] [--title T] [--json]
 arch task init <task_key> [--title T]
-arch task registry [init|add <key>] [--json]
+arch task registry [init|add <key>|check|sync] [--json]
 ```
 
 - `task new` под блокировкой каталога конфигурации читает JSON-реестр, выделяет следующий UI-ключ, создаёт каталог и `task.json`, затем атомарно добавляет запись в реестр. При ошибке записи созданный каталог удаляется.
 - `task init` делает то же для известного ключа: создаёт карточку и добавляет запись в реестр; повторная регистрация того же ключа идемпотентна.
 - Реестр `doc/config/task-registry.json` содержит `schema_version` и массив `tasks` с `task_key`, `task_number`, `source`, `title`, `created_at`. Дубли ключа или номера в семействе источника останавливают команду.
 - `task registry` без подкоманды выводит реестр; `task registry init` создаёт пустой реестр, если файла нет; `task registry add <key>` регистрирует существующую карточку (например, созданную до появления реестра). Чтение не требует блокировки.
+- `task registry check` читает верхнеуровневые каталоги задач и реестр без записи; возвращает `missing_in_registry`, `missing_on_disk`, `number_mismatch` и exit 1 при любом расхождении. Команда входит в локальный gate.
+- `task registry sync` под блокировкой добавляет записи для карточек, которых нет в реестре, беря title и номер из `task.json`. `--prune` удаляет записи без каталога. `number_mismatch` останавливает синхронизацию до исправления карточки.
 
 ### 9.18 Команда validate (архитектура)
 

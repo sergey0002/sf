@@ -1,0 +1,14 @@
+{
+  "schema_version":"draft-0.2","task_id":null,"task_key":"UI-0029-0002","task_number":"0002",
+  "source":{"type":"ui","native_id":null,"provenance":"UI-0029, AC-1 (ссылки), AC-2–AC-3, CASE-3–CASE-6","revision":null,"captured_at":"2026-11-22","attachments":[],"comments":[],"history":[]},
+  "title":"Компактный CLI и анализ влияния продуктовых флоу","kind":"feature",
+  "intent":"Через семейство docs предоставить точечное чтение, поиск, обратные связи, структурную проверку и анализ влияния без исполнения флоу.",
+  "scope":{"in":["Загрузчик, индекс, проекции, проверка ссылок, адаптация команд и тесты CLI"],"out":["Скиллы и политика закрытия, автоматическая семантическая классификация"],"allowed_files_modules":["doc/tools/arch/","doc/tools/tests/","doc/config/paths.yaml","doc/architecture/","doc/tests/"]},
+  "current_behavior":"docs context/impact не адресуют отдельные ветки продуктового флоу.",
+  "acceptance_criteria":["AC-1: CLI адресует ветку по ID, отдаёт только требуемую проекцию, разрешает ссылки, различает пустой результат, невалидную модель и неполную выдачу.","AC-2: При сравнении с базой возвращаются новые, изменённые, удалённые ветки, точные обратные связи и отдельные непокрытые пути; чтение ничего не пишет.","AC-3: Markdown и переносимый корень работают наряду с JSON; дубликаты и битые обязательные ссылки диагностируются без выбора наугад."],
+  "acceptance_policy":"case-coverage-v1","target_release":"unset","project_context_refs":["doc/architecture/system/addressable-contracts.md"],"constraints":["JSON по умолчанию только для новых входов; прежние flags, вывод и exit-коды сохранить"],"assumptions":[],"open_questions":[],"risk":"high",
+  "authority":{"allowed":["Изменения CLI и локальные фикстуры после поручения"],"forbidden":["Автозапуск операций из ссылок, внешний доступ"],"approval_required":["Начало реализации"]},"approvals":[],
+  "task_type":"subtask","flow":null,"complexity":"high","estimate_hours":16,"subtasks":[],"depends_on":["UI-0029-0001"],"phase":"intake",
+  "rollback_plan":"Вернуть прежние точки чтения и пересобрать только производный индекс; JSON оставить без изменения.",
+  "implementation_plan":["Подключить проверенную схему 0001, затем точное чтение, компактный поиск и diff с обратными связями"],"related_docs":["CAP-addressable-contracts","REG-cli-command-map"],"related_tests":[],"research_docs":[],"changed_files":{"added":[],"modified":[],"deleted":[]},"owner":"unset","priority":"unset","stage_history":[]
+}

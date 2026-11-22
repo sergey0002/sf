@@ -12,11 +12,14 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from .acceptance import CASE_COVERAGE, acceptance_state, snapshot_problems
+from .acceptance import (
+    CASE_COVERAGE, acceptance_state, read_plan_tier, snapshot_problems, snapshot_status,
+)
 from .cli.errors import EXIT_CONFLICT, EXIT_ERROR, EXIT_NOT_FOUND
 from .constants import TASK_KEY_RE, TASK_NUMBER_RE
 from .flows import (
@@ -310,6 +313,119 @@ def init_task(
     }
 
 
+def _git_changed_paths(root: Path) -> list[str] | None:
+    """Return project-relative paths reported by Git, or None outside a repo."""
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, check=False, timeout=10,
+        )
+        if top.returncode != 0:
+            return None
+        process = subprocess.run(
+            ["git", "-C", str(root), "-c", "core.quotePath=false",
+             "status", "--porcelain=v1", "--untracked-files=all"],
+            capture_output=True, text=True, check=False, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if process.returncode != 0:
+        return None
+    repository = Path(top.stdout.strip()).resolve()
+    project = root.resolve()
+    paths = set()
+    for line in process.stdout.splitlines():
+        if len(line) < 4:
+            continue
+        path = line[3:]
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        path = path.strip()
+        if not path:
+            continue
+        try:
+            relative = (repository / path).resolve().relative_to(project).as_posix()
+        except ValueError:
+            continue
+        paths.add(relative)
+    return sorted(paths)
+
+
+def _declared_paths(data: dict[str, Any]) -> list[str]:
+    """Collect paths the card claims to change, plus an optional planned write scope."""
+    paths = set()
+    changed = data.get("changed_files")
+    if isinstance(changed, dict):
+        for key in ("added", "modified", "deleted"):
+            values = changed.get(key)
+            if isinstance(values, list):
+                paths.update(value for value in values if isinstance(value, str))
+    scope = data.get("scope")
+    if isinstance(scope, dict):
+        planned = scope.get("write_files")
+        if isinstance(planned, list):
+            paths.update(value for value in planned if isinstance(value, str))
+    return sorted(paths)
+
+
+def _workspace_preflight(
+    project_config: ProjectConfig, data: dict[str, Any]
+) -> dict[str, Any]:
+    """Compare uncommitted changes with the task's declared and allowed paths."""
+    dirty = _git_changed_paths(project_config.root)
+    declared = _declared_paths(data)
+    scope = data.get("scope")
+    allowed = []
+    if isinstance(scope, dict) and isinstance(scope.get("allowed_files_modules"), list):
+        allowed = [value for value in scope["allowed_files_modules"] if isinstance(value, str)]
+    result: dict[str, Any] = {
+        "declared_files": declared,
+        "allowed_modules": allowed,
+    }
+    if dirty is None:
+        result.update(
+            status="unknown", dirty_files=[], intersections=[], module_overlaps=[],
+            foreign_changes=[], dirty_count=0,
+            recommendation="run git status manually; repository state is unavailable",
+        )
+        return result
+    declared_set = set(declared)
+    intersections = [path for path in dirty if path in declared_set]
+    module_overlaps = [
+        path for path in dirty
+        if any(path == module.rstrip("/") or path.startswith(module) for module in allowed)
+    ]
+    foreign = [path for path in dirty if path not in module_overlaps]
+    if not dirty:
+        status = "clean"
+        recommendation = "no uncommitted changes; start on this tree"
+    elif intersections:
+        status = "isolate"
+        recommendation = (
+            "another writer changed files declared by this task; use a worktree or a "
+            "stable snapshot before writing"
+        )
+    elif module_overlaps:
+        status = "review"
+        recommendation = (
+            "uncommitted changes exist in allowed modules; confirm they are not part "
+            "of this task before writing"
+        )
+    else:
+        status = "clean"
+        recommendation = "uncommitted changes are outside this task's allowed modules"
+    result.update(
+        status=status,
+        dirty_files=dirty,
+        dirty_count=len(dirty),
+        intersections=intersections,
+        module_overlaps=module_overlaps,
+        foreign_changes=foreign,
+        recommendation=recommendation,
+    )
+    return result
+
+
 def workspace_info(
     project_config: ProjectConfig, task_key: str, task_number: str, source_type: str
 ) -> tuple[dict[str, Any], list[str]]:
@@ -328,6 +444,7 @@ def workspace_info(
         "branch_hint": (
             f"futures/{task_number}" if source_type == "jira" else f"bugfix/{task_key}"
         ),
+        "preflight": _workspace_preflight(project_config, data),
         "note": "workspace preparation is deterministic; actual git checkout requires configured repository",
     }, []
 
@@ -654,14 +771,21 @@ def _journal_package_matches(recorded: Any, planned: list[dict[str, Any]]) -> bo
     """Accept an older journal that recorded only ids, titles and dependencies."""
     if not isinstance(recorded, list) or len(recorded) != len(planned):
         return False
-    keys = ("depends_on", "task_type", "flow", "complexity", "estimate_hours")
+    shape_keys = ("task_type", "flow", "complexity")
     for saved, current in zip(recorded, planned):
         if not isinstance(saved, dict):
             return False
         if saved.get("id") != current.get("id") or saved.get("title") != current.get("title"):
             return False
-        for key in keys:
-            if key in saved and saved.get(key) != current.get(key):
+        # Writers omit an empty dependency list; absence is not a wildcard.
+        if saved.get("depends_on", []) != current.get("depends_on", []):
+            return False
+        if saved.get("estimate_hours") != current.get("estimate_hours"):
+            return False
+        for key in shape_keys:
+            # Current journals always record task_type. Only legacy journals
+            # may lack shape metadata that did not exist when they were written.
+            if ("task_type" in saved or key in saved) and saved.get(key) != current.get(key):
                 return False
     return True
 
@@ -897,9 +1021,7 @@ def _decompose_locked(
             entry["task_type"] = "subtask"
             entry.setdefault("flow", None)
         entry.setdefault("complexity", default_complexity)
-    _validate_subtask_shapes(project_config, planned)
     declared_records = data.get("subtasks", [])
-    _validate_dependency_graph(declared_records, planned)
     journal_file = journal_path(tdir)
     try:
         journal = read_journal(tdir)
@@ -913,6 +1035,8 @@ def _decompose_locked(
             "CONFLICT", "incomplete decompose journal records a different package", field="subtask",
             exit_code=EXIT_CONFLICT, suggestion="rerun decompose with the recorded package",
         )
+    _validate_subtask_shapes(project_config, planned)
+    _validate_dependency_graph(declared_records, planned)
     if not planned:
         return {"ok": True, "task_key": task_key, "subtasks_created": []}
 
@@ -1122,6 +1246,44 @@ def closure_state(
     return children, subtask_errors, blockers, pending, plan_ready, dependencies
 
 
+def _evidence_freshness(
+    project_config: ProjectConfig, tdir: Path, data: dict[str, Any], stage: str
+) -> dict[str, Any] | None:
+    """Report whether the recorded stage snapshot still matches the current tree."""
+    artifact = tdir / stage / "verification.json"
+    if not artifact.is_file():
+        return None
+    try:
+        evidence = json.loads(artifact.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {
+            "stage": stage, "status": "unknown", "stale_files": [],
+            "missing_files": [], "problems": ["verification.json is unreadable"],
+        }
+    if not isinstance(evidence, dict):
+        return {
+            "stage": stage, "status": "unknown", "stale_files": [],
+            "missing_files": [], "problems": ["verification.json must be an object"],
+        }
+    entries = evidence.get("snapshot_files")
+    if not entries and data.get("acceptance_policy") != CASE_COVERAGE:
+        return None
+    state = snapshot_status(project_config.root, entries, tdir / stage / "plan.md")
+    result: dict[str, Any] = {
+        "stage": stage,
+        "status": state["status"],
+        "stale_files": state["stale_files"],
+        "missing_files": state["missing_files"],
+        "checked_revision": evidence.get("checked_revision"),
+    }
+    if data.get("phase") == "completed" and state["status"] != "current":
+        result["note"] = (
+            "historical closure is recorded; the current tree differs from the "
+            "verified snapshot"
+        )
+    return result
+
+
 def diagnose(
     project_config: ProjectConfig, task_key: str, task_number: str, source_type: str, brief: bool
 ) -> dict[str, Any]:
@@ -1157,6 +1319,17 @@ def diagnose(
         result["incomplete_write"] = pending
     if plan_ready is not None:
         result["acceptance_plan_ready"] = plan_ready
+        if current:
+            tier = read_plan_tier(tdir / current / "plan.md")
+            if tier is not None:
+                result["plan_tier"] = tier
+    if current:
+        freshness = _evidence_freshness(project_config, tdir, data, current)
+        if freshness is not None:
+            result["evidence_freshness"] = freshness
+    scope = data.get("scope")
+    if isinstance(scope, dict) and scope.get("write_files"):
+        result["write_scope"] = _workspace_preflight(project_config, data)
     flow = flow_diagnosis(project_config, data, state)
     result["flow_state"] = flow.get("state")
     result["available_transitions"] = flow.get("available_transitions", [])
@@ -1187,6 +1360,33 @@ def diagnose(
         )
     else:
         result["subtasks"] = subtasks
+    return result
+
+
+def doctor(
+    project_config: ProjectConfig, task_key: str, task_number: str, source_type: str, brief: bool
+) -> dict[str, Any]:
+    """Return one read-only summary of closure, evidence and workspace risks."""
+    diagnosis = diagnose(project_config, task_key, task_number, source_type, brief)
+    workspace, workspace_errors = workspace_info(
+        project_config, task_key, task_number, source_type
+    )
+    result: dict[str, Any] = {
+        "task_key": task_key,
+        "phase": diagnosis.get("phase"),
+        "can_close": diagnosis.get("can_close"),
+        "close_blockers": diagnosis.get("close_blockers", []),
+        "blocker_count": diagnosis.get("blocker_count", len(diagnosis.get("close_blockers", []))),
+        "acceptance_plan_ready": diagnosis.get("acceptance_plan_ready"),
+        "evidence_freshness": diagnosis.get("evidence_freshness"),
+        "incomplete_write": diagnosis.get("incomplete_write"),
+        "dependencies": diagnosis.get("dependencies", []),
+        "subtasks_blocked": diagnosis.get("subtasks_blocked"),
+        "subtasks_completed": diagnosis.get("subtasks_completed"),
+        "preflight": workspace.get("preflight", {"status": "unknown"}),
+    }
+    if workspace_errors:
+        result["workspace_errors"] = workspace_errors
     return result
 
 

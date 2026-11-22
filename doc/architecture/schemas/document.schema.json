@@ -9,7 +9,7 @@
     "type": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
     "title": {"type": "string", "minLength": 1},
     "summary": {"type": "string", "minLength": 1},
-    "status": {"type": "string", "enum": ["draft", "proposed", "accepted", "deprecated", "superseded"]},
+    "status": {"type": "string", "enum": ["draft", "current", "accepted", "deprecated", "superseded"]},
     "domain": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
     "related": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9_-]*$"}},
     "source_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},

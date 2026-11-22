@@ -95,6 +95,38 @@ case "${1:-}" in
         printf 'OK: architecture, index, paths, registry, unit tests, acceptance tests, UI-0001\n'
         exit 0
         ;;
+    --only)
+        pattern="${2:-}"
+        if [[ -z "$pattern" ]]; then
+            printf 'Usage: bash doc/tests/run.sh --only <unittest -k pattern>\n' >&2
+            exit 2
+        fi
+        status=0
+        unit=$(python3 -m unittest discover -s doc/tools/tests -q -k "$pattern" 2>&1) || status=$?
+        if [[ $status -ne 0 && "$unit" != *"Ran 0 tests"* ]]; then
+            printf 'ERROR targeted unit tests (exit %s)\n%s\n' "$status" "$unit" >&2
+            exit "$status"
+        fi
+        status=0
+        acceptance=$(python3 -m unittest discover -s doc/tests -p 'test_*.py' -q -k "$pattern" 2>&1) || status=$?
+        if [[ $status -ne 0 && "$acceptance" != *"Ran 0 tests"* ]]; then
+            printf 'ERROR targeted acceptance tests (exit %s)\n%s\n' "$status" "$acceptance" >&2
+            exit "$status"
+        fi
+        if [[ "$unit" == *"Ran 0 tests"* && "$acceptance" == *"Ran 0 tests"* ]]; then
+            printf 'ERROR --only: no tests matched %s\n' "$pattern" >&2
+            exit 1
+        fi
+        if [[ "$unit" == *"Ran 0 tests"* ]]; then
+            unit='Ran 0 tests (unit suite has no match)'
+        fi
+        if [[ "$acceptance" == *"Ran 0 tests"* ]]; then
+            acceptance='Ran 0 tests (acceptance suite has no match)'
+        fi
+        printf '%s\n%s\n' "$unit" "$acceptance"
+        printf 'OK: targeted tests matching %s\n' "$pattern"
+        exit 0
+        ;;
     --index-only)
         check_read_only
         run_check "reproducible index" check_index_reproducible
@@ -121,7 +153,7 @@ case "${1:-}" in
         ;;
     "") ;;
     *)
-        printf 'Usage: bash doc/tests/run.sh [--brief|--index-only|--gate|--in-copy [mode]]\n' >&2
+        printf 'Usage: bash doc/tests/run.sh [--brief|--only PATTERN|--index-only|--gate|--in-copy [mode]]\n' >&2
         exit 2
         ;;
 esac

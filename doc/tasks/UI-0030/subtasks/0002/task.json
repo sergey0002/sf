@@ -1,0 +1,94 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0030-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0030, AC-3–AC-4: миграция корпуса и инструкции агента",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Совместимая миграция и инструкции постановки",
+  "kind": "bugfix",
+  "intent": "Перевести три существующие дочерние карточки на предметные типы без потери данных и убрать совет создавать безликие подзадачи.",
+  "scope": {
+    "in": [
+      "Четыре task.json UI-0029, скиллы постановки и архитектурный контракт, проверка корпуса"
+    ],
+    "out": [
+      "Правки остальных карточек и плана UI-0029, публикация"
+    ],
+    "allowed_files_modules": [
+      "doc/tasks/UI-0029/",
+      "doc/skills/",
+      "doc/architecture/",
+      "doc/tests/"
+    ]
+  },
+  "current_behavior": "У детей UI-0029 сохранён subtask без flow; пример create-task предлагает тот же тип.",
+  "evidence": [
+    "doc/tasks/UI-0029/task.json",
+    "doc/skills/create-task/SKILL.md"
+  ],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    "AC-1: Ровно три дочерние карточки и их зеркала у родителя переведены по таблице плана; прочие поля и дерево сохранены, новых ошибок в корпусе нет.",
+    "AC-2: Применимые инструкции согласованы с CLI и различают создание, чтение legacy и восстановление; выбор типа следует результату, а не источнику или типу родителя."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не переписывать маршрутизацию tier'ов и не дублировать таблицу tier'ов"
+  ],
+  "assumptions": [
+    "Раздел plan-task о tier'ах, шаблонах и plan-policy принадлежит UI-0032-0003; здесь меняется только выбор типа ребёнка и связанные примеры"
+  ],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "bugfix",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": [
+    "UI-0030-0001"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Вернуть четыре карточки и инструкции вместе из контрольного снимка, не изменяя чужих правок.",
+  "implementation_plan": [
+    "Снять baseline; применить таблицу миграции; сверить корпус и проверить примеры скиллов в изолированном корне."
+  ],
+  "related_docs": [
+    "FLOW-create-task",
+    "FLOW-cli-subtask-lifecycle",
+    "ENT-task-record"
+  ],
+  "related_tests": [
+    {
+      "test_id": "task-identity",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

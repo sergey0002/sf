@@ -1,0 +1,271 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032",
+  "task_number": "0032",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Чат, 2026-11-22: шаблоны планов и критерии приёмки заданы глобально в plan-task и захардкожены в acceptance.py, хотя типы research, audit и planning требуют своих разделов и оракулов. Вынести политику плана на уровень конфигурации типа, дать каждому типу свои шаблоны и правила приёмки и решить, какие типы добавить. Исследование: doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md.",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Политика планов и правил приёмки по типам задач",
+  "kind": "feature",
+  "intent": "Агент и CLI получают обязательные разделы плана, лимиты, путь к шаблону и проверяемые правила приёмки из конфигурации выбранного типа задачи; глобальные дефолты задают совместимое поведение, а таксономия типов расширяется только при наличии отдельного оракула.",
+  "scope": {
+    "in": [
+      "Глобальные дефолты политики плана и каталог правил приёмки в doc/config/task-conf/plan-defaults.yaml",
+      "Единая JSON Schema формы task-conf в doc/architecture/schemas/task-conf.schema.json, покрывающая дефолты, блок plan/acceptance и ссылки на правила",
+      "Блок plan и acceptance для всех десяти имеющихся типов: audit, bugfix, docs, feature, jira-incoming, planning, refactor, research, scaffold, subtask",
+      "Шаблоны types/<type>/plan/<tier>.md для каждого tier из complexity_allowed: 27 файлов, включая профильные разделы research, audit, planning, bugfix, refactor, docs, intake и scaffold",
+      "Декларативные правила приёмки из каталога (section_present, section_min_items, link_min, table_column, case_min, command) и их проверка общим оценщиком",
+      "Разрешение политики по цепочке type → defaults с семантикой слияния (скаляры переопределяются, списки заменяются целиком) и режимом plan_policy: inherit|replace",
+      "Перенос PLAN_TIERS, TIER_COMPLEXITY, TIER_SECTIONS и MICRO_MAX_LINES из doc/tools/arch/acceptance.py в конфиг-driven резолвер; acceptance_state и plan_tier_problems работают по разрешённой политике",
+      "Новая read-only команда arch task plan-policy --type <type> --json и отражение источника политики в diagnose",
+      "Проверки task-conf: схема, существование шаблона, покрытие complexity_allowed tier'ами, уникальность tier'ов, положительный лимит, известность ссылок на правила, каталог без config.yaml, конфиг без id, несовпадение id и каталога, сверка обнаруженных типов с paths.yaml project.task_types",
+      "Декларации новых путей в doc/config/paths.yaml и перевод doc/skills/plan-task/SKILL.md в маршрутизатор по политике",
+      "Таксономия: предложение новых типов с критерием отдельного оракула, фаза 1 (spike, migration, incident) с конфигами, промптами, flow и шаблонами, фаза 2 — только решение, отклонённые кандидаты — с причиной",
+      "Синхронизация ENT-verification-evidence, SPEC-cli-implementation, REG-cli-validation-rules, REG-cli-command-map и VIEW-cli-package",
+      "Детерминированные тесты политики, правил приёмки, обнаружения типов, новых типов, отказов и обратной совместимости"
+    ],
+    "out": [
+      "Переименование tier'ов micro|standard|full и изменение маркера <!-- plan-tier: ... -->",
+      "Переопределение политики плана на уровне flow: политика объявляется только типом и дефолтами",
+      "Реализация типов фазы 2 (release, security, decision): только решение и обоснование",
+      "Кандидаты, которые не становятся типами: chore, test, experiment, epic, retrospective, impediment",
+      "Корпусный скан ссылок на удалённый или переименованный тип: он принадлежит UI-0030 AC-5",
+      "Новые ключи children_policy и parent_policy: их добавляет UI-0030 в ту же схему task-conf",
+      "Переклассификация или переоткрытие существующих задач и переписывание их планов",
+      "Изменение формата verification.json, acceptance_policy case-coverage-v1 и правил evidence",
+      "Запись во внешний трекер, merge, push и deploy"
+    ],
+    "allowed_files_modules": [
+      "doc/config/task-conf/",
+      "doc/config/paths.yaml",
+      "doc/architecture/schemas/",
+      "doc/architecture/system/",
+      "doc/architecture/domains/task-lifecycle/",
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/skills/plan-task/",
+      "doc/tasks/UI-0032/"
+    ]
+  },
+  "current_behavior": "Правила tier'ов плана заданы глобально и захардкожены: PLAN_TIERS, TIER_COMPLEXITY, TIER_SECTIONS и MICRO_MAX_LINES в doc/tools/arch/acceptance.py. Тип задачи влияет только на required_fields, allowed_flows, complexity и политики детей, поэтому все десять типов проверяются по одинаковым разделам плана и не могут объявить свои правила приёмки. Нормативная таблица tier'ов существует только в doc/skills/plan-task/SKILL.md. Загрузчик типов молча пропускает каталог без config.yaml и конфиг без id, а paths.yaml project.task_types не сверяется с обнаруженными каталогами.",
+  "evidence": [
+    "doc/tools/arch/acceptance.py:15-27 — PLAN_TIERS, TIER_COMPLEXITY, TIER_SECTIONS, MICRO_MAX_LINES заданы в коде",
+    "doc/tools/arch/acceptance.py:39-81 — plan_tier_problems проверяет маркер, complexity, разделы и лимит по константам",
+    "doc/tools/arch/acceptance.py:196 — acceptance_state вызывает plan_tier_problems без конфигурации типа",
+    "doc/tools/arch/task_ops.py:1323-1325 — diagnose отдаёт plan_tier из маркера без источника политики",
+    "doc/skills/plan-task/SKILL.md:21-50 — таблица tier'ов и правило одного шаблона заданы только в скилле",
+    "doc/config/task-conf/types/research/config.yaml:15-17 — тип объявляет open_questions и evidence, но не политику плана",
+    "doc/config/task-conf/types/scaffold/config.yaml:6-9 — только low, значит нужен один шаблон micro",
+    "doc/config/task-conf/types/research/config.yaml:6-9 — low и medium, значит micro и standard без full",
+    "doc/tools/arch/validation.py:439-490 — загрузчик task-conf молча пропускает каталоги без config.yaml и конфиги без id",
+    "doc/tools/arch/validation.py:251,297 — допустимый task_type берётся из paths.yaml project.task_types, а не из обнаруженных каталогов",
+    "doc/tools/arch/flows.py:72-95 — уже есть проверка YAML общей JSON Schema из config.schemas_root",
+    "doc/tools/arch/cli/commands/builtin.py:538-600 — scan --scope task-conf проверяет flow и промпты, но не сверяет типы с paths.yaml",
+    "doc/config/paths.yaml:107-113,120-136,242-252 — перечень разрешённых путей task-conf, задач и список task_types",
+    "doc/architecture/system/cli-package.md:75 — конфиг-driven валидация без хардкода объявлена принципом пакета",
+    "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md:48 — контракт tier'ов описан без источника конфигурации",
+    "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md — матрица разделов, каталог правил и предложение по типам"
+  ],
+  "contracts_and_invariants": [
+    "ARCH-contract: иерархическая task-conf — единственный источник правил типа задачи, CLI не дублирует их в коде",
+    "ENT-verification-evidence: tier проверяется структурно; маркер обязателен при estimate_hours; неизвестный или несовместимый tier даёт acceptance_plan_ready: false",
+    "VIEW-cli-package: все enum'ы, обязательные поля, allowed_flows и complexity читаются из YAML",
+    "REG-cli-validation-rules: обязательные поля = базовые из paths.yaml + типовые из task-conf",
+    "REG-cli-command-map: публичные read-only команды не пишут состояние; diagnose показывает машинные блокировки",
+    "Инвариант совместимости: карточка без блока plan и без estimate_hours сохраняет текущее поведение и acceptance_plan_ready",
+    "Инвариант слияния: списки политики заменяются целиком, а не конкатенируются; порядок разрешения type → defaults фиксирован",
+    "Инвариант единственного источника: политика плана объявляется на уровне типа; flow её не переопределяет, как и политики иерархии по UI-0030",
+    "Инвариант evidence: политика плана не входит в SHA-256 снимка и не инвалидирует уже записанные доказательства",
+    "Инвариант схемы: task-conf.schema.json — единая форма конфигов типов; UI-0030 добавляет в неё children_policy и parent_policy, не создавая второй схемы",
+    "Инвариант правил: правило приёмки либо проверяется структурно общим оценщиком, либо явно помечено как смысловое и остаётся за агентом",
+    "Инвариант таксономии: новый тип добавляется только при отдельном оракуле и отдельном наборе обязательных разделов; иначе это профиль существующего типа",
+    "Инвариант legacy: subtask остаётся читаемым для старых записей, но не становится выбираемым типом постановки (UI-0030)"
+  ],
+  "acceptance_criteria": [
+    "AC-1: plan-defaults.yaml валиден по task-conf.schema.json и воспроизводит текущие три tier'а: то же соответствие complexity, те же обязательные разделы и лимит micro 60 непустых строк. Карточки без блока plan проверяются ровно как до изменения.",
+    "AC-2: Все десять имеющихся типов имеют блок plan и acceptance, валидный по схеме: feature, bugfix, refactor, docs, research, audit, planning, jira-incoming, scaffold, subtask. Разрешённые политики research, audit, planning, bugfix и refactor отличаются от дефолта по разделам и правилам, scaffold ограничен micro, subtask помечен как legacy и не становится выбираемым типом постановки.",
+    "AC-3: Для каждого типа и каждого tier из его complexity_allowed существует непустой шаблон types/<type>/plan/<tier>.md — 27 файлов, включая один для scaffold и два для research; заголовки шаблона покрывают required_sections его политики.",
+    "AC-4: arch task plan-policy --type <type> --json для каждого из десяти типов возвращает разрешённую политику (tier'ы, разделы, лимиты, пути шаблонов, acceptance и правила) с exit 0 и не изменяет дерево; неизвестный тип даёт ненулевой код с перечнем доступных значений.",
+    "AC-5: Каталог правил приёмки декларативен, а общий оценщик проверяет section_present, section_min_items, link_min, table_column, case_min и command по разрешённой политике. Нарушение называет файл, раздел и правило; смысловые оракулы остаются за агентом. Для research отсутствие трёх источников или двух вариантов, для bugfix отсутствие раздела воспроизведения, для audit отсутствие колонки Severity дают acceptance_plan_ready: false.",
+    "AC-6: acceptance_state и plan_tier_problems используют разрешённую политику: типовые разделы, лимит micro из политики и несовместимый tier блокируют, совместимый план проходит; неизвестное правило приёмки в конфиге обнаруживается валидацией, а не игнорируется.",
+    "AC-7: scan --scope task-conf и validate --brief сообщают о невалидной схеме, отсутствующем файле шаблона, complexity без покрывающего tier'а, дубле tier'ов, неположительном лимите строк, неизвестной ссылке на правило, каталоге типа без config.yaml, конфиге без id, несовпадении id и имени каталога, а также о любом расхождении между обнаруженными типами и paths.yaml project.task_types в обе стороны; на текущем дереве проходят.",
+    "AC-8: doc/config/paths.yaml объявляет plan-defaults.yaml, task-conf.schema.json, шаблоны types/<type>/plan/<tier>.md и файлы новых типов; каждый объявленный шаблон существует и содержит разделы своего tier'а; docs paths --check проходит и не помечает новые файлы мусором.",
+    "AC-9: doc/skills/plan-task/SKILL.md и связанные архитектурные записи описывают политику уровня типа, каталог правил приёмки и получение шаблона из политики; глобальная таблица больше не единственный источник; существующие планы и доказательства остаются валидными без переписывания.",
+    "AC-10: Таксономия зафиксирована в исследовании и карточке: фаза 1 (spike, migration, incident) реализована с config.yaml, prompt.md, flow с prompt.md, шаблонами по tier и записями в paths.yaml; фаза 2 (release, security, decision) имеет обоснованное решение без реализации; отклонённые кандидаты (chore, test, experiment, epic, retrospective, impediment) перечислены с причиной. Каждый новый тип проходит те же проверки схемы, шаблонов, правил и plan-policy.",
+    "AC-11: Итоговый гейт validate --brief, index check, docs paths --check и bash doc/tests/run.sh --brief проходит; существующие задачи без блока plan сохраняют acceptance_plan_ready и evidence_freshness, а политика не участвует в хешах снимка."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Сохранить имена tier'ов, маркер <!-- plan-tier: ... --> и смысл micro|standard|full",
+    "Шаблоны остаются Markdown-файлами, а не inline-текстом в YAML",
+    "CLI остаётся read-only для plan-policy и не пишет состояние при разрешении политики",
+    "Не дублировать корпусный скан ссылок на удалённый тип — его реализует UI-0030 AC-5; здесь только локальная согласованность task-conf и paths.yaml",
+    "Не создавать второй схемы конфигов типов: task-conf.schema.json расширяет UI-0030",
+    "Не реализовывать типы фазы 2 и отклонённых кандидатов без нового решения владельца",
+    "Правки paths.yaml накладывать поверх незакоммиченных изменений UI-0031, не откатывая их",
+    "Не трогать несвязанные незакоммиченные правки в рабочем дереве",
+    "Политика не входит в SHA-256 снимка и не инвалидирует записанные доказательства",
+    "Ручной контроль: итоговый diff и приёмку проверяет владелец; агент не закрывает задачу самостоятельно"
+  ],
+  "assumptions": [
+    "Матрица разделов и правил выбрана по исследованию doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md на основе энциклопедий data и внешних практик",
+    "Политика плана объявляется только типом и дефолтами: правило единственного источника из UI-0030 распространяется и на неё",
+    "jsonschema уже доступен как зависимость, отдельная установка не требуется",
+    "Дети используют типы refactor, docs и research: feature требует собственных детей и не подходит для листа работы",
+    "UI-0030 добавляет children_policy и parent_policy в ту же схему task-conf и владеет корпусным сканом ссылок на удалённые типы; UI-0032 владеет блоком plan/acceptance, каталогом правил и локальной сверкой task-conf с paths.yaml",
+    "UI-0030-0002 правит plan-task ради выбора типа ребёнка, а UI-0032-0003 — ради маршрутизации tier'ов и правил; разделы не пересекаются и применяются последовательно",
+    "Фаза 1 новых типов реализуется в этой задаче; фаза 2 остаётся решением и требует отдельного поручения",
+    "Оценка родителя 80 ч покрывает сумму детей 72 ч и интеграционную проверку 8 ч"
+  ],
+  "open_questions": [
+    "Порог case_min для feature при изменении контракта или хранения: 2 (принято в матрице) или 3.",
+    "Нужен ли отдельный ключ selectable у типа или достаточно правила UI-0030; в матрице принят selectable для subtask."
+  ],
+  "risk": "high",
+  "authority": {
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Переименование tier'ов, переклассификация существующих задач, реализация типов фазы 2 и отклонённых кандидатов, запись во внешний трекер, merge, push и deploy без отдельного разрешения"
+    ],
+    "approval_required": [
+      "Начало реализации",
+      "Добавление новых типов фазы 1",
+      "Ручная проверка и приёмка итогового diff владельцем перед закрытием"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "high",
+  "estimate_hours": 80,
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Схема, дефолты, правила и шаблоны всех типов",
+      "status": "open",
+      "path": "subtasks/0001/task.json",
+      "task_type": "refactor",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 24
+    },
+    {
+      "id": "0002",
+      "title": "Резолвер политики и оценщик правил",
+      "status": "open",
+      "path": "subtasks/0002/task.json",
+      "depends_on": [
+        "0001"
+      ],
+      "task_type": "refactor",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 16
+    },
+    {
+      "id": "0003",
+      "title": "Скилл, каталог правил и архитектурные записи",
+      "status": "open",
+      "path": "subtasks/0003/task.json",
+      "depends_on": [
+        "0002"
+      ],
+      "task_type": "docs",
+      "flow": "docs-only",
+      "complexity": "medium",
+      "estimate_hours": 8
+    },
+    {
+      "id": "0004",
+      "title": "Совместимость, отказы и итоговый гейт",
+      "status": "open",
+      "path": "subtasks/0004/task.json",
+      "depends_on": [
+        "0001",
+        "0002",
+        "0003",
+        "0005"
+      ],
+      "task_type": "refactor",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 8
+    },
+    {
+      "id": "0005",
+      "title": "Таксономия типов: фаза 1 и решение по фазе 2",
+      "status": "open",
+      "path": "subtasks/0005/task.json",
+      "depends_on": [
+        "0001",
+        "0002"
+      ],
+      "task_type": "research",
+      "flow": "research-first",
+      "complexity": "medium",
+      "estimate_hours": 16
+    }
+  ],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Вернуть acceptance.py, validation.py, paths.yaml, схемы, конфиги типов, шаблоны, скилл и архитектурные записи к сохранённому снимку, удалить plan-defaults.yaml, шаблоны и файлы новых типов, пересобрать индекс. Существующие карточки, журналы и доказательства не откатывать; незакоммиченные правки UI-0031 в paths.yaml сохранить.",
+  "implementation_plan": [
+    "0001: единая схема task-conf, дефолты и каталог правил, конфиги и шаблоны для всех десяти типов, пути, проверки целостности",
+    "0002: резолвер type → defaults, оценщик правил приёмки, команда plan-policy, интеграция в acceptance_state и diagnose",
+    "0003: маршрутизация скилла plan-task, каталог правил в архитектуре и синхронизация записей",
+    "0004: обратная совместимость на корпусе, отказы и итоговый гейт",
+    "0005: таксономия, фаза 1 новых типов и решение по фазе 2"
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "ENT-verification-evidence",
+    "SPEC-cli-implementation",
+    "REG-cli-validation-rules",
+    "VIEW-cli-package",
+    "REG-cli-command-map",
+    "FLOW-task-lifecycle"
+  ],
+  "related_tests": [
+    {
+      "test_id": "plan-policy",
+      "location": "doc/tests/test_plan_policy.py",
+      "command": "python3 -m unittest doc.tests.test_plan_policy -q"
+    },
+    {
+      "test_id": "factory-brief",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [
+    {
+      "id": "RES-plan-policy-taxonomy",
+      "title": "Политика планов и таксономия типов задач",
+      "path": "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+      "source_type": "internal",
+      "source_ref": "data/sdd-research, data/sdd-encyclopedia, data/machinedocs-encyclopedia, внешние практики",
+      "summary": "Матрица разделов и правил приёмки для десяти типов, каталог проверяемых правил и предложение по новым типам в две фазы.",
+      "status": "hypothesis"
+    }
+  ],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

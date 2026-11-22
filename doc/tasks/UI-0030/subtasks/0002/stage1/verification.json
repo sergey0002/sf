@@ -1,0 +1,7 @@
+{
+  "task_key":"UI-0030-0002", "stage_id":"stage1", "status":"not_run", "checked_revision":null, "checks":[],
+  "planned_checks":[
+    {"id":"CASE-1","covers":["AC-1"],"expected":"Миграция изменила только классификацию и не дала новых ошибок."},
+    {"id":"CASE-2","covers":["AC-2"],"expected":"Инструкции и CLI согласованы на исполнимом примере."}
+  ]
+}

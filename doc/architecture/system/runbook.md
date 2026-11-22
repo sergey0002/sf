@@ -133,6 +133,24 @@ python doc/tools/arch/__main__.py task validate <task_key>
    python doc/tools/arch/__main__.py task close <key>
    ```
 
+### 2.5a Снимок evidence устарел
+
+**Симптомы:** `arch task diagnose <key>` или `arch task doctor <key>` показывает `evidence_freshness.status: stale`; `arch task evidence <key> --check` возвращает exit 1 и список `stale_files`.
+
+**Восстановление:**
+1. Проверьте `stale_files`: изменились ли план, контракты, реализация или тесты после проверки.
+2. Если изменение относится к задаче, повторите затронутые целевые сценарии на стабильном снимке и запишите новый результат через `arch task evidence`.
+3. Если задача уже `completed`, не переписывайте историческую запись: новый результат относится к текущему дереву. Для нового закрытия нужен согласованный снимок и повторная верификация.
+
+### 2.5b Грязное дерево пересекается с задачей
+
+**Симптомы:** `arch task workspace <key> --json` показывает `preflight.status: isolate` или `review`.
+
+**Восстановление:**
+1. При `isolate` другой писатель изменил объявленный файл. Используйте отдельный worktree или согласованный стабильный снимок.
+2. При `review` подтвердите, что незакоммиченные файлы в разрешённых модулях не относятся к задаче. Если относятся, включите их в базу или согласуйте границу.
+3. Не начинайте массовые правки на общем дереве, пока пересечение не объяснено.
+
 ### 2.6 task-conf тип не найден
 
 **Симптомы:** `arch task flows --type <unknown>` → `ERROR: task type '<unknown>' not found in task-conf`
@@ -325,11 +343,12 @@ done
 ### 5.5 Проверить реестр номеров
 
 ```bash
+python doc/tools/arch/__main__.py task registry check
 python doc/tools/arch/__main__.py task registry --json
 python doc/tools/arch/__main__.py task-key --source ui --next
 ```
 
-**Ожидаемый результат:** реестр читается, `count` совпадает с числом созданных UI-карточек, `--next` выдаёт свободный ключ. Расхождение исправляется `task registry add <key>`, а не ручной правкой JSON.
+**Ожидаемый результат:** `task registry check` сообщает совпадение с каталогами, `count` соответствует числу карточек, `--next` выдаёт свободный ключ. При расхождении выполните `task registry sync` (добавит пропущенные карточки) или `task registry sync --prune` (удалит записи без каталога), а не правьте JSON вручную.
 
 ### 5.6 Проверить все subtasks
 

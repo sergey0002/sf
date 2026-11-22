@@ -1,0 +1,12 @@
+{
+  "task_key": "UI-0032-0003",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-1", "covers": ["AC-1"], "expected": "Скилл маршрутизирует через plan-policy, применяет правила приёмки и открывает один шаблон; глобальная таблица помечена как дефолт."},
+    {"id": "CASE-2", "covers": ["AC-2"], "expected": "Пять записей описывают дефолты, схему, блок plan, разрешение type → defaults, слияние, режим, каталог правил, команду и проверки."},
+    {"id": "CASE-3", "covers": ["AC-3"], "expected": "validate, index check и docs paths --check проходят; UI-0031 остаётся готовым."}
+  ]
+}

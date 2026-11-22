@@ -1,0 +1,15 @@
+{
+  "schema_version":"draft-0.2","task_id":null,"task_key":"UI-0029-0001","task_number":"0001",
+  "source":{"type":"ui","native_id":null,"provenance":"UI-0029, AC-1, CASE-1–CASE-2","revision":null,"captured_at":"2026-11-22","attachments":[],"comments":[],"history":[]},
+  "title":"JSON-контракт продуктовых флоу и пилотная модель","kind":"docs",
+  "intent":"Определить схему и создать независимую многомодульную фикстуру, по которой можно проверять продуктовые ветки и их связи, не используя task-conf как источник продуктовой логики.",
+  "scope":{"in":["Схема, описания формата, классификация существующих FLOW-* и локальная фикстура продукта"],"out":["Поиск CLI, гейт закрытия, массовая конвертация"],"allowed_files_modules":["doc/architecture/","doc/config/paths.yaml","doc/tests/"]},
+  "current_behavior":"Индексация опирается на Markdown-архитектуру; выделенной JSON-схемы веток продукта нет.",
+  "acceptance_criteria":["AC-1: Схема и проверенная модель заказа содержат ветки отмены, отказа и повтора, межмодульную связь, typed refs и применимость; инструкции и task-conf не становятся продуктовой логикой.","AC-2: Схема отклоняет синтаксически корректный JSON без обязательного исхода; список переноса отделяет продуктовые записи от процедур фабрики и запрещает держать две активные редакции одного флоу."],
+  "acceptance_policy":"case-coverage-v1","target_release":"unset","project_context_refs":["doc/architecture/system/addressable-contracts.md","doc/architecture/system/architecture-contract.md"],
+  "constraints":["Объявить путь схемы и пилота; fixture не зависит от реализации указателя влияния"],"assumptions":[],"open_questions":[],"risk":"medium",
+  "authority":{"allowed":["Схема, документация и тестовая фикстура после поручения"],"forbidden":["Миграция task-conf, внешняя работа"],"approval_required":["Начало реализации"]},"approvals":[],
+  "task_type":"subtask","flow":null,"complexity":"medium","estimate_hours":8,"subtasks":[],"depends_on":[],"phase":"intake",
+  "rollback_plan":"Отключить регистрацию новой схемы, сохранив исходный Markdown и материалы пилота.",
+  "implementation_plan":["Утвердить минимальную модель продукта, эталон исходов и категории переноса"],"related_docs":["ARCH-contract","CAP-addressable-contracts"],"related_tests":[],"research_docs":[],"changed_files":{"added":[],"modified":[],"deleted":[]},"owner":"unset","priority":"unset","stage_history":[]
+}

@@ -1,0 +1,157 @@
+{
+  "task_key": "UI-0031",
+  "stage_id": "stage1",
+  "status": "passed",
+  "checked_revision": "sha256:0cbe525bfb18a9b9faa6814254ff33d0f3d2f4c758b4027e1dc72f7c78175724",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k repository",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k repository -k missing_contract_row",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k repository",
+      "exit_code": 0,
+      "cases": [
+        "CASE-3"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k repository -k invalid_body_schema",
+      "exit_code": 0,
+      "cases": [
+        "CASE-4"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k missing_body_schema",
+      "exit_code": 0,
+      "cases": [
+        "CASE-5"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k undeclared -k duplicate -k invalid_body_schema",
+      "exit_code": 0,
+      "cases": [
+        "CASE-6"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_type_registry -q -k status_enum",
+      "exit_code": 0,
+      "cases": [
+        "CASE-7"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --brief",
+      "exit_code": 0,
+      "cases": [
+        "CASE-8"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Множества типов в index.json и paths.yaml равны, дублей нет; docs paths --check exit 0."
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "expected": "Набор типов контракта совпадает с paths.yaml, у каждого типа есть строка формата и условие применения."
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Каждый неиспользуемый тип помечен зарезервированным с условием создания."
+    },
+    {
+      "id": "CASE-4",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Все body-схемы парсятся, glossary.json валиден, типы без схемы явно перечислены как prose-only."
+    },
+    {
+      "id": "CASE-5",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Тест падает при используемом типе без body-схемы и без записи prose-only."
+    },
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "run.sh --brief падает на необъявленном типе, дубле и невалидной схеме; эталон проходит."
+    },
+    {
+      "id": "CASE-7",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "Недопустимый статус отвергается, draft/accepted валидны, enum совпадает в трёх источниках."
+    },
+    {
+      "id": "CASE-8",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "validate, index check, docs paths --check и run.sh --brief зелёные; смысловые разделы не изменены."
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/schemas/bodies/glossary.json",
+      "sha256": "b67e1eff82c1ebb1425959549d2e588c7d742c20de1fb7070f4f6738b5a7c70d"
+    },
+    {
+      "path": "doc/architecture/schemas/document.schema.json",
+      "sha256": "aa167d695112ca3d66c26edd0a61da211563655de9778256e2c96f1f20263556"
+    },
+    {
+      "path": "doc/architecture/system/architecture-contract.md",
+      "sha256": "b940b73ccbdf0688803a84ae8af0b2eb0059f88f3ec7fad1e16008536d5faea0"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "eb9f443866ebf2e26a2d5b8b6eb722b5cdf9bce4686584da3b53afbc9e3381a2"
+    },
+    {
+      "path": "doc/tasks/UI-0031/stage1/plan.md",
+      "sha256": "4eecf25e095fa929b03304424a148a1065e6e6708912ace4af93ece3d687fbcc"
+    },
+    {
+      "path": "doc/tests/test_doc_type_registry.py",
+      "sha256": "c499865e6fb50f76bf8847dbb43da3ec82af602d741fe43085e750da94b8cb1c"
+    }
+  ]
+}

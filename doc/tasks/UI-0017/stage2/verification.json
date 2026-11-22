@@ -3,9 +3,16 @@
   "task_key": "UI-0017",
   "task_number": "0017",
   "stage_id": "stage2",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:41d7e48447bd7902c2f0e1bba20578508490e950a6ab26ee2a2ab25bdab5663f",
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py -q",
+      "exit_code": 0,
+      "cases": [],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
       "covers": [
@@ -18,6 +25,60 @@
         "AC-2"
       ],
       "expected": "AC-2: явные причины отказа, неизменное состояние и согласованная запись при закрытии."
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/schemas/flow-selection.schema.json",
+      "sha256": "3bdd3ac06dc4fa98f6bd3c14d223afb425d611346dbd49c86a39ea27656b6465"
+    },
+    {
+      "path": "doc/architecture/schemas/flow.schema.json",
+      "sha256": "91f175ec94c45c3c5c474b2b72b1a4dfb26c962a42ff8c92320624f458085314"
+    },
+    {
+      "path": "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "sha256": "11bc97b79edb8c3ca8c886f194037862587fba568294a2d7951a24a6b4a0e223"
+    },
+    {
+      "path": "doc/config/task-conf/types/feature/flow-selection.yaml",
+      "sha256": "fa7aa6b423ecc0ae3354cd0526dda73d944eba5d3b4258d5a616b54d7338bad3"
+    },
+    {
+      "path": "doc/config/task-conf/types/planning/flow-selection.yaml",
+      "sha256": "bef75978a7142f710406b5909e55bd08a7e916dbd4a1498fd30616c599f5920a"
+    },
+    {
+      "path": "doc/config/task-conf/types/refactor/flow-selection.yaml",
+      "sha256": "124bc37658b67eeb3440b67bf12ddb7ae1b4ab736d056e8196bdb556489103c4"
+    },
+    {
+      "path": "doc/tasks/UI-0017/stage2/plan.md",
+      "sha256": "7a3be9da0f543e2a0c8f985579cceea5afa972e0429037b3739cb463b9211e56"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "6b2f3adabe966ec934a89c14f2404fcbe9a015b3537eef7167b6f4c657a8c025"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "0c356831da2219e5c790e2f67c55684526cf6cf1eea8b01007c34baa6710cbae"
+    },
+    {
+      "path": "doc/tools/arch/flows.py",
+      "sha256": "a828a6d10157f51a5a6db61b074972840aa76d310ef095ba1f1ba79ab8c95a47"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "4e5036726e6ef0e78e5500d32f323cd26d95fa5bc272cc68bdeaed162b696d79"
+    },
+    {
+      "path": "doc/tools/arch/task_record.py",
+      "sha256": "dbe6e28f03fbfc63d7d9500d930cb2fd11ea88f2de9f4cefbf599cb6d0810f33"
+    },
+    {
+      "path": "doc/tools/arch/validation.py",
+      "sha256": "867f6dbc7a53fc5ed1ea0590b9c5ee6de8c3e8a8d0361e2dd75bf2236fc725f9"
     }
   ]
 }

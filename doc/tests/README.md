@@ -14,7 +14,7 @@ Use `bash doc/tests/run.sh --index-only` to check index freshness and rebuild re
 
 Use `bash doc/tests/run.sh --in-copy [mode]` when the checkout cannot run the gate directly. It copies the project to a temporary tree, runs the requested mode (`--gate` by default) and leaves the checkout unchanged.
 
-During iteration, run the exact test selector from the task plan. To explore a related group, use `python3 -m unittest discover -s doc/tests -p 'test_*.py' -k decompose -v` and confirm the selected tests ran. Use the compact full suite once the checked inputs are stable. [Recording a result on that snapshot](../architecture/domains/task-lifecycle/entities/verification-evidence.md#сбор-результата-через-cli)
+During iteration, run the exact test selector from the task plan. For a named group, `bash doc/tests/run.sh --only <pattern>` runs both suites with `unittest -k` and fails when neither suite selected a test. The equivalent manual form is `python3 -m unittest discover -s doc/tests -p 'test_*.py' -k decompose -v`. Use the compact full suite (`--brief`) once the checked inputs are stable, and the mandatory `--gate` once on the accepted snapshot. [Recording a result on that snapshot](../architecture/domains/task-lifecycle/entities/verification-evidence.md#сбор-результата-через-cli)
 
 ## Coverage
 

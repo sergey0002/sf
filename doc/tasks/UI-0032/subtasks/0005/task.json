@@ -1,0 +1,118 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032-0005",
+  "task_number": "0005",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0032, AC-10 и исследование doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Таксономия типов: фаза 1 и решение по фазе 2",
+  "kind": "research",
+  "intent": "Таксономия типов задач зафиксирована по критерию отдельного оракула: типы фазы 1 добавлены и проходят те же проверки, что существующие, фаза 2 имеет обоснованное решение, а отклонённые кандидаты перечислены с причиной.",
+  "scope": {
+    "in": [
+      "Зафиксировать в исследовании и карточке критерий нового типа: отдельный оракул и отдельный набор обязательных разделов",
+      "Реализовать фазу 1: spike, migration, incident — config.yaml, prompt.md, flow с prompt.md, шаблоны по разрешённым tier, записи в paths.yaml и task_types",
+      "Оформить решение по фазе 2: release, security, decision — обоснование, предусловия и отсутствие реализации",
+      "Зафиксировать отклонённых кандидатов: chore, test, experiment, epic, retrospective, impediment — с причиной",
+      "Проверить новые типы теми же проверками схемы, шаблонов, правил, plan-policy и scan"
+    ],
+    "out": [
+      "Реализация типов фазы 2 без нового решения владельца",
+      "Изменение существующих десяти типов сверх общей схемы",
+      "Переклассификация существующих карточек"
+    ],
+    "allowed_files_modules": [
+      "doc/config/task-conf/",
+      "doc/config/paths.yaml",
+      "doc/tests/",
+      "doc/tasks/UI-0032/subtasks/0005/",
+      "doc/tasks/UI-0032/research/"
+    ]
+  },
+  "current_behavior": "Таксономия состоит из десяти типов; критерий добавления нового типа не зафиксирован, поэтому типы выбираются по названию активности, а не по проверяемому результату.",
+  "evidence": [
+    "doc/config/task-conf/types/ — десять каталогов типов",
+    "doc/config/paths.yaml:242-252 — список task_types",
+    "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md §6 — предложение по типам",
+    "data/sdd-research/06-качество-и-трассируемость.md §3 — методы верификации",
+    "data/machinedocs-encyclopedia/Практики/Сквозной цикл разработки.md — стадии SDLC"
+  ],
+  "contracts_and_invariants": [
+    "ARCH-contract: тип задачи — часть task-conf и проверяется теми же правилами",
+    "Инвариант таксономии: новый тип только при отдельном оракуле и отдельном наборе разделов",
+    "Инвариант: новый тип не ослабляет проверки существующих типов",
+    "Инвариант: добавление типа требует одобрения владельца",
+    "Инвариант: типы фазы 2 не реализуются без отдельного поручения"
+  ],
+  "acceptance_criteria": [
+    "AC-1: Исследование и карточка фиксируют критерий нового типа, фазу 1, решение по фазе 2 с предусловиями и отклонённых кандидатов с причиной.",
+    "AC-2: Типы spike, migration и incident имеют config.yaml, prompt.md, flow с prompt.md, шаблоны по каждому разрешённому tier и записи в paths.yaml и task_types; их политики разрешаются plan-policy и проходят scan --scope task-conf и validate --brief.",
+    "AC-3: Новые типы используют каталог правил: spike требует таймбокс и решение, migration — целостность и повтор, incident — таймлайн и follow-ups; каждый тип имеет собственный профиль разделов.",
+    "AC-4: Добавление типов не меняет поведение существующих карточек и корпуса задач; одобрение владельца записано в approvals до реализации."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не реализовывать типы фазы 2 и отклонённых кандидатов",
+    "Не менять существующие десять типов сверх общей схемы",
+    "Не добавлять тип без flow и prompt.md",
+    "Одобрение владельца требуется до записи файлов новых типов"
+  ],
+  "assumptions": [
+    "Фаза 1 выбрана по исследованию: spike, migration, incident имеют отдельный оракул",
+    "Фаза 2 (release, security, decision) требует практики и отдельного решения",
+    "Оценка 16 ч покрывает решение, три типа с flow и шаблонами и проверки"
+  ],
+  "open_questions": [
+    "Подтверждает ли владелец фазу 1 в этом объёме и фазу 2 как отложенное решение."
+  ],
+  "risk": "medium",
+  "authority": {
+    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
+    "forbidden": ["Реализация фазы 2, изменение существующих типов, внешняя запись"],
+    "approval_required": ["Добавление новых типов фазы 1", "Начало реализации"]
+  },
+  "approvals": [],
+  "task_type": "research",
+  "flow": "research-first",
+  "complexity": "medium",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": ["UI-0032-0001", "UI-0032-0002"],
+  "phase": "intake",
+  "rollback_plan": "Удалить каталоги spike, migration и incident, их записи в paths.yaml и task_types и шаблоны; исследование и решение оставить как историю.",
+  "implementation_plan": [
+    "Зафиксировать критерий и решение по фазам в исследовании",
+    "Создать config.yaml, prompt.md, flow и prompt.md для трёх типов",
+    "Создать шаблоны по разрешённым tier и объявить пути",
+    "Прогнать plan-policy, scan и validate на временных карточках"
+  ],
+  "related_docs": ["ARCH-contract", "REG-cli-validation-rules", "FLOW-task-lifecycle"],
+  "related_tests": [
+    {"test_id": "plan-policy-new-types", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+  ],
+  "research_docs": [
+    {
+      "id": "RES-plan-policy-taxonomy",
+      "title": "Политика планов и таксономия типов задач",
+      "path": "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+      "source_type": "internal",
+      "source_ref": "data/sdd-research, data/sdd-encyclopedia, data/machinedocs-encyclopedia, внешние практики",
+      "summary": "Критерий нового типа, матрица разделов и правил, фаза 1 и фаза 2, отклонённые кандидаты.",
+      "status": "hypothesis"
+    }
+  ],
+  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

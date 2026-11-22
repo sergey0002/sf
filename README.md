@@ -82,6 +82,7 @@ python3 doc/tools/arch/__main__.py task types
 python3 doc/tools/arch/__main__.py task flows --type feature
 python3 doc/tools/arch/__main__.py task-key --source ui --next
 python3 doc/tools/arch/__main__.py task registry --json
+python3 doc/tools/arch/__main__.py task registry check
 ```
 
 Перед новой командой изучите `--help`. Успешный exit code подтверждает только CLI-контракт, а не семантическую правильность решения.
@@ -219,6 +220,7 @@ bash doc/tests/run.sh --gate
 python3 doc/tools/arch/__main__.py validate
 python3 doc/tools/arch/__main__.py index check
 python3 doc/tools/arch/__main__.py docs paths --check
+python3 doc/tools/arch/__main__.py task registry check
 
 # Только unit-тесты ArchitectureStore
 python3 -m unittest discover -s doc/tools/tests

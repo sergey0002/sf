@@ -134,7 +134,10 @@
       "doc/architecture/schemas/flow-selection.schema.json",
       "doc/config/task-conf/types/bugfix/flow-selection.yaml",
       "doc/config/task-conf/types/docs/flow-selection.yaml",
-      "doc/architecture/domains/task-lifecycle/entities/flow-definition.md"
+      "doc/architecture/domains/task-lifecycle/entities/flow-definition.md",
+      "doc/config/task-conf/types/feature/flow-selection.yaml",
+      "doc/config/task-conf/types/refactor/flow-selection.yaml",
+      "doc/config/task-conf/types/planning/flow-selection.yaml"
     ],
     "modified": [
       "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
@@ -150,7 +153,9 @@
       "doc/architecture/system/cli-validation-rules.md",
       "doc/architecture/system/implementation-spec.md",
       "doc/architecture/domains/task-lifecycle/flow.md",
-      "doc/architecture/index.json"
+      "doc/architecture/index.json",
+      "doc/AGENTS.md",
+      "doc/skills/go-to-task/SKILL.md"
     ],
     "deleted": []
   },
@@ -161,6 +166,11 @@
       "stage_id": "stage1",
       "status": "completed",
       "result": "Реализованы версионированные flow, выбор flow, переходы, готовность детей и диагностика схемы; целевые и итоговые проверки пройдены."
+    },
+    {
+      "stage_id": "stage2",
+      "status": "completed",
+      "result": "Исправлены порядок flow, синхронизация записи при закрытии, обязательность таблицы выбора, UNSUPPORTED-FLOW, replay event и процессные правила; целевые и итоговые проверки пройдены."
     }
   ]
 }

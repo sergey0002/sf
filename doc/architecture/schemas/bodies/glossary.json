@@ -6,8 +6,7 @@
     "has_terms": { "type": "boolean", "const": true },
     "term_format": {
       "type": "string",
-      "pattern": "^### .+ — `TERM-.+`
-"
+      "pattern": "^### .+ — `TERM-.+`$"
     }
   },
   "required": ["has_terms"]

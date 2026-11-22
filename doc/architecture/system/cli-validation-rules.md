@@ -193,7 +193,7 @@ Legacy-запись без `record_version` валидируется по общ
 
 ## Реестр номеров
 
-`doc/config/task-registry.json` — CLI-owned данные; `task new`, `task init` и `task registry add` пишут его, остальные команды только читают.
+`doc/config/task-registry.json` — CLI-owned данные; `task new`, `task init`, `task registry add` и `task registry sync` пишут его, остальные команды только читают.
 
 - `schema_version` отсутствует или не равен `1` → ошибка
 - `tasks` не массив → ошибка
@@ -203,6 +203,9 @@ Legacy-запись без `record_version` валидируется по общ
 - `task-key --next` для источника кроме `ui` → ошибка
 - Конфликт при регистрации существующего ключа с другим номером → ошибка
 - Ошибка записи реестра в `task new` → созданный каталог задачи удаляется
+- `task registry check` при расхождении → exit 1, файл реестра не изменён
+- `task registry sync` при `number_mismatch` → ошибка, реестр не изменён
+- `task registry sync` для каталога с невалидным именем или без `task.json` → каталог пропускается
 
 ## Пример валидного скффолда
 

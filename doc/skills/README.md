@@ -10,14 +10,14 @@
 |---|---|---|---|
 | [arch-cli](arch-cli/SKILL.md) | Нужен доступ к CLI фабрики: чтение задач, архитектуры, индекса, путей, сессий Kilo; валидация записей; превью закрытия. | `task diagnose`, `task validate`, `task close --dry-run`, `list`, `show`, `docs search`, `docs read`, `docs context`, `index check`, `index build`, `validate`, `scan`, `session find`, `session digest` | `doc/skills/arch-cli/SKILL.md` |
 | [architecture-read](architecture-read/SKILL.md) | Нужно найти и прочитать применимый архитектурный контракт по ID, домену или термину для задачи (intake, реализация, ревью). | `docs search`, `docs read`, `docs toc`, `docs check-links`, `docs impact`, `docs tree`, `list --id`, `list --domain`, `docs context --task`, `docs related` | `doc/skills/architecture-read/SKILL.md` |
-| [create-task](create-task/SKILL.md) | Постановка новой задачи или декомпозиция плана: собрать контекст, выбрать тип/flow, сделать приёмку исполнимой, собрать карточку и стадию. Не выполняет задачу: завершается предложением приступить после явного подтверждения. | `task types`, `task flows --type`, `task flow-prompt`, `task new`, `task init`, `task decompose`, `task-key --next`, `task registry`, `task validate`, `docs paths --check` | `doc/skills/create-task/SKILL.md` |
+| [create-task](create-task/SKILL.md) | Постановка новой задачи или декомпозиция плана: собрать контекст, выбрать тип/flow, сделать приёмку исполнимой, собрать карточку и стадию. Не выполняет задачу: завершается предложением приступить после явного подтверждения. | `task types`, `task flows --type`, `task flow-prompt`, `task new`, `task init`, `task decompose`, `task-key --next`, `task registry`, `task registry check`, `task registry sync`, `task validate`, `docs paths --check` | `doc/skills/create-task/SKILL.md` |
 | [go-to-task](go-to-task/SKILL.md) | Выполнение, продолжение, верификация или закрытие зарегистрированной задачи по точному ключу: разрешить зависимости, выполнить план, записать evidence. | `task diagnose`, `task flow-steps`, `task flow-prompt`, `task workspace`, `task evidence`, `task close`, `task status`, `task subtask validate`, `task subtask status` | `doc/skills/go-to-task/SKILL.md` |
 
 ## Дополнительные скиллы (черновики / специализированные)
 
 | Скилл | Назначение | Статус |
 |---|---|---|
-| [plan-task](plan-task/SKILL.md) | Подготовка и ревью `stageN/plan.md`: обязательные разделы, градация по сложности и часам, оценка, решение о декомпозиции, чек-лист качества | draft |
+| [plan-task](plan-task/SKILL.md) | Подготовка и ревью `stageN/plan.md`: tier `micro`/`standard`/`full` по сложности и часам, обязательные разделы и safety floor, оценка, решение о декомпозиции. Шаблоны — в `references/` | draft |
 | [architecture-docs](architecture-docs/SKILL.md) | Строгий регламент изменений архитектурной документации: declared paths, frontmatter/schema, валидация через CLI | draft |
 | [review-implementation](review-implementation/SKILL.md) | Ревью реализации на стабильном снимке против AC и архитектуры | — |
 | [document-session](document-session/SKILL.md) | Зафиксировать подтверждённые решения и evidence из текущего диалога | draft |

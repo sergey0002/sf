@@ -68,11 +68,11 @@ source_refs:
 
 ### 2.3 Не смешивать три разных статуса
 
-1. **Статус документа:** `status: draft | current | deprecated | superseded` — lifecycle самого документа.
+1. **Статус документа:** `status: draft | current | accepted | deprecated | superseded` — lifecycle самого документа. Исполняемый список значений задаёт `doc/config/paths.yaml` (`project.document_statuses`), а JSON Schema и этот раздел обязаны с ним совпадать.
 2. **Статус решения:** только для `type: decision`, отдельное `decision_status: proposed | accepted | rejected | deprecated | superseded`; у `superseded` обязателен `superseded_by: ADR-…`.
 3. **Статус описываемого объекта:** например, order `pending/confirmed/cancelled`. Это содержимое доменной модели и не равно status metadata документа/решения.
 
-Неутверждённое содержание документа имеет `status: draft`; неутверждённый ADR — `status: current` (это существующий действующий decision record) и `decision_status: proposed`. Proposal/open question явно маркируются; неопределённость (`assumption`, `not verified`) не маскировать под факт.
+Неутверждённое содержание документа имеет `status: draft`. `accepted` означает, что содержание одобрено (принятый контракт или ADR); `current` — подтверждённое текущее состояние без отдельного акта одобрения. Неутверждённый ADR — `status: current` и `decision_status: proposed`. Proposal/open question явно маркируются; неопределённость (`assumption`, `not verified`) не маскировать под факт. Значения `proposed` и `rejected` принадлежат только `decision_status` и недопустимы как `status` документа.
 
 ---
 
@@ -312,24 +312,36 @@ decision_status: proposed
 
 **Критически важный вывод аудита:** предыдущая версия описывала намерения и поля ряда документов, но не задавала полные форматы для capability/spec, data, glossary, interfaces/integrations, quality, security, deployment/operations, constraints/risks и verification. Поэтому её нельзя было считать «все форматы описаны» или implementation-ready. Ниже — обязательный минимальный contract для тех типов, которые вообще создаются. Наличие формата не означает, что нужно создать файл для каждого типа.
 
+Исполняемый список допустимых `type` — `doc/config/paths.yaml` (`project.document_types`); эта таблица обязана содержать ровно те же типы и строку формата для каждого. Для типов с проверяемой структурой тела есть JSON Schema в `doc/architecture/schemas/bodies/`; остальные помечены `prose-only` и проверяются ревью, а не схемой. Согласованность списка, таблицы, body-схем и статусов проверяет `doc/tests/test_doc_type_registry.py`.
+
 | Type | Обязателен? | Канонический формат и назначение |
 |---|---|---|
-| `system-overview` | Да, один на систему | Markdown: identity/scope, stakeholders/concerns map, links to views, source/evidence, open gaps. |
-| `architecture-view` | По concern | Markdown + C4/Mermaid/таблица, convention/level/scope/audience/legend/sources/known issues. |
-| `domain` | По каждому реальному bounded context | Markdown: responsibility, boundary, owner/consumers, relationships to other domains, terms, key capabilities. |
-| `capability-spec` | Если есть устойчивое поведение, важное для дальнейших задач | Markdown: Purpose, Scope, normative Requirements and testable WHEN/THEN Scenarios, related flow/entity/contract/test references. |
-| `glossary` | Да, но может быть частью domain overview | Markdown table/headings: stable term ID, preferred term, domain-context definition, aliases, non-preferred terms, example, technical mapping, refs. |
-| `entity` / `data-concept` | По необходимости | Markdown: meaning, identity, lifecycle/invariants/relationships, significant attributes, data ownership/classification, authoritative schema ref. |
-| `flow` | Для значимого behavior/runtime path | Markdown: trigger/actors/preconditions/outcomes, steps/guards/failure paths, side effects and references; optional diagram. |
-| `rule-set` | Если правила не помещаются/не читаются в capability/entity docs | Markdown table/sections: stable ID if cross-referenced, applicability, condition → outcome, precedence/default, exceptions, owner/evidence. |
-| `integration` | Для material external or cross-domain contract | Markdown: producer/consumer, direction, purpose, protocol, contract pointer/version, identity/security, compatibility/failure behavior, owner/tests. |
-| `cross-cutting-concept` | Если паттерн/ограничение действует в нескольких domains | Markdown: purpose, scope, invariant/pattern, allowed variation, exceptions, affected views and source refs. |
-| `quality-view` | Если есть согласованные architecture quality concerns | Markdown scenario records: source, stimulus, environment, response, measure, validation/evidence, affected views/decisions. |
-| `security-view` | If security/trust boundary is architectural | Markdown threat/control records; never store credentials/secrets. |
-| `deployment-operations-view` | If deployment/operability are material concerns | Markdown + optional C4 deployment diagram/IaC refs; topology, failure/restore/observability/runbook refs. |
-| `constraints-risks` | Только значимые/неочевидные constraints or risks | Markdown table with stable IDs when referenced, effect, owner, mitigation, status and review trigger. |
-| `verification-map` | If acceptance/test mapping is hard to infer from code/CI alone | Markdown table mapping capability/requirement/flow path → automated/manual test/evidence; tests remain in product repo. |
-| `decision` | Для significant architecture decisions | One MADR-style ADR per decision; decision status remains distinct from doc status. |
+| `system` | Да, один на систему | Markdown: назначение, граница области, архитектурные точки зрения, домены. Body-схема `system.json`. |
+| `system-overview` | Зарезервирован: создаётся при появлении concern «обзор системы для стейкхолдеров» | prose-only Markdown: identity/scope, stakeholders/concerns map, links to views, source/evidence, open gaps. |
+| `system-context` | Для материальной внешней границы системы | Markdown: актёры и внешние системы, информационный поток, trust boundary. Body-схема `system-context.json`. |
+| `component-view` | По concern «структура компонентов» | Markdown: таблица компонентов с ответственностью и границами. Body-схема `component-view.json`. |
+| `architecture-view` | По concern | prose-only Markdown + C4/Mermaid/таблица: convention/level/scope/audience/legend/sources/known issues. |
+| `data-view` | Для материальных границ данных | Markdown: таблица записей с форматом, властью и жизненным циклом; политика форматов. Body-схема `data-view.json`. |
+| `domain` | По каждому реальному bounded context | Markdown: responsibility, boundary, owner/consumers, relationships to other domains, terms, key capabilities. Body-схема `domain.json`. |
+| `capability` | По крупной возможности домена | Markdown: результат, не цели и нерешённое. Body-схема `capability.json`. |
+| `capability-spec` | Если есть устойчивое поведение, важное для дальнейших задач | Markdown: Purpose, Scope, normative Requirements and testable WHEN/THEN Scenarios, related flow/entity/contract/test references. Body-схема `capability-spec.json`. |
+| `entity` | По необходимости (`data-concept` — синоним) | Markdown: meaning, identity, lifecycle/invariants/relationships, significant attributes, data ownership/classification, authoritative schema ref. Body-схема `entity.json`. |
+| `glossary` | Да, но может быть частью domain overview | Markdown table/headings: stable term ID, preferred term, domain-context definition, aliases, non-preferred terms, example, technical mapping, refs. Body-схема `glossary.json`. |
+| `rule-set` | Если правила не помещаются/не читаются в capability/entity docs | Markdown table/sections: stable ID if cross-referenced, applicability, condition → outcome, precedence/default, exceptions, owner/evidence. Body-схема `rule-set.json`. |
+| `flow` | Для значимого behavior/runtime path | Markdown: trigger/actors/preconditions/outcomes, steps/guards/failure paths, side effects and references; optional diagram. Body-схема `flow.json`. |
+| `integration` | Зарезервирован: создаётся при появлении material external or cross-domain contract | prose-only Markdown: producer/consumer, direction, purpose, protocol, contract pointer/version, identity/security, compatibility/failure behavior, owner/tests. |
+| `cross-cutting-concept` | Зарезервирован: создаётся, когда паттерн/ограничение действует в нескольких domains | prose-only Markdown: purpose, scope, invariant/pattern, allowed variation, exceptions, affected views and source refs. |
+| `quality-attributes` | По согласованным architecture quality concerns | Markdown: таблица «атрибут → сценарий/реакция → открытая мера или решение». Body-схема `quality-attributes.json`. |
+| `quality-view` | Зарезервирован: создаётся, когда нужны сценарные записи качества с measure/evidence | prose-only Markdown scenario records: source, stimulus, environment, response, measure, validation/evidence, affected views/decisions. |
+| `security-view` | If security/trust boundary is architectural | Markdown threat/control records; never store credentials/secrets. Body-схема `security-view.json`. |
+| `deployment-operations-view` | Зарезервирован: создаётся, когда deployment/operability становятся материальным concern | prose-only Markdown + optional C4 deployment diagram/IaC refs; topology, failure/restore/observability/runbook refs. |
+| `constraints-risks` | Только значимые/неочевидные constraints or risks | Markdown table with stable IDs when referenced, effect, owner, mitigation, status and review trigger. Body-схема `constraints-risks.json`. |
+| `decision` | Для significant architecture decisions | One MADR-style ADR per decision; decision status remains distinct from doc status. Body-схема `decision.json`. |
+| `verification-map` | Зарезервирован: создаётся, если acceptance/test mapping нельзя вывести из кода и CI | prose-only Markdown table mapping capability/requirement/flow path → automated/manual test/evidence; tests remain in product repo. |
+| `testing-spec` | Для стратегии тестирования | prose-only Markdown: цель и охват, уровни, unit/integration/E2E, фикстуры, команды. |
+| `implementation-spec` | Для технической спецификации реализации | prose-only Markdown: структура пакета, модули, контракты вывода, ссылки на тесты. |
+| `runbook` | Для операционных процедур | prose-only Markdown: диагностика, восстановление после сбоев, откат, команды. |
+| `examples` | Для справочных примеров | prose-only Markdown: примеры входов и ожидаемого вывода, привязанные к действующим командам. |
 
 #### A. System overview и architecture view
 
@@ -628,7 +640,7 @@ source_refs:
 **Минимальные обязательные поля:**
 
 - `id` — стабильный уникальный ID.
-- `type` — из зарегистрированного конечного набора (`system-overview`, `architecture-view`, `domain`, `capability-spec`, `glossary`, `entity`, `data-view`, `flow`, `rule-set`, `integration`, `cross-cutting-concept`, `decision`, `quality-view`, `security-view`, `deployment-operations-view`, `constraints-risks`, `verification-map`). Создавать такой документ/type только при наличии concern и потребителя; не добавлять новые types из-за отдельной команды.
+- `type` — из зарегистрированного конечного набора `doc/config/paths.yaml` (`project.document_types`); полный перечень, формат и условие применения каждого типа — в §5.5. Создавать такой документ/type только при наличии concern и потребителя; не добавлять новые types из-за отдельной команды и не оставлять объявленный тип без строки формата.
 - `title` — человекочитаемое имя.
 - `summary` — короткий load-when/зачем читать, не просто повтор заголовка.
 - `status` — ограниченный enum документа.
@@ -647,7 +659,7 @@ source_refs:
 - Schema не доказывает, что entity description корректен, flow покрывает требование или решение одобрено.
 - `status` относится к document lifecycle; `decision_status` обязателен только для `decision`. При deprecated/superseded значении требовать replacement/reason по type-specific validation.
 
-**Draft generic schema (envelope, JSON Schema 2020-12):**
+**Draft generic schema (envelope, JSON Schema 2020-12).** Исполняемые источники истины — `doc/config/paths.yaml` (наборы `document_types`/`document_statuses`) и `doc/architecture/schemas/document.schema.json`; фрагмент ниже должен оставаться с ними синхронным:
 
 ```json
 {
@@ -659,11 +671,11 @@ source_refs:
   "properties": {
     "id": {"type": "string", "minLength": 3, "maxLength": 96, "pattern": "^[A-Za-z][A-Za-z0-9._:-]*$"},
     "type": {
-      "enum": ["system-overview", "architecture-view", "domain", "capability-spec", "glossary", "entity", "data-view", "flow", "rule-set", "integration", "cross-cutting-concept", "decision", "quality-view", "security-view", "deployment-operations-view", "constraints-risks", "verification-map"]
+      "enum": ["system", "system-overview", "system-context", "component-view", "architecture-view", "data-view", "domain", "capability", "capability-spec", "entity", "glossary", "rule-set", "flow", "integration", "cross-cutting-concept", "quality-attributes", "quality-view", "security-view", "deployment-operations-view", "constraints-risks", "decision", "verification-map", "testing-spec", "implementation-spec", "runbook", "examples"]
     },
     "title": {"type": "string", "minLength": 1},
     "summary": {"type": "string", "minLength": 1},
-    "status": {"enum": ["draft", "current", "deprecated", "superseded"]},
+    "status": {"enum": ["draft", "current", "accepted", "deprecated", "superseded"]},
     "decision_status": {"enum": ["proposed", "accepted", "rejected", "deprecated", "superseded"]},
     "domain": {"type": "string", "minLength": 1},
     "owner": {"type": "string", "minLength": 1},

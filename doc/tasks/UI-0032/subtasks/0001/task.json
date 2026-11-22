@@ -1,0 +1,131 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0032, AC-1, AC-2, AC-3, AC-7, AC-8 и объявление каталога правил из AC-5",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Схема, дефолты, правила и шаблоны всех типов",
+  "kind": "refactor",
+  "intent": "Форма политики и правил зафиксирована единой схемой, глобальные дефолты воспроизводят текущие tier'ы, а каждый из десяти типов объявляет свои разделы, шаблоны и проверяемые правила приёмки.",
+  "scope": {
+    "in": [
+      "Создать doc/config/task-conf/plan-defaults.yaml: tier'ы micro|standard|full, safety floor и каталог правил приёмки (section_present, section_min_items, link_min, table_column, case_min, command)",
+      "Создать doc/architecture/schemas/task-conf.schema.json: единая форма дефолтов, блока plan/acceptance и ссылок на правила, расширяемая UI-0030",
+      "Добавить блок plan и acceptance для всех десяти типов: feature, bugfix, refactor, docs, research, audit, planning, jira-incoming, scaffold, subtask",
+      "Создать 27 шаблонов types/<type>/plan/<tier>.md по матрице исследования: scaffold — micro, research — micro и standard, остальные восемь типов — micro, standard, full",
+      "Пометить subtask как legacy: конфиг сохраняется для чтения, но тип не предлагается для новой постановки",
+      "Объявить новые файлы, шаблоны и записи task_types в doc/config/paths.yaml поверх незакоммиченного среза UI-0031",
+      "Убрать молчаливый пропуск: каталог типа без config.yaml, конфиг без id и несовпадение id с именем каталога диагностируются",
+      "Сверить обнаруженные типы с paths.yaml project.task_types в обе стороны в scan --scope task-conf",
+      "Добавить проверки схемы, существования шаблона, покрытия complexity, дублей tier'ов, положительного лимита и известности ссылок на правила",
+      "Детерминированные тесты конфигурационного слоя в doc/tests/test_plan_policy.py"
+    ],
+    "out": [
+      "Резолвер политики, оценщик правил, команда plan-policy и интеграция в acceptance_state — это UI-0032-0002",
+      "Правки скилла и архитектурных записей — это UI-0032-0003",
+      "Файлы новых типов spike, migration и incident — это UI-0032-0005",
+      "Корпусный скан ссылок на удалённый тип — это UI-0030 AC-5",
+      "Ключи children_policy и parent_policy — это UI-0030",
+      "Изменение поведения существующих карточек и переписывание планов"
+    ],
+    "allowed_files_modules": [
+      "doc/config/task-conf/",
+      "doc/config/paths.yaml",
+      "doc/architecture/schemas/",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/tests/",
+      "doc/tasks/UI-0032/subtasks/0001/"
+    ]
+  },
+  "current_behavior": "Tier'ы и обязательные разделы заданы константами в doc/tools/arch/acceptance.py; в task-conf нет ни дефолтов, ни каталога правил, ни блока plan, ни схемы, ни шаблонов. paths.yaml не разрешает новые файлы. Загрузчик типов молча пропускает каталог без config.yaml и конфиг без id, а paths.yaml project.task_types не сверяется с обнаруженными каталогами.",
+  "evidence": [
+    "doc/tools/arch/acceptance.py:15-27 — константы PLAN_TIERS, TIER_COMPLEXITY, TIER_SECTIONS, MICRO_MAX_LINES",
+    "doc/config/task-conf/types/scaffold/config.yaml:6-9 — только low",
+    "doc/config/task-conf/types/research/config.yaml:6-9 — low и medium",
+    "doc/tools/arch/validation.py:439-490 — молчаливый пропуск каталогов и конфигов",
+    "doc/tools/arch/validation.py:251,297 — task_types берётся из paths.yaml без сверки с каталогами",
+    "doc/tools/arch/flows.py:72-95 — существующий паттерн проверки YAML общей схемой из config.schemas_root",
+    "doc/tools/arch/cli/commands/builtin.py:538-600 — scan task-conf без сверки типов с paths.yaml",
+    "doc/config/paths.yaml:107-113,120-136,242-252 — перечень путей, задач и task_types",
+    "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md — матрица разделов, каталог правил и список шаблонов"
+  ],
+  "contracts_and_invariants": [
+    "ARCH-contract: task-conf — единственный источник правил типа; CLI не дублирует значения",
+    "VIEW-cli-package: все enum'ы и правила читаются из YAML",
+    "ENT-verification-evidence: имена tier'ов, маркер и правило обязательности при estimate_hours сохраняются",
+    "Инвариант: дефолты эквивалентны текущему поведению; карточка без блока plan проверяется так же",
+    "Инвариант: списки заменяются целиком, без неявной конкатенации",
+    "Инвариант: один каталог типа — один config.yaml с совпадающим id; объявленный и обнаруженный наборы типов равны",
+    "Инвариант: task-conf.schema.json — единственная схема конфигов типов; UI-0030 расширяет её",
+    "Инвариант: правило приёмки либо проверяется структурно, либо явно смысловое; неизвестный kind отвергается",
+    "Инвариант legacy: subtask читается, но не предлагается для новой постановки"
+  ],
+  "acceptance_criteria": [
+    "AC-1: plan-defaults.yaml валиден по task-conf.schema.json, задаёт три tier'а с теми же complexity, разделами и лимитом micro 60, что и текущие константы, и содержит каталог правил с допустимыми kind и параметрами.",
+    "AC-2: Все десять типов имеют блок plan и acceptance, валидный по схеме; профильные типы research, audit, planning, bugfix, refactor и docs объявляют свои разделы и правила, scaffold ограничен micro, subtask помечен legacy.",
+    "AC-3: Существуют 27 непустых шаблонов types/<type>/plan/<tier>.md по матрице исследования, и заголовки каждого покрывают required_sections его политики.",
+    "AC-4: doc/config/paths.yaml разрешает plan-defaults.yaml, task-conf.schema.json, шаблоны types/<type>/plan/<tier>.md и не мешает срезу UI-0031; docs paths --check и scan --scope paths проходят.",
+    "AC-5: validate --brief и scan --scope task-conf сообщают о невалидной схеме, отсутствующем шаблоне, complexity без покрывающего tier'а, дубле tier'ов, неположительном лимите, неизвестной ссылке на правило, каталоге без config.yaml, конфиге без id, несовпадении id и каталога, а также о расхождении обнаруженных типов с paths.yaml project.task_types в обе стороны; на текущем дереве проходят.",
+    "AC-6: Удаление каталога типа при сохранённой записи в paths.yaml и удаление типа из paths.yaml при существующей карточке дают диагностику и не меняют дерево; карточка с типом, отсутствующим в paths.yaml, отвергается validate."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не менять имена tier'ов и маркер <!-- plan-tier: ... -->",
+    "Шаблоны — отдельные Markdown-файлы, не inline-текст",
+    "Не трогать acceptance.py и task_ops.py — это срез UI-0032-0002",
+    "Не создавать файлы новых типов — это UI-0032-0005",
+    "Не дублировать корпусный скан ссылок на удалённый тип — это UI-0030 AC-5",
+    "Не переписывать существующие карточки",
+    "Не откатывать незакоммиченные правки UI-0031 в paths.yaml"
+  ],
+  "assumptions": [
+    "Матрица разделов и правил берётся из doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+    "Схема использует additionalProperties: true, чтобы UI-0030 добавил children_policy и parent_policy без второго файла",
+    "Корпусная проверка ссылок на удалённый тип остаётся за UI-0030; здесь только локальная согласованность task-conf и paths.yaml",
+    "Оценка 24 ч покрывает 10 конфигов, 27 шаблонов, схему, каталог правил, пути и проверки целостности"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
+    "forbidden": ["Переименование tier'ов, правки acceptance.py и task_ops.py, файлы новых типов, корпусный скан типов, внешняя запись"],
+    "approval_required": ["Начало реализации"]
+  },
+  "approvals": [],
+  "task_type": "refactor",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "estimate_hours": 24,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Удалить plan-defaults.yaml, схему и шаблоны, вернуть десять конфигов, paths.yaml, validation.py, builtin.py и тесты к снимку, сохранив правки UI-0031 в paths.yaml.",
+  "implementation_plan": [
+    "Зафиксировать форму политики и правил в task-conf.schema.json",
+    "Создать plan-defaults.yaml с дефолтами и каталогом правил и сверить значения с текущими константами",
+    "Добавить блоки plan/acceptance в десять типов и создать 27 шаблонов по матрице",
+    "Убрать молчаливый пропуск и добавить сверку типов с paths.yaml",
+    "Объявить пути и покрыть конфигурационный слой тестами"
+  ],
+  "related_docs": ["ARCH-contract", "VIEW-cli-package", "ENT-verification-evidence", "REG-cli-validation-rules"],
+  "related_tests": [
+    {"test_id": "plan-policy-config", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+  ],
+  "research_docs": [],
+  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

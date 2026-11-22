@@ -24,9 +24,10 @@ CLI был рефакторен из одного файла `arch.py` (~900 с�
 | `store.py` | `ArchitectureStore` — загрузка документов с frontmatter, валидация ссылок/ID, сборка/проверка `index.json` | (внутри пакета arch — нет) |
 | `subtask.py` | Пути субтасок, скффолд JSON, перечисление этапов и вложенных субтасок | `identity`, `schema` |
 | `fs_atomic.py` | Атомарная замена одиночного файла и журнал составной записи | — |
-| `task_ops.py` | Прикладные lifecycle-сценарии task/subtask: чтение, валидация, decompose, diagnose, close, восстановление | `identity`, `schema`, `subtask`, `validation`, `fs_atomic`, `cli.errors` (коды) |
-| `task_registry.py` | CLI-реестр номеров в JSON: чтение, проверка дублей, следующий UI-ключ, атомарная регистрация под блокировкой | `identity`, `fs_atomic` |
-| `acceptance.py` | Структура обязательных кейсов, покрытие критериев и SHA-256 доказательств | Стандартная библиотека |
+| `task_ops.py` | Прикладные lifecycle-сценарии task/subtask: чтение, валидация, decompose, diagnose, doctor, workspace preflight, close, восстановление | `identity`, `schema`, `subtask`, `validation`, `fs_atomic`, `cli.errors` (коды) |
+| `task_registry.py` | CLI-реестр номеров в JSON: чтение, проверка дублей, следующий UI-ключ, атомарная регистрация под блокировкой, сверка с каталогами (`registry_drift`) и синхронизация (`sync_registry`) | `identity`, `fs_atomic` |
+| `acceptance.py` | Структура обязательных кейсов, покрытие критериев, SHA-256 доказательств и статус свежести снимка | Стандартная библиотека |
+| `evidence.py` | Запись результата явной проверки на выбранном снимке и pre-change baseline | `acceptance`, `fs_atomic`, `task_ops`, `subtask` |
 | `session_audit.py` | Read-only разбор локальной SQLite Kilo: поиск сессии по подстроке, метки flow/скиллов/правил/задач/CLI, статистика инструментов, фазы, аномалии и токены | Стандартная библиотека |
 | `cli/app.py` | Парсер `argparse`, `run()`, диспетчеризация зарегистрированных команд; `ArchitectureStore` создаётся лениво | `cli.commands`, `store` |
 | `cli/output.py` | JSON-envelope, human/brief/quiet/verbose режимы, scan-сводка | `cli.errors` |

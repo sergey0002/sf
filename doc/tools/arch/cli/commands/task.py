@@ -22,7 +22,7 @@ from arch.cli.errors import (
     ok_envelope,
 )
 from arch.cli.output import print_envelope
-from arch.evidence import task_evidence
+from arch.evidence import task_baseline, task_evidence
 from arch.identity import parse_task_key
 from arch.project_config import ProjectConfig
 from arch import task_ops, task_record, task_registry
@@ -80,8 +80,9 @@ class TaskCommand(Command):
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
         p.add_argument("--json", action="store_true", help="JSON envelope output")
 
-        p = sub.add_parser("workspace", help="show workspace paths and a branch hint without checkout")
+        p = sub.add_parser("workspace", help="show workspace paths, branch hint and a write preflight")
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
+        p.add_argument("--json", action="store_true", help="JSON envelope output")
 
         p = sub.add_parser("status", help="show task state, stages and verification")
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
@@ -126,6 +127,7 @@ class TaskCommand(Command):
                        help="subtask complexity ID=LEVEL, repeatable")
         p.add_argument("--subtask-estimate", action="append", default=[],
                        help="subtask estimate in hours ID=HOURS, repeatable")
+        p.add_argument("--json", action="store_true", help="JSON envelope output")
 
         p = sub.add_parser("advance", help="apply one flow event with revision and idempotency checks")
         p.add_argument("task_key", help="task key")
@@ -141,6 +143,11 @@ class TaskCommand(Command):
         p.add_argument("--json", action="store_true", help="JSON output")
         p.add_argument("--brief", action="store_true", help="show summary and task references")
 
+        p = sub.add_parser("doctor", help="one read-only summary of closure, evidence and workspace risks")
+        p.add_argument("task_key", help="task key")
+        p.add_argument("--json", action="store_true", help="JSON output")
+        p.add_argument("--brief", action="store_true", help="omit detailed blockers")
+
         p = sub.add_parser("evidence", help="check snapshot freshness or record a real test result")
         p.add_argument("task_key", help="task key")
         mode = p.add_mutually_exclusive_group(required=True)
@@ -149,6 +156,13 @@ class TaskCommand(Command):
         p.add_argument("--file", action="append", default=[], help="project-relative snapshot input, repeatable")
         p.add_argument("--case", action="append", default=[], help="planned case ID observed by the run, repeatable")
         p.add_argument("--replace-snapshot", action="store_true", help="clear old results if recording a different snapshot")
+        p.set_defaults(json=True)
+
+        p = sub.add_parser("baseline", help="record a pre-change command, exit code and input hashes")
+        p.add_argument("task_key", help="task or subtask key")
+        p.add_argument("--run", nargs=argparse.REMAINDER, required=True,
+                       help="execute these arguments from the project root")
+        p.add_argument("--file", action="append", default=[], help="project-relative input, repeatable")
         p.set_defaults(json=True)
 
         p = sub.add_parser("close", help="close a task (fails if subtasks not all completed)")
@@ -188,14 +202,17 @@ class TaskCommand(Command):
         st_init.add_argument("--flow", help="subtask flow")
         st_init.add_argument("--complexity", help="subtask complexity (default: parent)")
         st_init.add_argument("--estimate-hours", type=float, help="subtask estimate in hours")
+        st_init.add_argument("--json", action="store_true", help="JSON envelope output")
 
         st_validate = st_sub.add_parser("validate", help="validate subtask task.json")
         st_validate.add_argument("parent_task_key", help="parent task key")
         st_validate.add_argument("subtask_id", help="subtask ID")
+        st_validate.add_argument("--json", action="store_true", help="JSON envelope output")
 
         st_status = st_sub.add_parser("status", help="show subtask state")
         st_status.add_argument("parent_task_key", help="parent task key")
         st_status.add_argument("subtask_id", help="subtask ID")
+        st_status.add_argument("--json", action="store_true", help="JSON envelope output")
 
     def execute(
         self, args: argparse.Namespace, project_config: ProjectConfig, store: Any
@@ -216,6 +233,8 @@ class TaskCommand(Command):
             return self._flow_prompt(args, project_config)
         if args.task_action == "evidence":
             return self._evidence(args, project_config)
+        if args.task_action == "baseline":
+            return self._baseline(args, project_config)
         if args.task_action == "select-flow":
             return self._select_flow(args, project_config)
         if args.task_action in ("migrate", "event", "replay"):
@@ -235,7 +254,7 @@ class TaskCommand(Command):
         try:
             return self._run_lifecycle(args, project_config, parsed)
         except task_ops.TaskOpsError as exc:
-            json_errors = args.task_action in ("validate", "diagnose", "close", "evidence", "advance")
+            json_errors = args.task_action in ("validate", "diagnose", "doctor", "close", "evidence", "advance")
             return self._fail(
                 exc.code,
                 exc.message,
@@ -391,6 +410,19 @@ class TaskCommand(Command):
         self._json(ok_envelope(data=payload), args)
         return code
 
+    def _baseline(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            payload, code = task_baseline(
+                project_config, args.task_key, names=args.file, argv=args.run
+            )
+        except task_ops.TaskOpsError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field, suggestion=exc.suggestion,
+                              exit_code=exc.exit_code, args=args)
+        except (ValueError, OSError, RuntimeError) as exc:
+            return self._fail("BASELINE", str(exc), field="baseline.json", exit_code=1, args=args)
+        self._json(ok_envelope(data=payload), args)
+        return code
+
     def _close_record(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
         try:
             payload, blockers = task_ops.close(project_config, args.task_key, args.dry_run)
@@ -514,9 +546,15 @@ class TaskCommand(Command):
                     )
                     for error in errors
                 ]
-                print_envelope(multi_error_envelope(errs), json_mode=False, stream=sys.stderr)
+                print_envelope(
+                    multi_error_envelope(errs),
+                    json_mode=getattr(args, "json", False),
+                    stream=sys.stderr,
+                )
                 return 1
-            print_envelope(ok_envelope(data=payload), json_mode=False)
+            print_envelope(
+                ok_envelope(data=payload), json_mode=getattr(args, "json", False)
+            )
             return 0
 
         if args.task_action == "status":
@@ -534,7 +572,9 @@ class TaskCommand(Command):
                 args.subtask_depends_on, args.subtask_type, args.subtask_flow,
                 args.subtask_complexity, args.subtask_estimate,
             )
-            print_envelope(ok_envelope(data=payload), json_mode=False)
+            print_envelope(
+                ok_envelope(data=payload), json_mode=getattr(args, "json", False)
+            )
             return 0
 
         if args.task_action == "advance":
@@ -567,6 +607,32 @@ class TaskCommand(Command):
             else:
                 for subtask in payload.get("subtasks", []):
                     print(f"    [{subtask['phase']}] {subtask['id']} — {subtask['title']}")
+            return 0
+
+        if args.task_action == "doctor":
+            payload = task_ops.doctor(
+                project_config, task_key, task_number, source_type, args.brief
+            )
+            if args.json:
+                return self._json(ok_envelope(data=payload), args)
+            print(f"Doctor for task {task_key}:")
+            print(f"  phase: {payload.get('phase')}  can_close: {payload.get('can_close')}")
+            freshness = payload.get("evidence_freshness")
+            if freshness:
+                print(f"  evidence: {freshness.get('status')} ({freshness.get('stage')})")
+                for path in freshness.get("stale_files", []):
+                    print(f"    - stale: {path}")
+                if freshness.get("note"):
+                    print(f"    note: {freshness['note']}")
+            preflight = payload.get("preflight") or {}
+            print(f"  workspace: {preflight.get('status')}")
+            if preflight.get("recommendation"):
+                print(f"    {preflight['recommendation']}")
+            if payload.get("incomplete_write"):
+                print(f"  incomplete_write: {payload['incomplete_write'].get('state')}")
+            if not args.brief:
+                for blocker in payload.get("close_blockers", []):
+                    print(f"    - {blocker}")
             return 0
 
         if args.task_action == "close":
@@ -621,7 +687,9 @@ class TaskCommand(Command):
                     complexity=args.complexity,
                     estimate_hours=args.estimate_hours,
                 )
-                print_envelope(ok_envelope(data=payload), json_mode=False)
+                print_envelope(
+                    ok_envelope(data=payload), json_mode=getattr(args, "json", False)
+                )
                 return 0
             if args.subtask_action == "validate":
                 message, errors = task_ops.subtask_validate(
@@ -638,18 +706,23 @@ class TaskCommand(Command):
                         for error in errors
                     ]
                     print_envelope(
-                        multi_error_envelope(errs), json_mode=False, stream=sys.stderr
+                        multi_error_envelope(errs),
+                        json_mode=getattr(args, "json", False),
+                        stream=sys.stderr,
                     )
                     return 1
                 print_envelope(
-                    ok_envelope(data={"ok": True, "message": message}), json_mode=False
+                    ok_envelope(data={"ok": True, "message": message}),
+                    json_mode=getattr(args, "json", False),
                 )
                 return 0
             if args.subtask_action == "status":
                 payload = task_ops.subtask_status(
                     project_config, parent_task_key, subtask_id
                 )
-                print_envelope(ok_envelope(data=payload), json_mode=False)
+                print_envelope(
+                    ok_envelope(data=payload), json_mode=getattr(args, "json", False)
+                )
                 return 0
         except task_ops.TaskOpsError as exc:
             return self._fail(

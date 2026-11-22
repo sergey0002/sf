@@ -9,7 +9,9 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .acceptance import CASE_COVERAGE, criterion_ids, planned_case_ids, snapshot_file, snapshot_problems
+from .acceptance import (
+    CASE_COVERAGE, criterion_ids, planned_case_ids, snapshot_file, snapshot_status,
+)
 from .fs_atomic import write_json_record
 from .project_config import ProjectConfig
 from .subtask import current_stage, list_stages
@@ -46,9 +48,15 @@ def task_evidence(
     result: dict[str, Any] = {"task_key": key, "stage_id": stage,
                              "verification": artifact.relative_to(root).as_posix()}
     if argv is None:
-        problems = snapshot_problems(root, data.get("snapshot_files"), plan)
-        result.update(current=not problems, problems=problems)
-        return result, int(bool(problems))
+        state = snapshot_status(root, data.get("snapshot_files"), plan)
+        result.update(
+            current=state["status"] == "current",
+            status=state["status"],
+            stale_files=state["stale_files"],
+            missing_files=state["missing_files"],
+            problems=state["problems"],
+        )
+        return result, int(state["status"] != "current")
     if not names or not argv:
         raise ValueError("--run requires a command and at least one explicit --file")
 
@@ -103,3 +111,43 @@ def task_evidence(
         write_json_record(artifact, data)
     result["status"] = data["status"]
     return result, code
+
+
+def task_baseline(
+    config: ProjectConfig, key: str, *, names: list[str], argv: list[str]
+) -> tuple[dict[str, Any], int]:
+    """Record a pre-change command, its exit code and the hashes of its inputs."""
+    directory, task_path = task_or_subtask_paths(config, key)
+    stage = current_stage(list_stages(directory))
+    if stage is None:
+        raise ValueError(f"{key}: no current stage")
+    artifact = directory / stage / "baseline.json"
+    root = config.root
+    if not names or not argv:
+        raise ValueError("--run requires a command and at least one explicit --file")
+    excluded = {task_path.resolve(), artifact.resolve()}
+    before = _files(root, names, excluded)
+    process = subprocess.run(argv, cwd=root, capture_output=True, text=True, errors="replace", check=False)
+    code = process.returncode if process.returncode >= 0 else 128 - process.returncode
+    if _files(root, names, excluded) != before:
+        raise ValueError("baseline inputs changed during the run; result was not recorded")
+    record = {
+        "schema_version": "draft-0.1",
+        "task_key": key,
+        "stage_id": stage,
+        "command": shlex.join(argv),
+        "exit_code": code,
+        "result": f"Command exited with status {code}.",
+        "files": before,
+    }
+    with _task_writer(config, directory):
+        if _files(root, names, excluded) != before:
+            raise ValueError("baseline inputs changed during the run; result was not recorded")
+        write_json_record(artifact, record)
+    return {
+        "task_key": key,
+        "stage_id": stage,
+        "baseline": artifact.relative_to(root).as_posix(),
+        "exit_code": code,
+        "files": before,
+    }, code

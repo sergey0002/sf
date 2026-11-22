@@ -1,0 +1,14 @@
+{
+  "task_key": "UI-0032-0004",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-1", "covers": ["AC-1"], "expected": "Готовность и свежесть выборки карточек совпадают до и после; карточки не изменены."},
+    {"id": "CASE-2", "covers": ["AC-2"], "expected": "Политики и правил нет в snapshot_files; изменение политики не делает evidence устаревшим."},
+    {"id": "CASE-3", "covers": ["AC-3"], "expected": "Отказные сценарии, включая неизвестное правило и расхождение с paths.yaml, выполняются автоматически с ожидаемыми кодами; корпусный скан типов не дублируется."},
+    {"id": "CASE-4", "covers": ["AC-4"], "expected": "Новые типы не меняют существующие карточки и не добавляют ошибок в корпус."},
+    {"id": "CASE-5", "covers": ["AC-5"], "expected": "validate, index check, docs paths --check и run.sh --brief проходят на итоговом снимке."}
+  ]
+}

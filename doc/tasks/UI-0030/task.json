@@ -1,0 +1,148 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0030",
+  "task_number": "0030",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Чат, 2026-11-22: отделить подзадачу от типа работы; дополнение: при изменении или удалении типа CLI проверяет открытые и завершённые задачи и помогает агенту устранить конфликты.",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Типы и политики дочерних задач без поломки существующих карточек",
+  "kind": "feature",
+  "intent": "Агент ставит подзадачи по смыслу результата, CLI проверяет допустимость связей, а существующие карточки остаются доступными и валидными относительно исходного состояния.",
+  "scope": {
+    "in": [
+      "Политики иерархии, команды постановки и проверки, контроль изменений task-conf по всему корпусу, миграция трёх детей UI-0029, контракты и инструкции агента"
+    ],
+    "out": [
+      "Поддержка новых уровней вложенности, изменение source.type или формата ключа, запись в Jira, реализация UI-0029, массовая переклассификация scaffold"
+    ],
+    "allowed_files_modules": [
+      "doc/config/task-conf/",
+      "doc/config/paths.yaml",
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/architecture/",
+      "doc/skills/",
+      "doc/tasks/UI-0029/"
+    ]
+  },
+  "current_behavior": "Без явно заданного типа CLI создаёт ребёнка subtask без flow. Тип feature требует детей даже у вложенной карточки, а запрет типа быть ребёнком отдельно не выражен.",
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    "AC-1: Агент явно передаёт предметный тип ребёнка, CLI разрешает соответствующий flow и запрещает новые записи subtask, не наследуя тип родителя.",
+    "AC-2: Политики типа независимо ограничивают наличие детей и положение в иерархии; отказы создания не меняют карточки, стадии или журнал.",
+    "AC-3: Три legacy-ребёнка UI-0029 получают предметные типы и flow синхронно с родителем; ключи, связи, фазы, критерии, планы и история сохраняются. Остальные карточки не переписываются и не получают новых ошибок.",
+    "AC-4: Скиллы, архитектура и справка показывают, как выбирать тип по результату, отличать источник от роли и проверять совместимость; старые записи и журналы не теряют поддерживаемый путь чтения и восстановления.",
+    "AC-5: CLI обнаруживает ссылки на удалённый или переименованный тип и несовместимость flow, обязательных полей, сложности и политик у корней и детей, включая завершённые записи и зеркала родителей. Несовместимость блокирует итоговый прогон.",
+    "AC-6: Для каждого конфликта CLI показывает ключ, фактическую фазу, путь и поле, нарушенное правило и безопасный следующий шаг. Повторная проверка подтверждает исправление без автоматической переклассификации, переоткрытия или изменения истории."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не переписывать раздел tier'ов и шаблонов плана в doc/skills/plan-task/: он принадлежит UI-0032-0003; правки UI-0030-0002 ограничены выбором типа ребёнка",
+    "Не создавать вторую JSON-схему конфигов типов"
+  ],
+  "assumptions": [
+    "Форма конфигов типов задаётся единой doc/architecture/schemas/task-conf.schema.json из UI-0032; children_policy и parent_policy добавляются в неё, второй схемы не создаётся",
+    "Блок plan/acceptance в конфиге типа и резолвер политики плана принадлежат UI-0032; UI-0030 их не переопределяет и не дублирует",
+    "Корпусный скан ссылок на удалённый или переименованный тип остаётся здесь (AC-5); локальная сверка task-conf с paths.yaml принадлежит UI-0032"
+  ],
+  "open_questions": [],
+  "risk": "high",
+  "authority": {
+    "allowed": [
+      "Локальные изменения в scope и тесты после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Изменение этапов и истории чужих задач; запись во внешний трекер, merge, push и deploy без отдельного разрешения"
+    ],
+    "approval_required": [
+      "Начало реализации"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "high",
+  "estimate_hours": 56,
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Типы, политики и проверки CLI",
+      "status": "open",
+      "path": "subtasks/0001/task.json",
+      "task_type": "bugfix",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 16
+    },
+    {
+      "id": "0002",
+      "title": "Совместимая миграция и инструкции постановки",
+      "status": "open",
+      "path": "subtasks/0002/task.json",
+      "depends_on": [
+        "0001"
+      ],
+      "task_type": "bugfix",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 16
+    },
+    {
+      "id": "0003",
+      "title": "Проверка влияния изменений типов на весь корпус задач",
+      "status": "open",
+      "path": "subtasks/0003/task.json",
+      "depends_on": [
+        "0001"
+      ],
+      "task_type": "bugfix",
+      "flow": "standard-implementation",
+      "complexity": "medium",
+      "estimate_hours": 16
+    }
+  ],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Вернуть изменения CLI и конфигов согласованно с четырьмя карточками UI-0029 к сохранённому снимку; не откатывать чужие правки или историю. Повторить сравнение с baseline.",
+  "implementation_plan": [
+    "0001: политика и CLI с совместимым чтением и восстановлением",
+    "0002: синхронная миграция и обновление инструкций",
+    "0003: проверка всех фаз, отчёт конфликтов и итоговый гейт",
+    "Интеграционная проверка корпуса и артефактов"
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "FLOW-create-task",
+    "FLOW-cli-subtask-lifecycle",
+    "ENT-task-record",
+    "ENT-verification-evidence",
+    "REG-cli-command-map"
+  ],
+  "related_tests": [
+    {
+      "test_id": "task-identity",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

@@ -1,0 +1,13 @@
+{
+  "task_key": "UI-0032-0005",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-1", "covers": ["AC-1"], "expected": "Критерий нового типа, фаза 1, фаза 2 с предусловиями и отклонённые кандидаты зафиксированы."},
+    {"id": "CASE-2", "covers": ["AC-2"], "expected": "spike, migration и incident доступны, имеют flow и промпты и проходят scan и validate."},
+    {"id": "CASE-3", "covers": ["AC-3"], "expected": "Профильные разделы и правила: таймбокс и решение, целостность и повтор, таймлайн и follow-ups."},
+    {"id": "CASE-4", "covers": ["AC-4"], "expected": "Существующие карточки не изменились; одобрение владельца записано до реализации."}
+  ]
+}

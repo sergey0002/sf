@@ -443,6 +443,33 @@ $ arch task registry --json
 
 `task registry init` создаёт пустой реестр, `task registry add <key>` регистрирует существующую карточку.
 
+```
+$ arch task registry check
+task registry matches 28 task directories
+
+$ arch task registry sync --json
+{
+  "ok": true,
+  "code": 0,
+  "data": {
+    "added": [],
+    "removed": [],
+    "count": 28,
+    "ok": true,
+    "drift": {
+      "ok": true,
+      "cards": 28,
+      "registry": 28,
+      "missing_in_registry": [],
+      "missing_on_disk": [],
+      "number_mismatch": []
+    }
+  }
+}
+```
+
+`task registry check` не пишет файл и завершается с exit 1 при любом расхождении; `sync` добавляет пропущенные карточки, `--prune` удаляет записи без каталога.
+
 ## 3. Сценарии обработки ошибок
 
 ### 3.1 Отсутствующее обязательное поле
@@ -534,10 +561,8 @@ python doc/tools/arch/__main__.py docs paths --check
 python doc/tools/arch/__main__.py task decompose UI-0100 \
   --subtask-id 0001 --subtask-title "JSON-канон и валидация" \
   --subtask-id 0002 --subtask-title "Поиск и обратные ссылки" \
-  --subtask-type 0001=feature --subtask-flow 0001=standard-implementation \
-  --subtask-complexity 0001=high --subtask-estimate 0001=12 \
-  --subtask-type 0002=feature --subtask-flow 0002=standard-implementation \
-  --subtask-complexity 0002=medium --subtask-estimate 0002=8 \
+  --subtask-type 0001=subtask --subtask-complexity 0001=high --subtask-estimate 0001=12 \
+  --subtask-type 0002=subtask --subtask-complexity 0002=medium --subtask-estimate 0002=8 \
   --subtask-depends-on 0002=0001
 
 # 6. Проверить диагноз
@@ -569,10 +594,8 @@ python doc/tools/arch/__main__.py task init 2045
 python doc/tools/arch/__main__.py task decompose 2045 \
   --subtask-id 0001 --subtask-title "Нормализация и валидация входа" \
   --subtask-id 0002 --subtask-title "Реализация изменения" \
-  --subtask-type 0001=bugfix --subtask-flow 0001=standard-implementation \
-  --subtask-complexity 0001=medium --subtask-estimate 0001=4 \
-  --subtask-type 0002=bugfix --subtask-flow 0002=standard-implementation \
-  --subtask-complexity 0002=high --subtask-estimate 0002=12 \
+  --subtask-type 0001=subtask --subtask-complexity 0001=medium --subtask-estimate 0001=4 \
+  --subtask-type 0002=subtask --subtask-complexity 0002=high --subtask-estimate 0002=12 \
   --subtask-depends-on 0002=0001
 
 python doc/tools/arch/__main__.py task validate 2045

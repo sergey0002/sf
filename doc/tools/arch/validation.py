@@ -380,6 +380,12 @@ def validate_task_json(data: dict[str, Any], task_key: str, project_config: Proj
                 v = scope.get(side)
                 if v is not None and not isinstance(v, list):
                     errors.append(f"task.json: scope.{side} must be an array")
+            planned = scope.get("write_files")
+            if planned is not None and (
+                not isinstance(planned, list)
+                or any(not isinstance(item, str) for item in planned)
+            ):
+                errors.append("task.json: scope.write_files must be an array of strings")
 
     changed_files = data.get("changed_files")
     if changed_files is not None:

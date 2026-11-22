@@ -1,0 +1,103 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0032, AC-9",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Скилл, каталог правил и архитектурные записи",
+  "kind": "docs",
+  "intent": "Скилл и архитектурные записи описывают политику плана и правила приёмки как конфигурацию типа, а агент получает шаблон и правила через plan-policy, не полагаясь на глобальную таблицу как единственный источник.",
+  "scope": {
+    "in": [
+      "Перевести doc/skills/plan-task/SKILL.md в маршрутизатор: определить тип, получить политику через arch task plan-policy, открыть один шаблон по пути из политики, применить объявленные правила приёмки",
+      "Пометить глобальную таблицу tier'ов как дефолт и убрать утверждение, что она единственный источник",
+      "Описать каталог правил: kind'ы, параметры, что проверяется машинно и что остаётся смысловым у агента",
+      "Синхронизировать ENT-verification-evidence, SPEC-cli-implementation, REG-cli-validation-rules, REG-cli-command-map и VIEW-cli-package",
+      "Описать единую схему task-conf, разрешение type → defaults без слоя flow, семантику слияния, режим plan_policy, обнаружение типов и проверки scan/validate"
+    ],
+    "out": [
+      "Изменение кода CLI и конфигов — это UI-0032-0001 и UI-0032-0002",
+      "Файлы новых типов — это UI-0032-0005",
+      "Переписывание существующих планов и доказательств"
+    ],
+    "allowed_files_modules": [
+      "doc/skills/plan-task/",
+      "doc/architecture/system/",
+      "doc/architecture/domains/task-lifecycle/",
+      "doc/tasks/UI-0032/subtasks/0003/"
+    ]
+  },
+  "current_behavior": "doc/skills/plan-task/SKILL.md задаёт таблицу tier'ов и правило одного шаблона без источника конфигурации; архитектурные записи описывают проверку tier'ов без политики типа, каталога правил и команды plan-policy.",
+  "evidence": [
+    "doc/skills/plan-task/SKILL.md:21-50 — таблица tier'ов и правило одного шаблона",
+    "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md:48 — контракт tier'ов",
+    "doc/architecture/system/implementation-spec.md:466 — описание acceptance_plan_ready",
+    "doc/architecture/system/cli-command-map.md:32-39 — карта команд task",
+    "doc/architecture/system/cli-validation-rules.md:23 — правила task-conf",
+    "doc/architecture/system/cli-package.md:75 — принцип конфиг-driven валидации",
+    "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md §5 — каталог правил"
+  ],
+  "contracts_and_invariants": [
+    "ARCH-contract: архитектурные записи — канонический источник принятого решения",
+    "Инвариант: существующие планы и доказательства остаются валидными без переписывания",
+    "Инвариант: скилл ссылается на публичную команду, а не дублирует значения политики",
+    "Инвариант: правило приёмки описано как проверяемое или как смысловое, без двусмысленности"
+  ],
+  "acceptance_criteria": [
+    "AC-1: plan-task получает tier'ы, разделы и путь шаблона через arch task plan-policy, открывает ровно один шаблон и применяет объявленные правила приёмки; описано поведение типов без собственного блока plan.",
+    "AC-2: архитектурные записи описывают plan-defaults.yaml, единую схему task-conf.schema.json, блок plan типа, разрешение type → defaults без слоя flow, семантику слияния, режим plan_policy, каталог правил и их kind'ы, команду plan-policy, обнаружение типов и проверки scan/validate; глобальная таблица больше не единственный источник.",
+    "AC-3: arch validate --brief, arch index check и arch docs paths --check проходят; план UI-0031 остаётся принятым без изменений."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не менять смысловые разделы документов вне политики плана",
+    "Не дублировать значения tier'ов и правил в скилле как нормативный источник",
+    "Индекс пересобирать только через CLI"
+  ],
+  "assumptions": [
+    "Публичная команда plan-policy уже доступна после UI-0032-0002",
+    "Оценка 8 ч покрывает скилл, каталог правил и пять архитектурных записей"
+  ],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
+    "forbidden": ["Правки кода и конфигов, переписывание существующих планов, внешняя запись"],
+    "approval_required": ["Начало реализации"]
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "medium",
+  "estimate_hours": 8,
+  "subtasks": [],
+  "depends_on": ["UI-0032-0002"],
+  "phase": "intake",
+  "rollback_plan": "Вернуть скилл и затронутые архитектурные записи к снимку и пересобрать индекс.",
+  "implementation_plan": [
+    "Переписать маршрутизацию скилла на plan-policy и правила приёмки",
+    "Описать каталог правил и границу машинной проверки",
+    "Синхронизировать пять архитектурных записей",
+    "Пересобрать индекс и прогнать проверки"
+  ],
+  "related_docs": ["ENT-verification-evidence", "SPEC-cli-implementation", "REG-cli-validation-rules", "REG-cli-command-map", "VIEW-cli-package"],
+  "related_tests": [
+    {"test_id": "factory-brief", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}
+  ],
+  "research_docs": [],
+  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

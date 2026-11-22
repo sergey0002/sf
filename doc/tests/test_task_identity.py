@@ -1251,6 +1251,113 @@ class TaskIdentityContractTests(unittest.TestCase):
             card.write_text(json.dumps(task), encoding="utf-8")
             self.assertEqual(self._cli_at(root, "task", "validate", "UI-9999").returncode, 0)
 
+    def _write_acceptance_plan(
+        self, tdir, card, plan_text, *, complexity="medium", estimate_hours=None,
+    ):
+        task = json.loads(card.read_bytes())
+        task.update(
+            acceptance_policy="case-coverage-v1",
+            acceptance_criteria=["AC-1: observable result"],
+            complexity=complexity,
+        )
+        if estimate_hours is None:
+            task.pop("estimate_hours", None)
+        else:
+            task["estimate_hours"] = estimate_hours
+        card.write_text(json.dumps(task), encoding="utf-8")
+        stage = tdir / "stage1"
+        stage.mkdir(exist_ok=True)
+        (stage / "plan.md").write_text(plan_text, encoding="utf-8")
+        (stage / "verification.json").write_text(json.dumps({
+            "task_key": "UI-9999", "stage_id": "stage1", "checks": [],
+            "planned_checks": [{"id": "CASE-1", "covers": ["AC-1"], "expected": "OK"}],
+        }), encoding="utf-8")
+
+    def _plan_ready(self, root):
+        result = self._cli_at(root, "task", "diagnose", "UI-9999", "--json", "--brief")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)["data"]
+
+    MICRO_PLAN = (
+        "<!-- plan-tier: micro -->\n# UI-9999: small change\n\n"
+        "## Приёмка\n\n| CASE | AC | Дано | Действие | Ожидание |\n"
+        "|---|---|---|---|---|\n| CASE-1 | AC-1 | fixture | command | exit 0 |\n\n"
+        "## Проверка\n\n```bash\narch validate --brief\n```\n"
+    )
+
+    def test_plan_tier_must_match_complexity(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            self._write_acceptance_plan(tdir, card, self.MICRO_PLAN, complexity="high")
+            data = self._plan_ready(root)
+            self.assertFalse(data["acceptance_plan_ready"])
+            self.assertIn("not allowed for complexity", " ".join(data["close_blockers"]))
+
+            self._write_acceptance_plan(
+                tdir, card,
+                "<!-- plan-tier: full -->\n# Full\n\n## Цель\n\nx\n\n## Правила проекта\n\nx\n\n"
+                "## Решения\n\nx\n\n## Риск и откат\n\nx\n\n## Приёмка\n\nx\n\n"
+                "## Оценка\n\nx\n\n## Проверка\n\nx\n",
+                complexity="high",
+            )
+            self.assertTrue(self._plan_ready(root)["acceptance_plan_ready"])
+
+    def test_plan_tier_marker_required_with_estimate(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            plan = (
+                "# UI-9999\n\n## Цель\n\nx\n\n## Приёмка\n\nx\n\n## Оценка\n\nx\n\n"
+                "## Проверка\n\nx\n"
+            )
+            self._write_acceptance_plan(tdir, card, plan, complexity="medium", estimate_hours=4)
+            data = self._plan_ready(root)
+            self.assertFalse(data["acceptance_plan_ready"])
+            self.assertIn("plan-tier", " ".join(data["close_blockers"]))
+
+            self._write_acceptance_plan(
+                tdir, card, "<!-- plan-tier: standard -->\n" + plan,
+                complexity="medium", estimate_hours=4,
+            )
+            self.assertTrue(self._plan_ready(root)["acceptance_plan_ready"])
+
+    def test_micro_plan_requires_sections_and_respects_line_limit(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            self._write_acceptance_plan(
+                tdir, card, self.MICRO_PLAN, complexity="low", estimate_hours=1,
+            )
+            self.assertTrue(self._plan_ready(root)["acceptance_plan_ready"])
+
+            oversized = self.MICRO_PLAN + "\n" + "\n".join(f"line {i}" for i in range(70))
+            self._write_acceptance_plan(
+                tdir, card, oversized, complexity="low", estimate_hours=1,
+            )
+            data = self._plan_ready(root)
+            self.assertFalse(data["acceptance_plan_ready"])
+            self.assertIn("limit is 60", " ".join(data["close_blockers"]))
+
+            missing = "<!-- plan-tier: micro -->\n# UI-9999\n\n## Приёмка\n\nx\n"
+            self._write_acceptance_plan(
+                tdir, card, missing, complexity="low", estimate_hours=1,
+            )
+            data = self._plan_ready(root)
+            self.assertFalse(data["acceptance_plan_ready"])
+            self.assertIn("requires sections", " ".join(data["close_blockers"]))
+
+    def test_legacy_plan_without_tier_stays_ready(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            self._write_acceptance_plan(tdir, card, "# Test plan\n", complexity="medium")
+            self.assertTrue(self._plan_ready(root)["acceptance_plan_ready"])
+
     def test_scan_task_conf_reports_unreachable_and_ambiguous_flow(self):
         temp = tempfile.TemporaryDirectory()
         with temp:
@@ -1388,6 +1495,161 @@ class TaskIdentityContractTests(unittest.TestCase):
             closed = self._cli_at(root, "task", "close", "UI-9999", "--json")
             self.assertEqual(closed.returncode, 0, closed.stderr)
 
+    def test_decompose_and_subtask_status_support_json(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, _ = self._prepare_decompose_parent(root)
+            created = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0001", "--subtask-title", "First", "--json",
+            )
+            self.assertEqual(created.returncode, 0, created.stderr)
+            payload = json.loads(created.stdout)["data"]
+            self.assertEqual(payload["subtasks_created"][0]["subtask_id"], "0001")
+            status = self._cli_at(
+                root, "task", "subtask", "status", "UI-9999", "0001", "--json"
+            )
+            self.assertEqual(status.returncode, 0, status.stderr)
+            self.assertEqual(json.loads(status.stdout)["data"]["phase"], "intake")
+            validated = self._cli_at(
+                root, "task", "subtask", "validate", "UI-9999", "0001", "--json"
+            )
+            self.assertEqual(validated.returncode, 0, validated.stderr)
+            self.assertTrue(json.loads(validated.stdout)["data"]["ok"])
+
+    def test_workspace_preflight_reports_declared_and_module_overlap(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            task = json.loads(card.read_bytes())
+            task["scope"]["allowed_files_modules"] = ["doc/tools/arch/"]
+            task["scope"]["write_files"] = ["doc/tools/arch/task_ops.py"]
+            task["changed_files"] = {
+                "added": [], "modified": ["doc/tools/arch/task_ops.py"], "deleted": [],
+            }
+            card.write_text(json.dumps(task), encoding="utf-8")
+            git = ["git", "-C", str(root), "-c", "user.email=t@example.invalid",
+                   "-c", "user.name=test"]
+            subprocess.run(["git", "init", "-q", str(root)], check=True)
+            subprocess.run([*git, "add", "-A"], check=True)
+            subprocess.run([*git, "commit", "-qm", "base"], check=True)
+
+            clean = self._cli_at(root, "task", "workspace", "UI-9999", "--json")
+            self.assertEqual(clean.returncode, 0, clean.stderr)
+            self.assertEqual(json.loads(clean.stdout)["data"]["preflight"]["status"], "clean")
+
+            target = root / "doc/tools/arch/task_ops.py"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("changed\n", encoding="utf-8")
+            overlap = self._cli_at(root, "task", "workspace", "UI-9999", "--json")
+            self.assertEqual(overlap.returncode, 0, overlap.stderr)
+            preflight = json.loads(overlap.stdout)["data"]["preflight"]
+            self.assertEqual(preflight["status"], "isolate")
+            self.assertIn("doc/tools/arch/task_ops.py", preflight["intersections"])
+            self.assertEqual(preflight["foreign_changes"], [])
+            diagnosis = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(diagnosis["write_scope"]["status"], "isolate")
+
+            target.unlink()
+            other = root / "doc/tools/arch/other.py"
+            other.write_text("other\n", encoding="utf-8")
+            review = self._cli_at(root, "task", "workspace", "UI-9999", "--json")
+            self.assertEqual(review.returncode, 0, review.stderr)
+            preflight = json.loads(review.stdout)["data"]["preflight"]
+            self.assertEqual(preflight["status"], "review")
+            self.assertIn("doc/tools/arch/other.py", preflight["module_overlaps"])
+
+    def test_evidence_freshness_is_separate_from_historical_closure(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            stage = tdir / "stage1"
+            (stage / "plan.md").write_text("# plan\n", encoding="utf-8")
+            (root / "input.txt").write_text("before", encoding="utf-8")
+            task = json.loads(card.read_bytes())
+            task.update(
+                acceptance_policy="case-coverage-v1",
+                acceptance_criteria=["AC-1: observable outcome"],
+                phase="completed",
+            )
+            card.write_text(json.dumps(task), encoding="utf-8")
+            entries = [
+                {"path": name, "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest()}
+                for name in ("doc/tasks/UI-9999/stage1/plan.md", "input.txt")
+            ]
+            (stage / "verification.json").write_text(json.dumps({
+                "task_key": "UI-9999", "stage_id": "stage1", "status": "passed",
+                "checked_revision": "sha256:fixture",
+                "planned_checks": [{"id": "CASE-1", "covers": ["AC-1"], "expected": "Outcome"}],
+                "checks": [{"cases": ["CASE-1"], "command": "test", "exit_code": 0, "result": "OK"}],
+                "snapshot_files": entries,
+            }), encoding="utf-8")
+
+            current = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(current["evidence_freshness"]["status"], "current")
+            checked = self._cli_at(root, "task", "evidence", "UI-9999", "--check")
+            self.assertEqual(checked.returncode, 0, checked.stderr)
+            self.assertEqual(json.loads(checked.stdout)["data"]["status"], "current")
+
+            (root / "input.txt").write_text("after", encoding="utf-8")
+            stale = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(stale["phase"], "completed")
+            self.assertEqual(stale["evidence_freshness"]["status"], "stale")
+            self.assertEqual(stale["evidence_freshness"]["stale_files"], ["input.txt"])
+            self.assertIn("historical closure", stale["evidence_freshness"]["note"])
+            checked = self._cli_at(root, "task", "evidence", "UI-9999", "--check")
+            self.assertEqual(checked.returncode, 1)
+            payload = json.loads(checked.stdout)["data"]
+            self.assertFalse(payload["current"])
+            self.assertEqual(payload["status"], "stale")
+            self.assertEqual(payload["stale_files"], ["input.txt"])
+
+            doctor = json.loads(
+                self._cli_at(root, "task", "doctor", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(doctor["phase"], "completed")
+            self.assertEqual(doctor["evidence_freshness"]["status"], "stale")
+            self.assertIn("preflight", doctor)
+
+    def test_baseline_records_command_and_refuses_changed_inputs(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            (root / "input.txt").write_text("before", encoding="utf-8")
+            original = card.read_bytes()
+            result = self._cli_at(
+                root, "task", "baseline", "UI-9999", "--file", "input.txt",
+                "--run", sys.executable, "-c", "print('baseline')",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)["data"]
+            self.assertEqual(payload["exit_code"], 0)
+            baseline = tdir / "stage1/baseline.json"
+            record = json.loads(baseline.read_text(encoding="utf-8"))
+            self.assertEqual(record["command"].split()[0], sys.executable)
+            self.assertEqual(record["exit_code"], 0)
+            self.assertEqual(record["files"][0]["path"], "input.txt")
+            self.assertEqual(card.read_bytes(), original)
+
+            refused = self._cli_at(
+                root, "task", "baseline", "UI-9999", "--file", "input.txt",
+                "--run", sys.executable, "-c",
+                "open('input.txt', 'w', encoding='utf-8').write('changed')",
+            )
+            self.assertEqual(refused.returncode, 1)
+            self.assertIn("changed during the run", refused.stderr)
+            self.assertEqual(json.loads(baseline.read_text(encoding="utf-8")), record)
+
     def _prepare_decompose_parent(self, root, task_key="UI-9999"):
         tdir = root / "doc" / "tasks" / task_key
         (tdir / "stage1").mkdir(parents=True)
@@ -1522,6 +1784,54 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertFalse((tdir / "subtasks" / "0002").exists())
         self.assertEqual(parent.read_bytes(), before)
         self.assertTrue(journal.exists())
+
+    def test_resume_refuses_added_options_for_already_written_child(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, parent = self._prepare_decompose_parent(root)
+            original = parent.read_bytes()
+            args = ("task", "decompose", "UI-9999", "--subtask-id", "0001", "--subtask-title", "First",
+                    "--subtask-id", "0002", "--subtask-title", "Second", "--subtask-type", "0001=bugfix")
+            first_run = self._cli_at(root, *args)
+            self.assertEqual(first_run.returncode, 0, first_run.stderr)
+            first = tdir / "subtasks/0001/task.json"
+            saved_child = first.read_bytes()
+            second = tdir / "subtasks/0002"
+            (second / "task.json").unlink()
+            (second / "stage1").rmdir()
+            second.rmdir()
+            parent.write_bytes(original)
+            journal = tdir / ".arch-write-journal.json"
+            journal.write_text(json.dumps({
+                "schema_version": 1, "kind": "decompose", "task_key": "UI-9999",
+                "subtasks": [
+                    {"id": "0001", "title": "First", "task_type": "bugfix", "complexity": "medium"},
+                    {"id": "0002", "title": "Second"},
+                ],
+            }), encoding="utf-8")
+            before = self._snapshot_task_tree(tdir)
+
+            for option in (("--subtask-depends-on", "0001=0002"),
+                           ("--subtask-depends-on", "0001=0003"),
+                           ("--subtask-estimate", "0001=3"),
+                           ("--subtask-flow", "0001=standard-implementation")):
+                with self.subTest(option=option):
+                    refused = self._cli_at(root, *args, *option)
+                    self.assertEqual(refused.returncode, 5, refused.stderr)
+                    self.assertIn("different package", refused.stderr)
+                    self.assertEqual(self._snapshot_task_tree(tdir), before)
+
+            resumed = self._cli_at(root, *args)
+            self.assertEqual(resumed.returncode, 0, resumed.stderr)
+            self.assertEqual(first.read_bytes(), saved_child)
+            self.assertTrue((second / "task.json").is_file())
+            self.assertFalse(journal.exists())
+            declared = json.loads(parent.read_bytes())["subtasks"]
+            self.assertEqual([row["id"] for row in declared], ["0001", "0002"])
+            for row in declared:
+                self.assertNotIn("depends_on", row)
+                self.assertNotIn("estimate_hours", row)
 
     def _snapshot_task_tree(self, directory):
         return {path.relative_to(directory).as_posix(): path.read_bytes() if path.is_file() else None

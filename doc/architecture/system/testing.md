@@ -122,6 +122,11 @@ implemented: false
 | task new | Пустой реестр | Каталог, `task.json` и запись реестра созданы одним вызовом |
 | task new write failure | Ошибка записи реестра | Созданный каталог задачи удалён, реестр не изменён |
 | registry add | Существующая карточка вне реестра | Запись добавлена, title берётся из `task.json` |
+| registry check drift | Каталог без записи в реестре | `missing_in_registry`, exit 1, файл реестра не изменён |
+| registry check stale | Запись без каталога | `missing_on_disk`, exit 1 |
+| registry sync | Реестр и каталоги расходятся | Недостающие записи добавлены, title из `task.json` |
+| registry sync --prune | Каталог удалён | Запись удалена, `removed` содержит ключ |
+| registry sync mismatch | Номер в `task.json` не совпадает с ключом | RegistryError, реестр не изменён |
 
 ## 4. Integration-тесты
 
@@ -141,6 +146,8 @@ implemented: false
 | CLI task new | `arch task new --title "Test" --json` | JSON с новым `UI-NNNN`, карточка и запись реестра созданы, exit 0 |
 | CLI task registry | `arch task registry --json` | `path`, `schema_version`, `count`, `tasks`, exit 0 |
 | CLI task registry add | `arch task registry add <key> --json` | Запись существующей карточки добавлена, exit 0 |
+| CLI task registry check | `arch task registry check` | Совпадение реестра и каталогов, exit 0; расхождение даёт exit 1 |
+| CLI task registry sync | `arch task registry sync --json` | `added`/`removed`/`count`, exit 0 |
 
 ## 5. E2E-тесты
 
@@ -263,3 +270,5 @@ bash doc/tests/run.sh --gate
 ```
 
 Он выполняет read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными `PYTHONHASHSEED` в отдельных временных деревьях, unit/acceptance тесты и fixture. `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую. GitHub Actions workflow удалён; `--ci` больше не поддерживается.
+
+Для итерации используйте точный селектор или `bash doc/tests/run.sh --only <pattern>`: он запускает обе группы с `unittest -k` и отказывает, если ни одна группа не выбрала тест. `--only` не заменяет `--gate`; полный gate запускается один раз на принятом снимке. Повторный gate нужен после изменения проверяемого входа или объяснённого сбоя, а не вместо локализации.

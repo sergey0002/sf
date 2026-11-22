@@ -1,0 +1,139 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0031",
+  "task_number": "0031",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Чат, 2026-11-22: перечень типов архитектурных документов расходится между реестром контракта, paths.yaml, body-схемами и фактическим использованием; привести к единому корректному состоянию.",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Согласованность реестра типов архитектурных документов",
+  "kind": "docs",
+  "intent": "Агент и валидатор видят один реестр допустимых типов архитектурных документов: каждый используемый тип объявлен, описан и имеет проверяемый формат, а объявленные типы не расходятся с практикой.",
+  "scope": {
+    "in": [
+      "Свести реестр типов из ARCH-contract §5.5/§6.1, doc/config/paths.yaml project.document_types, schemas/bodies и index.json к единому набору",
+      "Убрать дубль rule-set и расхождение status-enum между document.schema.json, paths.yaml и контрактом §2.3",
+      "Исправить schemas/bodies/glossary.json и обеспечить валидность всех body-схем",
+      "Добавить детерминированную проверку согласованности типов и статусов в doc/tests с запуском через doc/tests/run.sh --brief",
+      "Обновить описание формата и условие применения для каждого объявленного типа, включая неиспользуемые"
+    ],
+    "out": [
+      "Переклассификация типов существующих документов и переписывание их смыслового содержания",
+      "Создание новых архитектурных документов по продуктовым доменам",
+      "Изменение task-conf, task_types, flow и политик задач",
+      "Изменение поведения CLI за пределами проверки реестра типов и статусов"
+    ],
+    "allowed_files_modules": [
+      "doc/config/paths.yaml",
+      "doc/architecture/system/architecture-contract.md",
+      "doc/architecture/schemas/",
+      "doc/architecture/README.md",
+      "doc/tests/",
+      "doc/tasks/UI-0031/"
+    ]
+  },
+  "current_behavior": "Реестр контракта §6.1 объявляет 17 типов, paths.yaml — 27 записей с дублем rule-set, body-схемы есть для 15 типов, index.json использует 20 типов. Шесть объявленных типов не используются, девять используемых отсутствуют в реестре контракта. glossary.json не парсится как JSON. Enum статусов документа различается в трёх источниках.",
+  "evidence": [
+    "doc/config/paths.yaml project.document_types: 27 записей, rule-set повторяется",
+    "doc/architecture/system/architecture-contract.md:311-332 — таблица реестра типов",
+    "doc/architecture/schemas/bodies: 15 файлов, glossary.json невалидный JSON",
+    "doc/architecture/schemas/document.schema.json:12 — enum статусов draft|proposed|accepted|deprecated|superseded",
+    "doc/config/paths.yaml:226-232 — enum статусов draft|current|deprecated|superseded|accepted|rejected",
+    "doc/architecture/index.json — фактические типы и статусы документов"
+  ],
+  "contracts_and_invariants": [
+    "ARCH-contract §5.5: наличие формата не означает, что нужно создать файл для каждого типа",
+    "ARCH-contract §6.1: type берётся из зарегистрированного конечного набора; новые типы не добавляются из-за отдельной команды",
+    "ADR-0001: индекс производный, генерируется и не правится вручную",
+    "CAP-doc-integrity: структурная валидность frontmatter, ID, ссылок и индекса проверяется CLI",
+    "Инвариант: существующие документы остаются читаемыми и валидными без переписывания содержания"
+  ],
+  "acceptance_criteria": [
+    "AC-1: doc/config/paths.yaml project.document_types — единственный источник истины для допустимых типов: список без дублей, и множество типов, фактически используемых в index.json, совпадает с объявленным. docs paths --check проходит.",
+    "AC-2: Таблица реестра ARCH-contract §5.5/§6.1 содержит строку формата и условие применения для каждого объявленного типа, и её набор типов совпадает с document_types. Неиспользуемые типы явно помечены как зарезервированные с условием, когда их создавать, а не отсутствуют молча.",
+    "AC-3: Для каждого используемого типа есть либо валидная body-схема в schemas/bodies, либо явная запись prose-only с причиной; все body-схемы парсятся как JSON Schema Draft 2020-12, включая исправленный glossary.json.",
+    "AC-4: Детерминированная проверка в doc/tests, доступная через doc/tests/run.sh --brief, падает при использовании необъявленного типа, при объявленном типе без строки формата, при дубле в document_types и при невалидной body-схеме; на текущем дереве проходит.",
+    "AC-5: Enum статусов документа согласован между document.schema.json, paths.yaml и ARCH-contract §2.3; существующие документы со status draft и accepted остаются валидными без переписывания, а недопустимый статус отвергается валидатором.",
+    "AC-6: validate --brief, index check, docs paths --check и doc/tests/run.sh --brief проходят; смысловое содержание существующих документов не переписано — меняются только реестр типов, форматы, enum статусов, схемы и тесты."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не менять тип существующих документов и их смысловые разделы",
+    "Не добавлять новые типы без concern и потребителя",
+    "Индекс пересобирать только через CLI",
+    "Ручной контроль: результат и итоговый diff проверяет владелец; агент не закрывает задачу самостоятельно"
+  ],
+  "assumptions": [
+    "Неиспользуемые типы (system-overview, integration, cross-cutting-concept, quality-view, deployment-operations-view, verification-map) сохраняются как зарезервированные, если для них есть архитектурный concern"
+  ],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Переклассификация существующих документов, запись во внешний трекер, merge, push и deploy без отдельного разрешения"
+    ],
+    "approval_required": [
+      "Начало реализации",
+      "Ручная проверка и приёмка итогового diff владельцем перед закрытием"
+    ]
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "medium",
+  "estimate_hours": 8,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "verification",
+  "rollback_plan": "Вернуть paths.yaml, architecture-contract.md, schemas/ и doc/tests к сохранённому снимку и пересобрать индекс; смысловые документы и чужие правки не откатывать.",
+  "implementation_plan": [
+    "Сверить наборы типов из index.json, paths.yaml, контракта и body-схем и зафиксировать целевой набор",
+    "Обновить paths.yaml (дубль, статусы) и ARCH-contract §2.3/§5.5/§6.1",
+    "Исправить glossary.json и привести body-схемы к валидному JSON Schema 2020-12",
+    "Добавить проверку согласованности в doc/tests и включить её в run.sh --brief",
+    "Прогнать validate, index check, docs paths --check и полный набор тестов"
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "CAP-doc-integrity",
+    "ADR-0001",
+    "REG-cli-command-map"
+  ],
+  "related_tests": [
+    {
+      "test_id": "doc-type-registry",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [
+      "doc/tests/test_doc_type_registry.py",
+      "doc/tasks/UI-0031/stage1/plan.md",
+      "doc/tasks/UI-0031/stage1/verification.json"
+    ],
+    "modified": [
+      "doc/config/paths.yaml",
+      "doc/architecture/system/architecture-contract.md",
+      "doc/architecture/schemas/document.schema.json",
+      "doc/architecture/schemas/bodies/glossary.json"
+    ],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

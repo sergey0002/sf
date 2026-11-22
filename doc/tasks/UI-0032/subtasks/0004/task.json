@@ -1,0 +1,101 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032-0004",
+  "task_number": "0004",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0032, AC-11 и совместимость из AC-1",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Совместимость, отказы и итоговый гейт",
+  "kind": "refactor",
+  "intent": "Корпус существующих задач сохраняет готовность и свежесть доказательств, политика и новые типы не влияют на хеши снимка, а отказные сценарии и итоговый прогон подтверждают результат на принятом снимке.",
+  "scope": {
+    "in": [
+      "Регрессионная проверка задач без блока plan: acceptance_plan_ready и evidence_freshness до и после",
+      "Проверка, что политика и правила отсутствуют в snapshot_files и их изменение не инвалидирует evidence",
+      "Автоматизация отказных сценариев из UI-0032-0001 и UI-0032-0002, включая неизвестное правило и расхождение task-conf с paths.yaml",
+      "Проверка, что появление новых типов не меняет поведение существующих карточек",
+      "Итоговый гейт validate, index check, docs paths --check и run.sh --brief"
+    ],
+    "out": [
+      "Новая функциональность и правки конфигов сверх исправлений, найденных регрессией",
+      "Переклассификация существующих задач"
+    ],
+    "allowed_files_modules": [
+      "doc/tests/",
+      "doc/tools/arch/",
+      "doc/tasks/UI-0032/subtasks/0004/"
+    ]
+  },
+  "current_behavior": "Проверка плана опирается на константы, поэтому сравнение поведения до и после отсутствует; отказные сценарии политики и правил не покрыты общим прогоном.",
+  "evidence": [
+    "doc/tools/arch/acceptance.py:186-203 — acceptance_state и snapshot_problems",
+    "doc/tools/arch/acceptance.py:124-179 — snapshot_status и SHA-256 входов",
+    "doc/tests/run.sh — общий прогон --brief",
+    "doc/tasks/UI-0031/stage1/verification.json — пример записанного снимка"
+  ],
+  "contracts_and_invariants": [
+    "ENT-verification-evidence: политика не входит в snapshot_files; изменение кода или входа требует новой верификации",
+    "Инвариант: существующие карточки не переписываются и не получают новых ошибок",
+    "Инвариант: негативные фикстуры не меняют реальные карточки",
+    "Инвариант: новый тип не ослабляет проверки существующих типов"
+  ],
+  "acceptance_criteria": [
+    "AC-1: Для выборки существующих задач без блока plan acceptance_plan_ready и evidence_freshness совпадают до и после изменения; ни одна карточка не переписана.",
+    "AC-2: Политика и правила отсутствуют в snapshot_files, а изменение plan-defaults.yaml или блока plan не делает записанный evidence устаревшим.",
+    "AC-3: Отказные сценарии схемы, шаблона, покрытия complexity, дубля tier'ов, лимита, неизвестного типа, несовместимого tier, неизвестного правила и расхождения task-conf с paths.yaml выполняются автоматически и дают ожидаемые коды.",
+    "AC-4: Появление типов spike, migration и incident не меняет поведение существующих карточек и не добавляет ошибок в корпус.",
+    "AC-5: arch validate --brief, arch index check, arch docs paths --check и bash doc/tests/run.sh --brief проходят на итоговом снимке."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Не менять реальные карточки задач",
+    "Не ослаблять существующие проверки ради зелёного прогона",
+    "Не добавлять корпусный скан ссылок на удалённый тип — он принадлежит UI-0030 AC-5; проверять только локальную согласованность task-conf и paths.yaml"
+  ],
+  "assumptions": [
+    "Регрессия запускается на копиях карточек или на read-only диагностике без записи",
+    "Оценка 8 ч покрывает baseline, регрессию, автоматизацию отказов и итоговый гейт"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
+    "forbidden": ["Правки карточек, ослабление проверок, внешняя запись"],
+    "approval_required": ["Начало реализации", "Приёмка итогового diff владельцем"]
+  },
+  "approvals": [],
+  "task_type": "refactor",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "estimate_hours": 8,
+  "subtasks": [],
+  "depends_on": ["UI-0032-0001", "UI-0032-0002", "UI-0032-0003", "UI-0032-0005"],
+  "phase": "intake",
+  "rollback_plan": "Вернуть тесты и вспомогательные правки CLI к снимку; конфиги, резолвер, документы и новые типы предыдущих срезов оставить.",
+  "implementation_plan": [
+    "Снять baseline готовности и свежести для выборки карточек",
+    "Добавить регрессионные и отказные тесты, включая новые типы",
+    "Проверить изоляцию политики от snapshot_files",
+    "Прогнать итоговый гейт на стабильном снимке"
+  ],
+  "related_docs": ["ENT-verification-evidence", "SPEC-cli-implementation", "REG-cli-validation-rules"],
+  "related_tests": [
+    {"test_id": "plan-policy-compat", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"},
+    {"test_id": "factory-brief", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}
+  ],
+  "research_docs": [],
+  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

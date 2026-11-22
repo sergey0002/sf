@@ -1,0 +1,117 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0032-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "UI-0032, AC-4, AC-5 и AC-6",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Резолвер политики и оценщик правил",
+  "kind": "refactor",
+  "intent": "CLI разрешает политику плана по цепочке type → defaults, проверяет план и декларативные правила приёмки, а агент получает разрешённые разделы, лимиты, шаблоны и правила одной read-only командой.",
+  "scope": {
+    "in": [
+      "Создать doc/tools/arch/plan_policy.py: загрузка дефолтов и типа, слияние со скалярным переопределением и заменой списков, режим plan_policy: inherit|replace",
+      "Реализовать общий оценщик правил приёмки для kind'ов section_present, section_min_items, link_min, table_column, case_min, command",
+      "Перенести проверку tier'ов из констант acceptance.py на разрешённую политику и подключить оценщик правил",
+      "Добавить read-only команду arch task plan-policy --type <type> --json",
+      "Показать источник политики в diagnose, сохранив существующие поля",
+      "Покрыть разрешение, правила, отказы и интеграцию тестами"
+    ],
+    "out": [
+      "Создание конфигов, схемы, правил и шаблонов — это UI-0032-0001",
+      "Правки скилла и архитектурных записей — это UI-0032-0003",
+      "Файлы новых типов — это UI-0032-0005",
+      "Политика на уровне flow и корпусный скан ссылок на удалённый тип",
+      "Изменение формата verification.json и правил evidence"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/plan_policy.py",
+      "doc/tools/arch/acceptance.py",
+      "doc/tools/arch/task_ops.py",
+      "doc/tools/arch/cli/commands/task.py",
+      "doc/tools/arch/__init__.py",
+      "doc/tests/",
+      "doc/tasks/UI-0032/subtasks/0002/"
+    ]
+  },
+  "current_behavior": "Tier'ы и разделы заданы константами в acceptance.py; plan_tier_problems не получает конфигурацию типа; правил приёмки нет; отдельной команды просмотра политики нет; diagnose отдаёт только распознанный plan_tier.",
+  "evidence": [
+    "doc/tools/arch/acceptance.py:39-81 — plan_tier_problems по константам",
+    "doc/tools/arch/acceptance.py:186-203 — acceptance_state вызывает plan_tier_problems",
+    "doc/tools/arch/task_ops.py:1323-1325 — diagnose возвращает plan_tier",
+    "doc/tools/arch/validation.py:439-490 — загрузчик типов доступен резолверу",
+    "doc/tools/arch/cli/commands/task.py:727-760 — регистрация команд task",
+    "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md §5 — каталог правил"
+  ],
+  "contracts_and_invariants": [
+    "ENT-verification-evidence: неизвестный или несовместимый tier даёт acceptance_plan_ready: false; маркер обязателен при estimate_hours",
+    "REG-cli-command-map: read-only команда не пишет состояние",
+    "Инвариант: порядок разрешения type → defaults фиксирован; flow политику плана не переопределяет; списки заменяются целиком",
+    "Инвариант: оценщик правил проверяет только объявленную структуру и не выводит смысл из текста",
+    "Инвариант: неизвестный kind или ссылка на несуществующее правило — ошибка конфигурации, а не молчаливый пропуск",
+    "Инвариант: карточки без блока plan сохраняют прежние acceptance_plan_ready и evidence_freshness",
+    "Инвариант: политика не входит в snapshot_files"
+  ],
+  "acceptance_criteria": [
+    "AC-1: Резолвер возвращает политику по цепочке type → defaults; скалярные поля переопределяются, списки заменяются целиком, plan_policy: replace отбрасывает дефолтные tier'ы; результат детерминирован и не зависит от блока plan во flow.",
+    "AC-2: arch task plan-policy --type <type> --json возвращает tier'ы, разделы, лимиты, пути шаблонов, acceptance и правила с exit 0 и не изменяет дерево; неизвестный тип даёт ненулевой код с перечнем доступных значений.",
+    "AC-3: Оценщик реализует section_present, section_min_items, link_min, table_column, case_min и command; нарушение называет файл, раздел и правило; неизвестное правило в конфиге отвергается, а смысловые оракулы остаются за агентом.",
+    "AC-4: acceptance_state и plan_tier_problems проверяют план по разрешённой политике и правилам: типовые разделы, лимит micro из политики, несовместимый tier и нарушенное правило блокируют, совместимый план проходит.",
+    "AC-5: diagnose показывает источник политики, не меняя существующие поля; карточка без блока plan сохраняет acceptance_plan_ready и evidence_freshness."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Команда plan-policy только читает состояние",
+    "Не менять имена полей существующего вывода diagnose",
+    "Не менять формат verification.json",
+    "Не добавлять слой flow в разрешение политики",
+    "Не реализовывать в оценщике смысловые проверки, требующие модели"
+  ],
+  "assumptions": [
+    "Ошибки схемы уже отсекаются в UI-0032-0001; резолвер сообщает о неполной политике",
+    "Отсутствие блока plan во flow не является ошибкой и не влияет на результат",
+    "Оценка 16 ч покрывает резолвер, оценщик шести kind'ов, команду, интеграцию и тесты"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
+    "forbidden": ["Правки конфигов типов и шаблонов, переименование tier'ов, политика на уровне flow, внешняя запись"],
+    "approval_required": ["Начало реализации"]
+  },
+  "approvals": [],
+  "task_type": "refactor",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": ["UI-0032-0001"],
+  "phase": "intake",
+  "rollback_plan": "Удалить plan_policy.py и команду plan-policy, вернуть acceptance.py, task_ops.py, task.py и тесты к снимку; конфиги и шаблоны из UI-0032-0001 оставить.",
+  "implementation_plan": [
+    "Реализовать загрузку и слияние политики",
+    "Реализовать оценщик шести kind'ов правил",
+    "Перевести plan_tier_problems и acceptance_state на разрешённую политику и правила",
+    "Добавить команду plan-policy и источник политики в diagnose",
+    "Покрыть разрешение, правила, отказы и интеграцию тестами"
+  ],
+  "related_docs": ["ENT-verification-evidence", "REG-cli-command-map", "REG-cli-validation-rules", "SPEC-cli-implementation"],
+  "related_tests": [
+    {"test_id": "plan-policy-resolver", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+  ],
+  "research_docs": [],
+  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}
