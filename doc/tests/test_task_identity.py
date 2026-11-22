@@ -392,6 +392,77 @@ class TaskIdentityContractTests(unittest.TestCase):
             missing = self._cli_at(root, "task", "registry", "add", "UI-0999", "--json")
             self.assertNotEqual(missing.returncode, 0)
 
+    def _make_card(self, root, key, number, title="Card"):
+        directory = root / "doc/tasks" / key
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "task.json").write_text(
+            json.dumps({"task_key": key, "task_number": number, "title": title}),
+            encoding="utf-8",
+        )
+        return directory
+
+    def test_registry_check_detects_drift_without_writing(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            self._write_registry(root, [])
+            self._make_card(root, "UI-0500", "0500")
+            before = (root / "doc/config/task-registry.json").read_bytes()
+            result = self._cli_at(root, "task", "registry", "check", "--json")
+            self.assertEqual(result.returncode, 1)
+            drift = json.loads(result.stdout)["data"]
+            self.assertEqual(drift["missing_in_registry"], ["UI-0500"])
+            self.assertEqual((root / "doc/config/task-registry.json").read_bytes(), before)
+
+    def test_registry_sync_builds_and_prunes_from_directories(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            self._write_registry(root, [{
+                "task_key": "UI-0001", "task_number": "0001", "source": "ui",
+                "title": None, "created_at": None,
+            }])
+            self._make_card(root, "UI-0500", "0500", title="Built")
+            sync = self._cli_at(root, "task", "registry", "sync", "--json")
+            self.assertEqual(sync.returncode, 0, sync.stderr)
+            payload = json.loads(sync.stdout)["data"]
+            self.assertEqual(payload["added"], ["UI-0500"])
+            self.assertEqual(payload["removed"], [])
+            self.assertFalse(payload["ok"], "stale entry remains until --prune")
+            registry = json.loads(
+                (root / "doc/config/task-registry.json").read_text(encoding="utf-8")
+            )
+            titles = {entry["task_key"]: entry["title"] for entry in registry["tasks"]}
+            self.assertEqual(titles["UI-0500"], "Built")
+
+            renamed = root / "doc/tasks/UI-0501"
+            (root / "doc/tasks/UI-0500").rename(renamed)
+            card = json.loads((renamed / "task.json").read_text(encoding="utf-8"))
+            card.update(task_key="UI-0501", task_number="0501")
+            (renamed / "task.json").write_text(json.dumps(card), encoding="utf-8")
+            self.assertEqual(self._cli_at(root, "task", "registry", "check").returncode, 1)
+            prune = self._cli_at(root, "task", "registry", "sync", "--prune", "--json")
+            self.assertEqual(prune.returncode, 0, prune.stderr)
+            payload = json.loads(prune.stdout)["data"]
+            self.assertIn("UI-0500", payload["removed"])
+            self.assertIn("UI-0501", payload["added"])
+
+    def test_registry_sync_refuses_number_mismatch(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            self._write_registry(root, [{
+                "task_key": "UI-0500", "task_number": "0500", "source": "ui",
+                "title": None, "created_at": None,
+            }])
+            self._make_card(root, "UI-0500", "0999")
+            check = self._cli_at(root, "task", "registry", "check", "--json")
+            self.assertEqual(check.returncode, 1)
+            self.assertEqual(json.loads(check.stdout)["data"]["number_mismatch"][0]["task_key"],
+                             "UI-0500")
+            sync = self._cli_at(root, "task", "registry", "sync", "--json")
+            self.assertNotEqual(sync.returncode, 0)
+
     def test_task_init_creates_directory_and_task_json(self):
         temp = tempfile.TemporaryDirectory()
         with temp:

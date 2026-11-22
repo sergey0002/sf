@@ -317,6 +317,8 @@ project:
       - task registry
       - task registry init
       - task registry add
+      - task registry check
+      - task registry sync
       - task validate
       - task workspace
       - task status

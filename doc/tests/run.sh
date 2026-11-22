@@ -20,6 +20,7 @@ check_read_only() {
     run_check "index freshness" "${arch[@]}" index check
     run_check "architecture and index" "${arch[@]}" validate --brief
     run_check "declared paths" "${arch[@]}" docs paths --check
+    run_check "task registry" "${arch[@]}" task registry check
 }
 
 copy_project() {
@@ -91,7 +92,7 @@ case "${1:-}" in
         run_check "unit tests" python3 -m unittest discover -s doc/tools/tests -q
         run_check "acceptance tests" python3 -m unittest discover -s doc/tests -p 'test_*.py' -q
         run_check "UI-0001 fixture" "${arch[@]}" task validate UI-0001
-        printf 'OK: architecture, index, paths, unit tests, acceptance tests, UI-0001\n'
+        printf 'OK: architecture, index, paths, registry, unit tests, acceptance tests, UI-0001\n'
         exit 0
         ;;
     --index-only)

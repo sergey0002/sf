@@ -375,7 +375,7 @@ class TaskCommand(Command):
                               exit_code=1, args=args)
         payload = {**result, "ok": after["ok"], "drift": after}
         self._json(ok_envelope(data=payload), args)
-        return 0 if after["ok"] else 1
+        return 0
 
     def _evidence(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
         try:
