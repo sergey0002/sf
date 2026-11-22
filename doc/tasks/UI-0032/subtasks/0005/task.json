@@ -43,7 +43,8 @@
     "doc/config/paths.yaml:242-252 — список task_types",
     "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md §6 — предложение по типам",
     "data/sdd-research/06-качество-и-трассируемость.md §3 — методы верификации",
-    "data/machinedocs-encyclopedia/Практики/Сквозной цикл разработки.md — стадии SDLC"
+    "data/machinedocs-encyclopedia/Практики/Сквозной цикл разработки.md — стадии SDLC",
+    "doc/tasks/UI-0032-0005/research/taxonomy-decision.md — решение по фазам (создаётся этим срезом)"
   ],
   "contracts_and_invariants": [
     "ARCH-contract: тип задачи — часть task-conf и проверяется теми же правилами",
@@ -77,9 +78,16 @@
   ],
   "risk": "medium",
   "authority": {
-    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
-    "forbidden": ["Реализация фазы 2, изменение существующих типов, внешняя запись"],
-    "approval_required": ["Добавление новых типов фазы 1", "Начало реализации"]
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Реализация фазы 2, изменение существующих типов, внешняя запись"
+    ],
+    "approval_required": [
+      "Добавление новых типов фазы 1",
+      "Начало реализации"
+    ]
   },
   "approvals": [],
   "task_type": "research",
@@ -87,7 +95,10 @@
   "complexity": "medium",
   "estimate_hours": 16,
   "subtasks": [],
-  "depends_on": ["UI-0032-0001", "UI-0032-0002"],
+  "depends_on": [
+    "UI-0032-0001",
+    "UI-0032-0002"
+  ],
   "phase": "intake",
   "rollback_plan": "Удалить каталоги spike, migration и incident, их записи в paths.yaml и task_types и шаблоны; исследование и решение оставить как историю.",
   "implementation_plan": [
@@ -96,22 +107,34 @@
     "Создать шаблоны по разрешённым tier и объявить пути",
     "Прогнать plan-policy, scan и validate на временных карточках"
   ],
-  "related_docs": ["ARCH-contract", "REG-cli-validation-rules", "FLOW-task-lifecycle"],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-validation-rules",
+    "FLOW-task-lifecycle"
+  ],
   "related_tests": [
-    {"test_id": "plan-policy-new-types", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+    {
+      "test_id": "plan-policy-new-types",
+      "location": "doc/tests/test_plan_policy.py",
+      "command": "python3 -m unittest doc.tests.test_plan_policy -q"
+    }
   ],
   "research_docs": [
     {
-      "id": "RES-plan-policy-taxonomy",
-      "title": "Политика планов и таксономия типов задач",
-      "path": "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+      "id": "RES-taxonomy-decision",
+      "title": "Решение по таксономии: фаза 1 и фаза 2",
+      "path": "doc/tasks/UI-0032-0005/research/taxonomy-decision.md",
       "source_type": "internal",
-      "source_ref": "data/sdd-research, data/sdd-encyclopedia, data/machinedocs-encyclopedia, внешние практики",
-      "summary": "Критерий нового типа, матрица разделов и правил, фаза 1 и фаза 2, отклонённые кандидаты.",
+      "source_ref": "doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md",
+      "summary": "Критерий нового типа, состав фазы 1, предусловия фазы 2 и отклонённые кандидаты.",
       "status": "hypothesis"
     }
   ],
-  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
   "owner": "unset",
   "priority": "unset",
   "stage_history": []

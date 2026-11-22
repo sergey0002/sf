@@ -44,6 +44,7 @@
 | Путь | Действие |
 |---|---|
 | `doc/tasks/UI-0032/research/plan-policy-and-type-taxonomy.md` | изменить: зафиксировать решение по фазам |
+| `doc/tasks/UI-0032-0005/research/taxonomy-decision.md` | создать: решение, предусловия фазы 2, отклонённые кандидаты |
 | `doc/config/task-conf/types/{spike,migration,incident}/config.yaml` | создать |
 | `doc/config/task-conf/types/{spike,migration,incident}/prompt.md` | создать |
 | `doc/config/task-conf/types/{spike,migration,incident}/flows/<flow>/{config.yaml,prompt.md}` | создать |

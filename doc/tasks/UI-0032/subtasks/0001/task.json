@@ -68,14 +68,15 @@
     "Инвариант: один каталог типа — один config.yaml с совпадающим id; объявленный и обнаруженный наборы типов равны",
     "Инвариант: task-conf.schema.json — единственная схема конфигов типов; UI-0030 расширяет её",
     "Инвариант: правило приёмки либо проверяется структурно, либо явно смысловое; неизвестный kind отвергается",
-    "Инвариант legacy: subtask читается, но не предлагается для новой постановки"
+    "Инвариант legacy: subtask читается, но не предлагается для новой постановки",
+    "Инвариант: каталог с selectable: false не обязан быть в paths.yaml task_types и не предлагается для постановки; каталог с selectable: true обязан совпадать с task_types"
   ],
   "acceptance_criteria": [
     "AC-1: plan-defaults.yaml валиден по task-conf.schema.json, задаёт три tier'а с теми же complexity, разделами и лимитом micro 60, что и текущие константы, и содержит каталог правил с допустимыми kind и параметрами.",
     "AC-2: Все десять типов имеют блок plan и acceptance, валидный по схеме; профильные типы research, audit, planning, bugfix, refactor и docs объявляют свои разделы и правила, scaffold ограничен micro, subtask помечен legacy.",
     "AC-3: Существуют 27 непустых шаблонов types/<type>/plan/<tier>.md по матрице исследования, и заголовки каждого покрывают required_sections его политики.",
     "AC-4: doc/config/paths.yaml разрешает plan-defaults.yaml, task-conf.schema.json, шаблоны types/<type>/plan/<tier>.md и не мешает срезу UI-0031; docs paths --check и scan --scope paths проходят.",
-    "AC-5: validate --brief и scan --scope task-conf сообщают о невалидной схеме, отсутствующем шаблоне, complexity без покрывающего tier'а, дубле tier'ов, неположительном лимите, неизвестной ссылке на правило, каталоге без config.yaml, конфиге без id, несовпадении id и каталога, а также о расхождении обнаруженных типов с paths.yaml project.task_types в обе стороны; на текущем дереве проходят.",
+    "AC-5: validate --brief и scan --scope task-conf сообщают о невалидной схеме, отсутствующем шаблоне, complexity без покрывающего tier'а, дубле tier'ов, неположительном лимите, неизвестной ссылке на правило, каталоге без config.yaml, конфиге без id и несовпадении id и каталога, а также о расхождении выбираемых типов (selectable: true) с paths.yaml project.task_types в обе стороны; legacy-каталог с selectable: false допускается без записи в task_types; на текущем дереве проходят.",
     "AC-6: Удаление каталога типа при сохранённой записи в paths.yaml и удаление типа из paths.yaml при существующей карточке дают диагностику и не меняют дерево; карточка с типом, отсутствующим в paths.yaml, отвергается validate."
   ],
   "acceptance_policy": "case-coverage-v1",
@@ -99,9 +100,15 @@
   "open_questions": [],
   "risk": "medium",
   "authority": {
-    "allowed": ["Локальные изменения в объявленном scope после поручения на реализацию"],
-    "forbidden": ["Переименование tier'ов, правки acceptance.py и task_ops.py, файлы новых типов, корпусный скан типов, внешняя запись"],
-    "approval_required": ["Начало реализации"]
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Переименование tier'ов, правки acceptance.py и task_ops.py, файлы новых типов, корпусный скан типов, внешняя запись"
+    ],
+    "approval_required": [
+      "Начало реализации"
+    ]
   },
   "approvals": [],
   "task_type": "refactor",
@@ -119,12 +126,25 @@
     "Убрать молчаливый пропуск и добавить сверку типов с paths.yaml",
     "Объявить пути и покрыть конфигурационный слой тестами"
   ],
-  "related_docs": ["ARCH-contract", "VIEW-cli-package", "ENT-verification-evidence", "REG-cli-validation-rules"],
+  "related_docs": [
+    "ARCH-contract",
+    "VIEW-cli-package",
+    "ENT-verification-evidence",
+    "REG-cli-validation-rules"
+  ],
   "related_tests": [
-    {"test_id": "plan-policy-config", "location": "doc/tests/test_plan_policy.py", "command": "python3 -m unittest doc.tests.test_plan_policy -q"}
+    {
+      "test_id": "plan-policy-config",
+      "location": "doc/tests/test_plan_policy.py",
+      "command": "python3 -m unittest doc.tests.test_plan_policy -q"
+    }
   ],
   "research_docs": [],
-  "changed_files": {"added": [], "modified": [], "deleted": []},
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
   "owner": "unset",
   "priority": "unset",
   "stage_history": []
