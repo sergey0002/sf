@@ -1169,8 +1169,6 @@ The scanner may generate evidence-backed **candidate findings или document de
 1. Все подзадачи в `doc/tasks/<task_key>/subtasks/<subtask_id>/` имеют `phase: completed`.
 2. Получен approval владельца задачи.
 
-Команда `arch task diagnose <task_key>` выдаёт гант-подобную диагностику со списком блокеров закрытия. `arch task close` отказывает с ненулевым exit code, если хоть одна подзадача не закрыта.
-
-Это гарантирует, что задача не считается завершённой, пока не выполнены все вложенные работы.
+Текущие `arch task diagnose <task_key>` и `arch task close` проверяют непосредственные каталоги, найденные на диске. Объявленного, но отсутствующего ребёнка текущий обход может пропустить. Перед вызовом `close` агент сверяет объявленных детей и их состояния, результаты приёмки, актуальность evidence и полученное одобрение. YAML шага и его gate используются как инструкции агенту. [Жизненный цикл задачи](../domains/task-lifecycle/flow.md) описывает текущие границы CLI и порядок работы с prompts.
 
 This nuance captured in root manifest как future/out-of-scope note. Until separate design approved, no scanner directory, queue schema, generated-candidate type, graph technology, MCP list или multi-agent runtime added to this architecture.

@@ -20,7 +20,7 @@ implemented: true
 | Источник | Что задаёт |
 |----------|-----------|
 | `doc/config/paths.yaml` (секция `project`) | `task_types`, `phases`, `risk_levels`, `source_types`, базовые `task_schema_required_fields` |
-| `doc/config/task-conf/types/<type>/config.yaml` | `required_fields`, `allowed_flows`, `complexity_allowed`, `subtask_policy`, `close_policy` |
+| `doc/config/task-conf/types/<type>/config.yaml` | `required_fields`, `allowed_flows`, `complexity_allowed`, `subtask_policy`; `close_policy` описывает процесс закрытия |
 
 ## Обязательные поля
 
@@ -104,6 +104,8 @@ implemented: true
 | `task_type` | должен быть зарегистрирован в `doc/config/task-conf/types/*/config.yaml` |
 | `flow` | должен быть в `allowed_flows` для выбранного `task_type` |
 | `complexity` | должен быть в `complexity_allowed` для выбранного `task_type` |
+
+Поля `steps`, `action`, `output` и `gate` в YAML потока задают порядок работы агента. CLI перечисляет потоки и выдаёт соответствующие prompts. Шаги читаются из YAML и выполняются агентом. При закрытии агент отдельно проверяет критерии приёмки, объявленные подзадачи, применимость evidence и необходимое одобрение. См. [поток жизненного цикла](../domains/task-lifecycle/flow.md).
 
 ## Условия ошибок
 

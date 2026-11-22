@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CLI = ROOT / "doc/tools/arch/__main__.py"
 sys.path.insert(0, str(ROOT / "doc" / "tools"))
 from arch.body_validation import get_supported_body_types  # noqa: E402
+from arch.validation import load_task_conf_types  # noqa: E402
 
 
 def cli(*args):
@@ -20,6 +21,28 @@ def cli(*args):
 
 
 class TaskIdentityContractTests(unittest.TestCase):
+    def test_task_flow_prompts_follow_declared_steps(self):
+        types, errors = load_task_conf_types(ROOT)
+        self.assertEqual(errors, [])
+        self.assertTrue(types)
+        for type_id, config in types.items():
+            flows = config["flows"]
+            self.assertEqual(set(config["allowed_flows"]), set(flows))
+            self.assertIn(config["default_flow"], flows)
+            for flow_id, flow in flows.items():
+                with self.subTest(type=type_id, flow=flow_id):
+                    self.assertEqual(flow["type"], type_id)
+                    for field in ("subtask_policy", "close_policy"):
+                        self.assertEqual(flow[field], config[field])
+                    steps = [step["id"] for step in flow["steps"]]
+                    self.assertEqual(len(steps), len(set(steps)))
+                    self.assertEqual(steps[-1], "close")
+                    prompt = (
+                        ROOT / "doc/config/task-conf/types" / type_id
+                        / "flows" / flow_id / "prompt.md"
+                    ).read_text(encoding="utf-8")
+                    self.assertEqual(re.findall(r"^\d+\. `([^\x60]+)`", prompt, re.M), steps)
+
     def test_jira_has_four_digit_bare_key(self):
         result = cli("task-key", "--source", "jira", "--number", "0427")
         self.assertEqual(result.returncode, 0, result.stderr)

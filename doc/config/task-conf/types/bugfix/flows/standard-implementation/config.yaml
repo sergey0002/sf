@@ -10,7 +10,7 @@ steps:
     name: Воспроизведение
     action: reproduce_bug
     output: evidence of bug
-    gate: bug_reproduced
+    gate: reproduction_or_accepted_alternative_recorded
   - id: plan
     name: Планирование
     action: create_plan

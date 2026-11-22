@@ -25,6 +25,7 @@ forbidden_in_scope:
   - "data/ как проектный файл"
   - "task.md как альтернатива task.json"
   - "автоматическое выделение task_number"
+# Справочный шаблон. Текущий CLI читает flow, но не создаёт стадии из этого поля.
 stage_template:
   - id: stage1
     name: Приём и уточнение
