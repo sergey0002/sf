@@ -29,6 +29,9 @@ implemented: true
 поэтому последующая правка шаблона не меняет уже запущенную запись.
 `intent_digest` — SHA-256 канонического подмножества intent-полей. Поля `phase`,
 `subtasks`, `stage_history` и `changed_files` изменяемы и в дайджест не входят.
+Исполнительный `status`, `target_release`, `branch` и `release_branch` — тоже изменяемые
+поля `task.json`: они не входят в `intent_digest` и не хранятся в `state.json`; их меняет
+владелец или агент явно, а `phase` остаётся осью жизненного цикла.
 
 ## Инварианты
 

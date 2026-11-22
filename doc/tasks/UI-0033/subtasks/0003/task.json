@@ -1,0 +1,85 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0033-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Архитектурные документы, скиллы и правила против повторных дефектов",
+  "kind": "feature",
+  "intent": "Архитектурные документы, скиллы и правила фиксируют новые поля и запреты, чтобы слабая модель не воспроизводила ручную карточку, обход политики и неполный gate.",
+  "scope": {
+    "in": [
+      "ENT-task-input",
+      "REG-cli-validation-rules",
+      "REG-cli-command-map",
+      "VIEW-cli-package",
+      "скиллы create-task/go-to-task/arch-cli",
+      "doc/AGENTS.md",
+      "prompt типа feature"
+    ],
+    "out": [
+      "изменение кода CLI"
+    ],
+    "allowed_files_modules": []
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    "AC-1: документы и скиллы описывают status/release/branch и инвариант валидного скаффолда; index build, docs check-links и validate --brief проходят."
+  ],
+  "target_release": "0.1.0",
+  "project_context_refs": [
+    "ENT-task-input"
+  ],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "low",
+  "estimate_hours": 4,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "status": "in_progress",
+  "rollback_plan": "Вернуть затронутые файлы к предыдущему снимку; данные корпуса не откатывать.",
+  "implementation_plan": [
+    "Выполнено в рамках UI-0033"
+  ],
+  "related_docs": [
+    "ENT-task-input",
+    "REG-cli-validation-rules",
+    "REG-cli-command-map",
+    "VIEW-cli-package"
+  ],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "branch": "bugfix/UI-0033",
+  "release_branch": "main",
+  "acceptance_policy": "case-coverage-v1"
+}

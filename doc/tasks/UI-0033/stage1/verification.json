@@ -1,0 +1,86 @@
+{
+  "task_key": "UI-0033",
+  "stage_id": "stage1",
+  "status": "passed",
+  "checked_revision": "sha256:a84b5f5827f3592084e7b2d190e262ec1667b5860a5edc72a7de048efa800398",
+  "checks": [
+    {
+      "command": "bash doc/tests/run.sh --gate",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1",
+        "CASE-2",
+        "CASE-3"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py docs check-links",
+      "exit_code": 0,
+      "cases": [
+        "CASE-4"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "expected": "валидная карточка из task new"
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-3",
+        "AC-5"
+      ],
+      "expected": "validate и наследование ребёнком"
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-4",
+        "AC-6"
+      ],
+      "expected": "полный gate зелёный"
+    },
+    {
+      "id": "CASE-4",
+      "covers": [
+        "AC-7",
+        "AC-8"
+      ],
+      "expected": "документы и скиллы синхронизированы"
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "ff8a71ac5c6838c8ccccebe206499b97d2faf2b1e667d975859eecffe8b840a6"
+    },
+    {
+      "path": "doc/tasks/UI-0033/stage1/plan.md",
+      "sha256": "ddd2f5646609318483ee34ec6cfc8e56b4052fccbefec0b960574728d4d9c76b"
+    },
+    {
+      "path": "doc/tests/test_task_fields.py",
+      "sha256": "de83b7ff178306dd2499376996abe5e43c36f543fab5eee49b8dbb86e5c9dffc"
+    },
+    {
+      "path": "doc/tools/arch/schema.py",
+      "sha256": "ee97fd91bf551b5b160148b4d1b17813960430df04eb058710477afa5b485763"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "803314bbd450a661872be118fcebf38bc13f998084d77f01dc492fb8f9899888"
+    },
+    {
+      "path": "doc/tools/arch/validation.py",
+      "sha256": "0ed875981f54cc3df2ecb5b1952168d5457109335257e44b566ebd3dfab5dece"
+    }
+  ]
+}

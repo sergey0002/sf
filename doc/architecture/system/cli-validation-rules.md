@@ -19,7 +19,7 @@ implemented: true
 
 | Источник | Что задаёт |
 |----------|-----------|
-| `doc/config/paths.yaml` (секция `project`) | `task_types`, `phases`, `risk_levels`, `source_types`, базовые `task_schema_required_fields` |
+| `doc/config/paths.yaml` (секция `project`) | `task_types`, `phases`, `task_statuses`, `risk_levels`, `source_types`, базовые `task_schema_required_fields`, `release` (дефолты релиза и веток) |
 | `doc/config/task-conf/types/<type>/config.yaml` | `required_fields`, `allowed_flows`, `complexity_allowed`, `subtask_policy`; `close_policy` описывает процесс закрытия |
 
 ## Обязательные поля
@@ -38,7 +38,10 @@ implemented: true
 | `intent` | строка | должно быть присутствовать |
 | `scope` | объект | `in` и `out` (если присутствуют) должны быть массивами |
 | `acceptance_criteria` | массив | должно быть присутствовать |
-| `target_release` | строка | должно быть присутствовать |
+| `target_release` | строка | должно быть присутствовать; при `project.release.enforce: true` не `unset` |
+| `branch` | строка | рабочая ветка задачи; валидное имя git-ветки; при `enforce: true` не `unset` |
+| `release_branch` | строка | ветка мерджа; валидное имя git-ветки; при `enforce: true` не `unset` |
+| `status` | строка | ∈ `project.task_statuses`, если присутствует; отдельная ось от `phase` |
 | `project_context_refs` | массив | должно быть присутствовать |
 | `constraints` | массив | должно быть присутствовать |
 | `assumptions` | массив | должно быть присутствовать |
@@ -101,6 +104,25 @@ implemented: true
 ## Политика плана и правила приёмки
 
 `doc/config/task-conf/plan-defaults.yaml` задаёт дефолтные tier'ы и safety floor. `types/<type>/config.yaml` может объявить `plan` и `acceptance.rules`. Разрешение идёт `type → defaults`; `scan --scope task-conf` сверяет выбираемые типы с `paths.yaml task_types`, шаблоны, покрытие complexity и ссылки на правила. `selectable: false` обозначает legacy-тип и не требует записи в `task_types`.
+
+## Релиз, ветка задачи и ветка мерджа
+
+`project.release` в `paths.yaml` задаёт дефолты для новых карточек: `default_branch` (`main`), `default_release` (`0.1.0`) и `branch_patterns` по `source.type` (`jira` → `futures/{task_number}`, `ui` → `bugfix/{task_key}`, `other` → `task/{task_key}`). `task new`/`task init` подставляют их в скаффолд, а `task decompose`/`task subtask init` наследуют значения родителя (UI-0027 AC-5). Инвариант: скаффолд обязан проходить `task validate` сразу после создания — новое обязательное поле требует дефолта в скаффолде, миграции корпуса и теста `init → validate`. Флаг `enforce` включает обязательность полей; контракт Git-операций (подготовка, публикация, интеграция) принадлежит UI-0027.
+
+Правила приёмки декларативны и проверяются общим оценщиком:
+
+| Kind | Параметры | Что проверяется |
+|---|---|---|
+| `section_present` | `section` | заголовок с этим текстом существует |
+| `section_min_items` | `section`, `min` | в разделе не меньше `min` пунктов списка или строк таблицы |
+| `link_min` | `section`, `min` | в разделе не меньше `min` ссылок или inline-кода |
+| `table_column` | `section`, `column` | в таблице раздела есть колонка |
+| `case_min` | `min` | `planned_checks` покрывает не меньше `min` кейсов |
+| `command` | `command` | команда присутствует в плане |
+
+Дополнительно правило может иметь `when` (флаг карточки или список флагов, например `[contract_change, storage_change]`) и `applies_to` (tier'ы). Без `applies_to` правило действует на `standard` и `full`; floor-правила из дефолтов действуют на всех tier'ах. Правила типа дополняют floor, а не заменяют его. Неизвестный `kind` или ссылка на неизвестное правило — ошибка конфигурации. Смысл оракула CLI не оценивает: он подтверждает только объявленную структуру и называет файл, раздел и правило.
+
+План без маркера `<!-- plan-tier: ... -->` не оценивается правилами типа: карточки без `estimate_hours` сохраняют прежнее поведение.
 
 ## Управление типами и flujo (task-conf)
 

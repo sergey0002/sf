@@ -1,0 +1,80 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0033-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Поля релиза и веток в скаффолде, валидации и наследовании",
+  "kind": "feature",
+  "intent": "Новая карточка создаётся валидной: init_task/task new подставляют target_release, branch и release_branch из project.release, а дети наследуют значения родителя.",
+  "scope": {
+    "in": [
+      "task_ops._release_defaults и _apply_release_defaults",
+      "применение в init_task, decompose и _subtask_init"
+    ],
+    "out": [
+      "Git-операции подготовки и публикации ветки (UI-0027)"
+    ],
+    "allowed_files_modules": []
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    "AC-1: task init/task new создают карточку с target_release, branch и release_branch из project.release, и она проходит task validate.",
+    "AC-2: task decompose и task subtask init наследуют поля родителя и не перезаписывают явные значения."
+  ],
+  "target_release": "0.1.0",
+  "project_context_refs": [
+    "ENT-task-input"
+  ],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "refactor",
+  "flow": "standard-implementation",
+  "complexity": "low",
+  "estimate_hours": 6,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "status": "in_progress",
+  "rollback_plan": "Вернуть затронутые файлы к предыдущему снимку; данные корпуса не откатывать.",
+  "implementation_plan": [
+    "Выполнено в рамках UI-0033"
+  ],
+  "related_docs": [
+    "ENT-task-input",
+    "REG-cli-validation-rules",
+    "REG-cli-command-map"
+  ],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "branch": "bugfix/UI-0033",
+  "release_branch": "main",
+  "acceptance_policy": "case-coverage-v1"
+}

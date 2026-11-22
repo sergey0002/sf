@@ -55,14 +55,14 @@
     "CLI валидирует status по task_statuses из paths.yaml при task init / validate / close"
   ],
   "acceptance_criteria": [
-    "AC-1: paths.yaml содержит блок task_statuses с минимум 8 значениями, включая paused",
-    "AC-2: status добавлен в task_schema_required_fields в paths.yaml",
-    "AC-3: TASK_DIR_TEMPLATE в schema.py содержит поле status со значением open",
-    "AC-4: validation.py проверяет, что status — строка из task_statuses, иначе ошибка",
-    "AC-5: arch task init создаёт карточку со status: open",
-    "AC-6: arch validate --brief проходит на конфиге (paths.yaml валиден); существующие карточки без branch/release_branch/target_release не проходят валидацию — это ожидается, поля обязательны",
-    "AC-7: go-to-task SKILL.md описывает правила присвоения статуса, разделение с phase, и правила заполнения target_release / branch / release_branch",
-    "AC-8: task.json содержит target_release (не unset), branch (валидное имя git-ветки), release_branch (валидное имя git-ветки)"
+    "AC-1: paths.yaml содержит блок task_statuses с 8 значениями, включая paused, и release с default_branch/default_release/branch_patterns/enforce.",
+    "AC-2: TASK_DIR_TEMPLATE задаёт status open, а init_task/task new подставляют target_release, branch, release_branch из project.release; скаффолд проходит task validate сразу.",
+    "AC-3: validation.py проверяет status по task_statuses, а target_release/branch/release_branch — по project.release (enforce) и BRANCH_RE.",
+    "AC-4: корпус (все карточки и дети) содержит status, target_release, branch, release_branch; task validate проходит на выборке и детях.",
+    "AC-5: decompose и subtask init наследуют ветку и релиз родителя; проверено тестом.",
+    "AC-6: doc/tests/test_task_fields.py покрывает дефолты скаффолда, enum status, обязательность и формат веток, наследование ребёнком.",
+    "AC-7: архитектурные документы (ENT-task-input, REG-cli-validation-rules, REG-cli-command-map, VIEW-cli-package) описывают status/release/branch и инвариант валидного скаффолда; index build и docs check-links проходят.",
+    "AC-8: скиллы create-task/go-to-task/arch-cli, doc/AGENTS.md и prompt типа feature фиксируют запрет ручной карточки, смены типа ради обхода политики и требуют полный gate при изменении контракта."
   ],
   "acceptance_policy": "case-coverage-v1",
   "target_release": "0.1.0",
@@ -101,21 +101,50 @@
     ]
   },
   "approvals": [],
-  "task_type": "audit",
-  "flow": "research-first",
+  "task_type": "feature",
+  "flow": "standard-implementation",
   "complexity": "medium",
   "estimate_hours": 16,
-  "subtasks": [],
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Поля релиза и веток в скаффолде, валидации и наследовании",
+      "status": "open",
+      "path": "subtasks/0001/task.json",
+      "task_type": "refactor",
+      "flow": "standard-implementation",
+      "complexity": "low",
+      "estimate_hours": 6
+    },
+    {
+      "id": "0002",
+      "title": "Миграция корпуса и тесты init -> validate",
+      "status": "open",
+      "path": "subtasks/0002/task.json",
+      "task_type": "refactor",
+      "flow": "standard-implementation",
+      "complexity": "low",
+      "estimate_hours": 6
+    },
+    {
+      "id": "0003",
+      "title": "Архитектурные документы, скиллы и правила против повторных дефектов",
+      "status": "open",
+      "path": "subtasks/0003/task.json",
+      "task_type": "docs",
+      "flow": "docs-only",
+      "complexity": "low",
+      "estimate_hours": 4
+    }
+  ],
   "depends_on": [],
   "phase": "intake",
-  "status": "open",
+  "status": "review",
   "rollback_plan": "Удалить блок task_statuses из paths.yaml, убрать status из required_fields, удалить status из TASK_DIR_TEMPLATE и validation.py, вернуть файлы к сохранённому снимку.",
   "implementation_plan": [
-    "Добавить task_statuses в paths.yaml и status в required_fields",
-    "Добавить status: open в TASK_DIR_TEMPLATE в schema.py",
-    "Добавить валидацию status enum в validation.py",
-    "Создать task.json карточку UI-0033",
-    "Прогнать arch validate --brief и тесты"
+    "0001: поля релиза и веток в скаффолде, валидации и наследовании детьми",
+    "0002: миграция корпуса и тесты init -> validate",
+    "0003: архитектурные документы, скиллы и правила против повторных дефектов"
   ],
   "related_docs": [
     "SYS-simple-factory",

@@ -32,7 +32,7 @@ def _schema_errors(schema_path: Path, data: dict[str, Any]) -> list[str]:
             location = "/".join(str(part) for part in error.path) or "<root>"
             errors.append(f"{schema_path.name}: {location}: {error.message}")
         return errors
-    except (OSError, ValueError, Exception) as exc:
+    except Exception as exc:  # schema read/parse or validator setup failure
         return [f"{schema_path.name}: {exc}"]
 
 
@@ -199,11 +199,6 @@ def task_conf_integrity(config: Any, declared_types: list[str]) -> list[str]:
             template = config.task_conf_root / "types" / data["id"] / str(tier.get("template") or "")
             if not template.is_file():
                 problems.append(f"task-conf: {data['id']} tier {name} template is missing: {tier.get('template')}")
-            allowed = set(data.get("complexity_allowed") or [])
-            if allowed and not allowed <= set(tier.get("complexity") or []):
-                missing = sorted(allowed - set(tier.get("complexity") or []))
-                if missing and name == next(iter(plan.get("tiers") or {})):
-                    pass
         covered = {item for tier in (plan.get("tiers") or {}).values() if isinstance(tier, dict) for item in tier.get("complexity") or []}
         missing = [item for item in data.get("complexity_allowed") or [] if item not in covered]
         if missing:

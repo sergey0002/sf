@@ -17,6 +17,7 @@ description: Use the factory's arch CLI to inspect tasks, read architecture, val
 | Проверить готовность кейсов приёмки | `task diagnose <key> --json --brief` | Для `case-coverage-v1` поле `acceptance_plan_ready` отражает наличие плана и покрытие AC запланированными кейсами. Пропущенные кейсы и устаревшие хеши блокируют `close`. |
 | Проверить снимок верификации | `task evidence <key> --check` | `status: current|stale|missing`, `stale_files`, `missing_files` и `problems`; exit 1, если снимок не `current`. |
 | Проверить карточку или ребёнка | `task validate <key>` · `task subtask validate <parent> <id>` | Структурная проверка. `task status <key> --json` и `task subtask status <parent> <id>` показывают состояние и артефакты. |
+| Проверить статус, релиз и ветки | `task status <key> --json` · `task diagnose <key> --json --brief` | `phase`, `status`, `target_release`, `branch`, `release_branch`; `status` — отдельная ось от `phase`. |
 | Проверить рабочую область | `task workspace <key> --json` | Валидация, пути, подсказка ветки и `preflight`: `clean|review|isolate|unknown`, пересечения с `changed_files`, необязательным `scope.write_files` и разрешёнными модулями. Git checkout не выполняется. |
 | Получить одну сводку рисков | `task doctor <key> --json` | Фаза, блокировки, `evidence_freshness`, незавершённая запись, зависимости и `preflight`. Только чтение. |
 | Выбрать действующий тип и flow | `task types` · `task flows --type <type>` | Перечень доступных комбинаций. `task flow-steps --type <type> --flow <flow>` показывает порядок, результаты и условия перехода без тел промптов. |
@@ -49,6 +50,8 @@ description: Use the factory's arch CLI to inspect tasks, read architecture, val
 | Записать pre-change baseline | `task baseline <key> --file <path> --run <command> <args>` пишет `stageN/baseline.json` с командой, exit code и хешами входов. Если вход изменился во время запуска, запись отклоняется. |
 
 Рабочий маршрут чтения: `docs context` для задачи → `docs search` для неизвестного термина → `docs read` для точного раздела. `docs toc` помогает выбрать якорь, `docs check-links` проверяет ссылки, `docs impact` оценивает последствия правки. Полный контракт — [адресуемые контракты](../../architecture/system/addressable-contracts.md).
+
+`task new`/`task init` подставляют `status: open` и дефолты `project.release` (`target_release`, `branch`, `release_branch`); дети наследуют значения родителя. Скаффолд обязан проходить `task validate` сразу. Новое обязательное поле вводите вместе с дефолтом скаффолда, миграцией корпуса и тестом `init → validate`; иначе `task new` создаёт невалидную карточку.
 
 Для расчёта результата используйте exit code. `can_close` и `would_close` описывают машинные предусловия. Предпросмотр может вернуть exit 0 и `would_close: false`, фактический отказ `close --json` даёт exit 1 и JSON в stderr. `validate --brief` и `scan --brief` дают одну строку при успехе и диагностические детали при отказе. Полный список инцидентов доступен без `--brief`.
 

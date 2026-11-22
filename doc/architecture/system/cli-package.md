@@ -72,7 +72,7 @@ subtask.py (identity, schema)   fs_atomic.py
 ## Принципы проектирования
 
 - **Детерминизм:** ключ выводится из явного ввода; UI-номер выделяется только из CLI-реестра `doc/config/task-registry.json` по правилу «максимум + 1». Скрытых эвристик и сканирования каталогов задач нет.
-- **Конфиг-driven валидация:** все enum'ы, обязательные поля, allowed_flows, complexity_levels, tier'ы плана и структурные правила приёмки читаются из YAML-конфигов (`doc/config/paths.yaml`, `doc/config/task-conf/plan-defaults.yaml`, `doc/config/task-conf/types/*/config.yaml`). Нет хардкода в Python.
+- **Конфиг-driven валидация:** все enum'ы, обязательные поля, allowed_flows, complexity_levels, `task_statuses`, дефолты релиза и веток (`project.release`), tier'ы плана и структурные правила приёмки читаются из YAML-конфигов (`doc/config/paths.yaml`, `doc/config/task-conf/plan-defaults.yaml`, `doc/config/task-conf/types/*/config.yaml`). Нет хардкода в Python. Скаффолд новой карточки обязан проходить `task validate` сразу; обязательное поле без дефолта — дефект контракта.
 - **Семантические решения принадлежат агенту/скиллам:** CLI валидирует структуру и перечисления; он никогда не угадывает релевантность и не заполняет семантические поля.
 - **`task.json` — единственный канонический вход задачи:** `task.md` отвергается, если присутствует.
 - **Субтаски всегда ручные:** нет привязки к внешним источникам (Jira, трекеры и т.д.).

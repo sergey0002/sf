@@ -1104,6 +1104,11 @@ The scanner may generate evidence-backed **candidate findings или document de
 | `refactor` | Рефакторинг | `standard-implementation`, `minimal-scaffold` | optional | все подзадачи должны быть закрыты |
 | `subtask` | Лист работы внутри родительской задачи | нет | forbidden | все подзадачи должны быть закрыты |
 | `scaffold` | Создание заготовки | `minimal-scaffold` | forbidden | все подзадачи должны быть закрыты |
+| `spike` | Ограниченное по времени исследование с решением о следующем шаге | `spike-first` | optional | все подзадачи должны быть закрыты |
+| `migration` | Перевод данных или контракта с целостностью и откатом | `migration-first` | optional | все подзадачи должны быть закрыты |
+| `incident` | Локализация нарушения сервиса и разбор без обвинений | `incident-response` | optional | все подзадачи должны быть закрыты |
+
+Тип добавляется только при отдельном оракуле приёмки и отдельном наборе обязательных разделов; иначе это профиль существующего типа. Отложенные кандидаты (`release`, `security`, `decision`) и отклонённые (`chore`, `test`, `experiment`, `epic`, `retrospective`, `impediment`) перечислены с причинами в исследовании UI-0032. Ключ `selectable: false` помечает legacy-тип: он читается для старых карточек, но не предлагается для новой постановки и не обязан присутствовать в `paths.yaml task_types`.
 
 ### Поля task.json, добавляемые структурой task-conf
 
@@ -1116,6 +1121,14 @@ The scanner may generate evidence-backed **candidate findings или document de
 - **`subtasks`** — массив `{id, title, status, path}`; задаётся при декомпозиции через `arch task decompose`. Запись может содержать выбранные агентом `task_type`, `flow`, `complexity` и `estimate_hours` ребёнка.
 - **`implementation_plan`** — требуется для типов, где указано в `required_fields`.
 - **`research_docs`** — массив研究-документов задачи, см. раздел 17.
+
+### Политика плана и правила приёмки
+
+Tier'ы плана не задаются в коде. `doc/config/task-conf/plan-defaults.yaml` содержит дефолтные `tiers` (`micro`/`standard`/`full`: `complexity`, `required_sections`, `template`, `max_nonempty_lines`) и floor-правила `acceptance.rules`. Блок `plan` в `types/<type>/config.yaml` дополняет дефолты: скалярные поля переопределяются, `required_sections` объединяются, правила типа дополняют floor. `plan_policy: replace` заменяет набор tier'ов, но не отменяет floor. Шаблоны плана лежат в `types/<type>/plan/<tier>.md`.
+
+`arch task plan-policy --type <type> --json` возвращает разрешённую политику только для чтения. Порядок разрешения — `type → defaults`; flow политику плана не переопределяет. Проверка плана применяется только к opted-in планам с маркером `<!-- plan-tier: ... -->`: план без маркера сохраняет прежнее поведение.
+
+Правила приёмки декларативны: `section_present`, `section_min_items`, `link_min`, `table_column`, `case_min`, `command`. Правило может иметь `when` (флаг карточки или список флагов) и `applies_to` (tier'ы; по умолчанию `standard`/`full`). Оценщик проверяет только объявленную структуру и называет файл, раздел и правило; смысл оракула остаётся за агентом. Неизвестный `kind` — ошибка конфигурации.
 
 ### Валидация полностью конфиг-driven
 

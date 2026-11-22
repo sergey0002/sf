@@ -1,0 +1,23 @@
+{
+  "task_key": "UI-0033-0001",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "exit 0 и наблюдаемый результат"
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "exit 0 и наблюдаемый результат"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0033-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Миграция корпуса и тесты init -> validate",
+  "kind": "feature",
+  "intent": "Существующий корпус мигрирован на обязательные поля, а тест init -> validate защищает контракт от повторной рассинхронизации скаффолда и валидации.",
+  "scope": {
+    "in": [
+      "бэкфилл 73 карточек",
+      "doc/tests/test_task_fields.py",
+      "обновление фикстур test_task_identity"
+    ],
+    "out": [
+      "изменение поведения Git-операций"
+    ],
+    "allowed_files_modules": []
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    "AC-1: каждая карточка корпуса и её дети содержат status, target_release, branch, release_branch; task validate проходит.",
+    "AC-2: test_task_fields.py покрывает дефолты, enum status, обязательность и формат веток, наследование; полный набор тестов зелёный."
+  ],
+  "target_release": "0.1.0",
+  "project_context_refs": [
+    "ENT-task-input"
+  ],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "refactor",
+  "flow": "standard-implementation",
+  "complexity": "low",
+  "estimate_hours": 6,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "status": "in_progress",
+  "rollback_plan": "Вернуть затронутые файлы к предыдущему снимку; данные корпуса не откатывать.",
+  "implementation_plan": [
+    "Выполнено в рамках UI-0033"
+  ],
+  "related_docs": [
+    "ENT-task-input",
+    "REG-cli-validation-rules"
+  ],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "branch": "bugfix/UI-0033",
+  "release_branch": "main",
+  "acceptance_policy": "case-coverage-v1"
+}
