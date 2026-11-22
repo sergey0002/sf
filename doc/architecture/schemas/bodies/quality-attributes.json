@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Quality-attributes document body schema",
+  "type": "object",
+  "properties": {
+    "has_table": { "type": "boolean", "const": true },
+    "table_columns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "contains": { "const": "Атрибут" }
+    }
+  },
+  "required": ["has_table", "table_columns"]
+}

@@ -1,0 +1,43 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0003",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "Создать /home/user/cli.skill.plan.md",
+      "expected": "Файл существует, содержит разделы анализа CLI и скилов",
+      "actual": "/home/user/cli.skill.plan.md создан, содержит 11 разделов: манифест, data/, существующий CLI, отсутствующие команды, скилы, структура CLI, приоритеты, решения, связь с артефактами, roadmap, что не входит, состояние тестов",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "bash doc/tests/run.sh",
+      "expected": "13/13 pass",
+      "actual": "All environment acceptance tests passed, 13/13",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "python3 -m unittest discover -s doc/tools/tests",
+      "expected": "5/5 pass",
+      "actual": "5 tests OK",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "doc/tools/arch.py validate && doc/tools/arch.py index check",
+      "expected": "valid + current",
+      "actual": "Architecture documentation is valid / Index is current",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "/home/user/cli.skill.plan.md создан с полным анализом CLI и скилов",
+    "Манифест перечитан (CLI/скилы/задачи/архитектура/четыре слоя/E2E flow)",
+    "data/ прочитана через MOC: README.md, cli-skills-encyclopedia/Главная.md, machinedocs-encyclopedia/Главная.md + Индекс.md, sdd-encyclopedia/Главная.md, subagents-encyclopedia/Главная.md",
+    "arch.py validate → valid, index check → current, index build → 29 документов",
+    "doc/tests/run.sh → 13/13 pass",
+    "unittest discover → 5/5 pass"
+  ],
+  "status": "completed"
+}

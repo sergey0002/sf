@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Capability-spec document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["## Назначение", "## Требования"]
+      },
+      "minItems": 2
+    },
+    "has_requirements": { "type": "boolean", "const": true }
+  },
+  "required": ["required_sections", "has_requirements"]
+}

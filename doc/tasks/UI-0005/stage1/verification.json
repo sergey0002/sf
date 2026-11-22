@@ -1,0 +1,58 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0005",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "Анализ текущего task.json",
+      "expected": "Определены недостающие поля traceability",
+      "actual": "Недостающие поля: source.comments/attachments/history, related_docs, related_tests, changed_files, owner, priority, stage_history",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "Обновить task.json UI-0001 и UI-0004",
+      "expected": "Новые поля traceability добавлены",
+      "actual": "Оба task.json содержат source.attachments/comments/history, related_docs, related_tests, changed_files (added/modified/deleted), owner, priority, stage_history",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "Обновить arch.py task validate",
+      "expected": "Валидация новых полей без ломания существующих",
+      "actual": "validate_task_json проверяет related_docs (формат ID), related_tests (test_id + location), changed_files (объект с массивами), owner/priority (строки), stage_history (массив объектов со stage_id/status)",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "Обновить SKILL.md go-to-task и задокументируй",
+      "expected": "Ссылки на related_docs, related_tests, changed_files, stage_history",
+      "actual": "go-to-task: раздел Task.json traceability fields со всеми полями; задокументируй: раздел Task.json traceability fields для записи evidence и stage_history",
+      "status": "passed"
+    },
+    {
+      "id": "V-5",
+      "command": "Добавить unit-тесты",
+      "expected": "Новые тесты для расширенной валидации",
+      "actual": "test_task_validate_accepts_traceability_fields, test_task_validate_rejects_bad_related_docs, test_task_validate_rejects_bad_related_tests, test_task_validate_rejects_bad_changed_files",
+      "status": "passed"
+    },
+    {
+      "id": "V-6",
+      "command": "bash doc/tests/run.sh + unittest discover",
+      "expected": "Все тесты pass",
+      "actual": "test_task_identity.py: 18/18 pass; test_arch.py: 5/5 pass; Итого 23/23; arch.py validate → valid; index check → current",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "task.json UI-0001 → валиден с новыми полями traceability",
+    "task.json UI-0004 → валиден с новыми полями traceability",
+    "arch task validate UI-0001 → task UI-0001 is valid",
+    "arch task validate UI-0004 → task UI-0004 is valid",
+    "23/23 тестов проходят (18 + 5)",
+    "SKILL.md go-to-task и задокументируй обновлены со ссылками на поля traceability",
+    "Новые unit-тесты отвергают невалидные related_docs / related_tests / changed_files"
+  ],
+  "status": "completed"
+}

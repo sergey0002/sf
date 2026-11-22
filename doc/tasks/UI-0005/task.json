@@ -1,0 +1,119 @@
+{
+  "schema_version": "draft-0.2",
+  "task_key": "UI-0005",
+  "task_number": "0005",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-task-json-traceability",
+    "provenance": "user request in chat",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Расширить формат task.json для полной traceability задачи",
+  "intent": "Оценить текущий task.json против манифеста и best practices data/, определить недостающие поля (история комментариев, связанные тесты, сущности архитектуры, изменённые файлы, история стадий, владелец, приоритет), обновить task.json примеры, добавить валидацию в arch.py task validate, добавить тесты.",
+  "scope": {
+    "in": [
+      "Анализ текущего task.json UI-0001 и UI-0004",
+      "Сравнение с требованиями манифеста (execution snapshot, source provenance, comments/attachments, acceptance refs)",
+      "Сравнение с data/machinedocs-encyclopedia (Контракт задачи для агента)",
+      "Определение недостающих полей task.json",
+      "Обновление task.json UI-0001 и UI-0004 примером расширенного формата",
+      "Обновление arch.py task validate для проверки новых полей",
+      "Обновление SKILL.md навыков (go-to-task, задокументируй) со ссылками на новые поля",
+      "Добавление unit-тестов для расширенной валидации",
+      "Прогон всех тестов (13/13 -> 19+)"
+    ],
+    "out": []
+  },
+  "exclusions": [
+    "Не править data/ как проектные файлы",
+    "Не копировать корневой манифест в doc/",
+    "Не создавать task.md",
+    "Не реализовывать полный Jira adapter (только поле source.comments/attachments/history как структуру)",
+    "Не делать фактические git push/merge/deploy"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "task.json содержит новые поля: source.comments, source.attachments, source.history, related_docs, related_tests, changed_files, owner, priority, stage_history",
+      "verification": "Прочитать обновлённые task.json UI-0001 и UI-0004, убедиться в наличии полей"
+    },
+    {
+      "id": "AC-2",
+      "statement": "arch task validate проходит для обновлённых task.json с новыми полями",
+      "verification": "Запустить arch task validate UI-0001 и UI-0004, код возврата 0"
+    },
+    {
+      "id": "AC-3",
+      "statement": "SKILL.md go-to-task и задокументируй содержат ссылки на новые поля task.json",
+      "verification": "Прочитать SKILL.md, проверить наличие упоминаний related_docs, related_tests, stage_history"
+    },
+    {
+      "id": "AC-4",
+      "statement": "Все тесты завода проходят после изменений",
+      "verification": "doc/tests/run.sh — все pass"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md",
+    "../../../cli.skill.plan.md",
+    "../../../data/machinedocs-encyclopedia/Главная.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "Не копировать корневой манифест в doc/",
+    "data/ — внешний справочник, только чтение"
+  ],
+  "assumptions": [
+    "Текущий task.json формат уже работает с arch task validate",
+    "Новые поля добавляются без破壞ного изменения существующих"
+  ],
+  "open_questions": [
+    "Нужен ли отдельный JSON Schema файл для task.json валидации или достаточно структурной проверки в коде arch.py",
+    "Нужно ли versioning task.json schema (schema_version draft-0.2 -> draft-0.3)"
+  ],
+  "approvals": [
+    "Никаких push/merge/deploy не запрашивается этой задачей"
+  ],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "low",
+  "phase": "completed",
+  "kind": "feature",
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "subtasks": [],
+  "depends_on": [],
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "implementation_plan": "Оценить task.json, определить недостающие поля, обновить примеры, добавить валидацию и тесты"
+}

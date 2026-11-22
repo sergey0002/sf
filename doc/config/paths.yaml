@@ -1,0 +1,286 @@
+# Конфигурация путей и настроек проекта для arch CLI.
+# Хранится в корне doc/ и читается CLI при каждой операции с документацией.
+# Только пути, задекларированные ниже, считаются допустимыми в doc/.
+# Любой файл вне этого перечня — мусор, подлежит диагностике и удалению только по решению пользователя.
+
+version: "1.0"
+doc_root: "doc"
+
+# ---------------------------------------------------------------------------
+# Допустимые пути (relative to repository root). Каждый путь — точный файл или
+# шаблон с подстановкой (marked with {id}). Шаблоны покрывают повторяющиеся
+# сущности (tasks, domains, entities, flows, capabilities, decisions).
+# ---------------------------------------------------------------------------
+allowed_paths:
+
+  # Корень doc
+  - "doc/AGENTS.md"
+
+  # Архитектурная документация
+  - "doc/architecture/README.md"
+  - "doc/architecture/glossary.md"
+  - "doc/architecture/index.json"
+
+  # Системные документы (уровень system)
+  - "doc/architecture/system/manifest.md"
+  - "doc/architecture/system/architecture-contract.md"
+  - "doc/architecture/system/architecture-audit.md"
+  - "doc/architecture/system/cli-command-map.md"
+  - "doc/architecture/system/cli-package.md"
+  - "doc/architecture/system/cli-validation-rules.md"
+  - "doc/architecture/system/components.md"
+  - "doc/architecture/system/constraints-risks.md"
+  - "doc/architecture/system/context.md"
+  - "doc/architecture/system/data.md"
+  - "doc/architecture/system/overview.md"
+  - "doc/architecture/system/quality.md"
+  - "doc/architecture/system/security.md"
+  - "doc/architecture/system/task-number-registry.md"
+  - "doc/architecture/system/implementation-spec.md"
+  - "doc/architecture/system/testing.md"
+  - "doc/architecture/system/examples.md"
+  - "doc/architecture/system/runbook.md"
+
+  # Схемы архитектуры
+  - "doc/architecture/schemas/document.schema.json"
+  - "doc/architecture/schemas/index.schema.json"
+  - "doc/architecture/schemas/bodies/capability-spec.json"
+  - "doc/architecture/schemas/bodies/capability.json"
+  - "doc/architecture/schemas/bodies/component-view.json"
+  - "doc/architecture/schemas/bodies/constraints-risks.json"
+  - "doc/architecture/schemas/bodies/data-view.json"
+  - "doc/architecture/schemas/bodies/decision.json"
+  - "doc/architecture/schemas/bodies/domain.json"
+  - "doc/architecture/schemas/bodies/entity.json"
+  - "doc/architecture/schemas/bodies/flow.json"
+  - "doc/architecture/schemas/bodies/glossary.json"
+  - "doc/architecture/schemas/bodies/quality-attributes.json"
+  - "doc/architecture/schemas/bodies/rule-set.json"
+  - "doc/architecture/schemas/bodies/security-view.json"
+  - "doc/architecture/schemas/bodies/system-context.json"
+  - "doc/architecture/schemas/bodies/system.json"
+
+  # Решения (ADR) — шаблон для любого ADR
+  - "doc/architecture/decisions/{id}.md"
+
+  # Домены — шаблоны
+  - "doc/architecture/domains/{domain}/README.md"
+  - "doc/architecture/domains/{domain}/capability.md"
+  - "doc/architecture/domains/{domain}/flow.md"
+  - "doc/architecture/domains/{domain}/capabilities/{slug}.md"
+  - "doc/architecture/domains/{domain}/flows/{slug}.md"
+  - "doc/architecture/domains/{domain}/entities/{slug}.md"
+  - "doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md"
+  - "doc/architecture/domains/task-lifecycle/cli-subtask-lifecycle.md"
+
+  # Конфигурация проекта (корень doc)
+  - "doc/config/paths.yaml"
+  # Конфиги типов задач (иерархическая структура)
+  - "doc/config/task-conf/types/{type}/config.yaml"
+  - "doc/config/task-conf/types/{type}/prompt.md"
+  - "doc/config/task-conf/types/{type}/flows/{flow}/config.yaml"
+  - "doc/config/task-conf/types/{type}/flows/{flow}/prompt.md"
+
+  # Навыки агентов
+  - "doc/skills/README.md"
+  - "doc/skills/{skill_id}/SKILL.md"
+
+  # Задачи — шаблон: doc/tasks/{task_key}/...
+  - "doc/tasks/{task_key}/task.json"
+  - "doc/tasks/{task_key}/stage{stage}/plan.md"
+  - "doc/tasks/{task_key}/stage{stage}/verification.json"
+  - "doc/tasks/{task_key}/subtasks/{subtask_id}/task.json"
+  - "doc/tasks/{task_key}/subtasks/{subtask_id}/stage{stage}/plan.md"
+  - "doc/tasks/{task_key}/subtasks/{subtask_id}/stage{stage}/verification.json"
+  # Исследования задачи — свободные md-документы, привязанные к таску
+  - "doc/tasks/{task_key}/research/{slug}.md"
+
+  # Тесты документации
+  - "doc/tests/README.md"
+  - "doc/tests/SCENARIOS.md"
+  - "doc/tests/run.sh"
+  - "doc/tests/test_task_identity.py"
+
+  # Инструменты (CLI)
+  - "doc/tools/README.md"
+  - "doc/tools/requirements.txt"
+  - "doc/tools/arch/__init__.py"
+  - "doc/tools/arch/__main__.py"
+  # CLI modular package (replaced monolithic cli.py)
+  - "doc/tools/arch/cli/__init__.py"
+  - "doc/tools/arch/cli/app.py"
+  - "doc/tools/arch/cli/errors.py"
+  - "doc/tools/arch/cli/output.py"
+  - "doc/tools/arch/cli/commands/__init__.py"
+  - "doc/tools/arch/cli/commands/base.py"
+  - "doc/tools/arch/cli/commands/registry.py"
+  - "doc/tools/arch/cli/commands/task_key.py"
+  - "doc/tools/arch/cli/commands/builtin.py"
+  - "doc/tools/arch/constants.py"
+  - "doc/tools/arch/identity.py"
+  - "doc/tools/arch/schema.py"
+  - "doc/tools/arch/store.py"
+  - "doc/tools/arch/subtask.py"
+  - "doc/tools/arch/validation.py"
+  - "doc/tools/arch/body_validation.py"
+  - "doc/tools/tests/test_arch.py"
+
+# ---------------------------------------------------------------------------
+# Прочая конфигурация проекта, читаемая CLI
+# ---------------------------------------------------------------------------
+project:
+  # Регистр и форматы идентификаторов
+  id_formats:
+    task_key: "^(?:[0-9]{4}|UI-[0-9]{4}|[A-Z][A-Z0-9]{0,7}-[0-9]{4})$"
+    document_id: "^[A-Za-z][A-Za-z0-9._:-]*$"
+    subtask_id: "^[0-9]{4}$"
+
+  # Допустимые типы документов архитектуры
+  document_types:
+    - system-overview
+    - architecture-view
+    - domain
+    - capability-spec
+    - glossary
+    - entity
+    - data-view
+    - flow
+    - rule-set
+    - integration
+    - cross-cutting-concept
+    - decision
+    - quality-view
+    - security-view
+    - deployment-operations-view
+    - constraints-risks
+    - verification-map
+    - component-view
+    - rule-set
+    - system-context
+    - quality-attributes
+    - system
+    - capability
+    - implementation-spec
+    - testing-spec
+    - examples
+    - runbook
+
+  # Допустимые статусы документов
+  document_statuses:
+    - draft
+    - current
+    - deprecated
+    - superseded
+    - accepted
+    - rejected
+
+  # Допустимые task_type (синхронизированы с doc/config/task-conf/types/*/config.yaml)
+  task_types:
+    - jira-incoming
+    - research
+    - planning
+    - audit
+    - feature
+    - bugfix
+    - docs
+    - refactor
+    - scaffold
+
+  # Допустимые phase
+  phases:
+    - intake
+    - planning
+    - execution
+    - verification
+    - completed
+    - blocked
+
+  # Допустимые уровни риска
+  risk_levels:
+    - low
+    - medium
+    - high
+    - critical
+
+  # Допустимые типы источников задач
+  source_types:
+    - jira
+    - ui
+    - other
+
+  # Базовые обязательные поля task.json (для всех типов задач).
+  # Специфичные поля для конкретного типа берутся из task-conf/types/<type>/config.yaml (required_fields).
+  task_schema_required_fields:
+    - schema_version
+    - task_key
+    - task_number
+    - source
+    - title
+    - kind
+    - intent
+    - scope
+    - acceptance_criteria
+    - target_release
+    - project_context_refs
+    - constraints
+    - assumptions
+    - open_questions
+    - risk
+    - authority
+    - approvals
+    - task_type
+    - flow
+    - complexity
+    - subtasks
+    - depends_on
+    - phase
+    - rollback_plan
+    - related_docs
+    - related_tests
+    - research_docs
+    - changed_files
+    - owner
+    - priority
+    - stage_history
+
+  # CLI настройки
+  cli:
+    allowed_commands:
+      - list
+      - show
+      - index build
+      - index check
+      - validate
+      - docs paths --check
+      - task-key
+      - task init
+      - task validate
+      - task workspace
+      - task status
+      - task types
+      - task flows --type <type>
+      - task decompose <task_key>
+      - task diagnose <task_key>
+      - task close <task_key>
+      - task subtask init
+      - task subtask validate
+      - task subtask status
+    strict_mode: true
+    garbage_detector: true
+
+# ---------------------------------------------------------------------------
+# Правила регламента структуры
+# ---------------------------------------------------------------------------
+structure_rules:
+  # В doc/ сохраняются только файлы из allowed_paths. Любой другой файл — отклонение.
+  only_declared_paths: true
+  # Прозрачные расширения для архитектурных документов
+  architecture_doc_extensions:
+    - ".md"
+    - ".json"
+  # Фронтмatter обязателен для всех .md в doc/architecture/
+  frontmatter_required_for:
+    - "doc/architecture/**/*.md"
+  # Индекс генерируется, не правится вручную
+  generated_files:
+    - "doc/architecture/index.json"

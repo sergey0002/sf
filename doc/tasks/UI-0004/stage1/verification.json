@@ -1,0 +1,81 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0004",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "arch task init UI-0004",
+      "expected": "Создаёт каталог doc/tasks/UI-0004/ с task.json и stage1/",
+      "actual": "Создаёт task directory, task.json со scaffold полями, stage1/ каталог; task.md не создаётся",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "arch task validate UI-0001",
+      "expected": "Код возврата 0, task.json валиден",
+      "actual": "task UI-0001 is valid, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "arch task init UI-0001",
+      "expected": "Ошибка коллизии, код возврата != 0",
+      "actual": "ERROR: task directory already exists, exit 1",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "arch task init с некорректными ключами",
+      "expected": "Ошибка валидации ключа, код возврата != 0",
+      "actual": "bad-key → invalid task_key error, exit 1; 123, 12345, 12A4, ui-0001, GH-123, UI-0001-extra все отвергаются",
+      "status": "passed"
+    },
+    {
+      "id": "V-5",
+      "command": "arch task workspace UI-0001",
+      "expected": "Информация о workspace, ветке, target_release",
+      "actual": "Возвращает JSON с task_key, task_number, directory, target_release, branch_hint, note",
+      "status": "passed"
+    },
+    {
+      "id": "V-6",
+      "command": "arch task status UI-0001",
+      "expected": "Статус задачи, стадии, файлы верификации, отсутствие task.md",
+      "actual": "Возвращает JSON со стадиями [stage1], verification_files, has_task_md: false",
+      "status": "passed"
+    },
+    {
+      "id": "V-7",
+      "command": "bash doc/tests/run.sh",
+      "expected": "13/13 pass",
+      "actual": "14 тестов в test_task_identity.py (включая 6 новых для task CLI) + 5 в test_arch.py = 19/19, все pass",
+      "status": "passed"
+    },
+    {
+      "id": "V-8",
+      "command": "python3 -m unittest discover -s doc/tools/tests",
+      "expected": "5/5 pass",
+      "actual": "5 tests OK, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-9",
+      "command": "arch.py validate && arch.py index check",
+      "expected": "valid + current",
+      "actual": "Architecture documentation is valid / Index is current",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "arch task init UI-0005 → создаёт directory, task.json, stage1/ (ручная проверка, каталог удалён)",
+    "arch task validate UI-0001 → task UI-0001 is valid",
+    "arch task init UI-0001 → collision error, exit 1",
+    "arch task init bad-key → invalid task_key error, exit 1",
+    "arch task workspace UI-0001 → JSON с workspace инфо",
+    "arch task status UI-0001 → JSON со стадиями, verification_files, has_task_md: false",
+    "test_task_identity.py: 14/14 pass (8 старых + 6 новых для task CLI)",
+    "test_arch.py: 5/5 pass",
+    "arch.py validate → valid, index check → current"
+  ],
+  "status": "completed"
+}

@@ -1,0 +1,119 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": "ui:0001",
+  "task_key": "UI-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": "user-input-scaffold-example",
+    "provenance": "user request in chat",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Create the simple software-factory architecture scaffold",
+  "kind": "scaffold",
+  "intent": "Create a project folder with architecture documentation, necessary deterministic architecture-doc CLI, tool-neutral agent skills, and a task/stage record, using only explicit root-manifest requirements and clearly obvious consequences.",
+  "scope": {
+    "in": [
+      "Create doc/architecture with agent-readable draft architecture pages and generated index.",
+      "Create doc/tools with a deterministic Python CLI for architecture docs and tests.",
+      "Create doc/skills with create-task, go-to-task and задокументируй drafts from the root manifest.",
+      "Create this task.json and stage plan/evidence record without creating task.md.",
+      "Require four-digit task_number and deterministic source key naming: Jira bare number, UI/user input with UI prefix, all other sources with explicit prefix."
+    ],
+    "out": [
+      "Do not copy the root manifest into simple/.",
+      "Do not choose trackers, product repositories, branches/releases, CI vendors, model providers or an agent runtime.",
+      "Do not implement the future code-scanning program, code graph, MCP integrations, subagent orchestration, or a pilot."
+    ],
+    "allowed_files_modules": []
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "The simple/ project contains a domain-first doc/architecture example whose claims are limited to the root manifest; unresolved decisions are marked rather than guessed.",
+      "verification": "Inspect architecture Markdown and run arch validate/index check."
+    },
+    {
+      "id": "AC-2",
+      "statement": "The doc/tools Python CLI can list/show docs, build/check index.json, validate frontmatter/schema/IDs/links, and has passing automated tests.",
+      "verification": "Run the documented CLI commands and unittest suite."
+    },
+    {
+      "id": "AC-3",
+      "statement": "The doc/skills folder contains tool-neutral drafts for create-task, go-to-task and задокументируй consistent with the manifest constraints.",
+      "verification": "Inspect skill files and references."
+    },
+    {
+      "id": "AC-4",
+      "statement": "A single task.json plus stage plan/evidence are present; no task.md or copied root manifest is created.",
+      "verification": "Inspect task paths and project tree."
+    },
+    {
+      "id": "AC-5",
+      "statement": "Every task has exactly four decimal digits; Jira task keys have no prefix, UI user-input tasks use UI-, and other sources require an explicit prefix. Invalid combinations are rejected and no number is auto-allocated.",
+      "verification": "Run `doc/tests/run.sh` and inspect the task-key CLI cases."
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md"
+  ],
+  "constraints": [
+    "Current factory core is single-agent.",
+    "task.json is the only canonical task input.",
+    "CLI performs deterministic operations; agent/skills own semantic decisions.",
+    "Do not implement a pilot or make choices marked unresolved in the manifest."
+  ],
+  "assumptions": [],
+  "open_questions": [
+    "The final task.json JSON Schema is not yet approved; this input is explicitly marked draft-0.2.",
+    "No product repository, release mapping, CI system, code owner roster, or canonical shared docs-repository URL is configured.",
+    "UI-0001 is a local scaffold fixture number only; no global allocator or reservation is implied."
+  ],
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests",
+      "create_branch",
+      "open_pr"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "approvals": [
+    "No product release, push, merge or deploy is requested by this documentation scaffold."
+  ],
+  "related_docs": [],
+  "related_tests": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "task_type": "scaffold",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": null,
+  "stage_history": [],
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "research_docs": []
+}

@@ -1,0 +1,34 @@
+id: standard-implementation
+title: Стандартная реализация
+type: feature
+description: |
+  Стандартный flujo реализации: уточнение намерения → план → ограниченная
+  реализация → проверка → закрытие.
+subtask_policy: required
+close_policy: all_subtasks_required
+steps:
+  - id: intent
+    name: Уточнение намерения
+    action: read_and_clarify
+    output: task.json intent/scope
+    gate: blocking_questions_resolved
+  - id: plan
+    name: Планирование
+    action: create_plan
+    output: stage1/plan.md
+    gate: plan_approved
+  - id: implement
+    name: Реализация
+    action: bounded_implementation
+    output: changed files within allowed scope
+    gate: scope_respected
+  - id: verify
+    name: Проверка
+    action: run_validation_and_tests
+    output: stage1/verification.json
+    gate: tests_passed_and_paths_valid
+  - id: close
+    name: Закрытие
+    action: request_approval_and_close
+    output: approvals, stage_history
+    gate: all_subtasks_closed_and_approval_obtained

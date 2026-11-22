@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/simple-factory/document.schema.json",
+  "title": "Architecture document frontmatter",
+  "type": "object",
+  "required": ["id", "type", "title", "summary", "status", "domain"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9_-]*$"},
+    "type": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "title": {"type": "string", "minLength": 1},
+    "summary": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["draft", "proposed", "accepted", "deprecated", "superseded"]},
+    "domain": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "related": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Z][A-Za-z0-9_-]*$"}},
+    "source_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "applies_to": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "additionalProperties": true
+}

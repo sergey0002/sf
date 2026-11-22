@@ -1,0 +1,18 @@
+id: standard-implementation
+title: Стандартная реализация
+type: planning
+description: |
+  Прямое составление плана без предварительного исследования.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: plan
+    name: Составление плана
+    action: create_plan
+    output: stage1/plan.md
+    gate: constitution_check_passed
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed

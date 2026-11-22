@@ -1,0 +1,72 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0006",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "Изучить data best practices",
+      "expected": "Прочитаны: Контракт задачи для агента, Исследование формата, Тесты, Сущности SDD",
+      "actual": "Прочитаны все 4 файла из data/machinedocs-encyclopedia и data/sdd-encyclopedia",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "Определить дополнительные поля task.json",
+      "expected": "task_id, source.revision, source.captured_at, kind, scope.in/out, allowed_files_modules, current_behavior, evidence, contracts_and_invariants, risk, authority",
+      "actual": "Все поля определены и добавлены в task.json UI-0001 и UI-0004",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "Сформулировать правила отражения в архитектуре",
+      "expected": "ADR, related_docs, changed_files, stage_history, обновление ENT/FLOW docs, related_tests как evidence",
+      "actual": "Правила добавлены в go-to-task/SKILL.md и задокументируй/SKILL.md в разделе 'Architectural reflection after task completion'",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "Обновить task.json UI-0001 и UI-0004",
+      "expected": "Новые поля traceability и contract добавлены",
+      "actual": "Оба task.json содержат task_id, source.revision/captured_at, kind, scope (in/out/allowed_files_modules), current_behavior, evidence, contracts_and_invariants, risk, authority",
+      "status": "passed"
+    },
+    {
+      "id": "V-5",
+      "command": "Обновить arch.py task validate",
+      "expected": "Валидация новых полей",
+      "actual": "validate_task_json проверяет task_id, kind, scope (object with in/out), allowed_files_modules, current_behavior, evidence, contracts_and_invariants, risk (enum), authority (object with arrays)",
+      "status": "passed"
+    },
+    {
+      "id": "V-6",
+      "command": "Обновить SKILL.md go-to-task и задокументируй",
+      "expected": "Ссылки на новые поля и правила отражения в архитектуре",
+      "actual": "Оба SKILL.md обновлены с разделами 'Task.json traceability fields' (новые поля) и 'Architectural reflection after task completion' (ADR, related_docs, changed_files, stage_history, ENT/FLOW docs, related_tests)",
+      "status": "passed"
+    },
+    {
+      "id": "V-7",
+      "command": "Добавить unit-тесты",
+      "expected": "Новые тесты для новых полей",
+      "actual": "test_task_validate_rejects_bad_task_id, test_task_validate_rejects_bad_kind, test_task_validate_rejects_bad_scope, test_task_validate_rejects_bad_risk, test_task_validate_rejects_bad_authority + обновлён test_task_validate_accepts_traceability_fields",
+      "status": "passed"
+    },
+    {
+      "id": "V-8",
+      "command": "bash doc/tests/run.sh + unittest discover",
+      "expected": "Все тесты pass",
+      "actual": "test_task_identity.py: 23/23 pass; test_arch.py: 5/5 pass; Итого 28/28; arch.py validate → valid; index check → current",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "task.json UI-0001 → валиден с полями из data/ best practices",
+    "task.json UI-0004 → валиден с полями из data/ best practices",
+    "arch task validate UI-0001 → task UI-0001 is valid",
+    "arch task validate UI-0004 → task UI-0004 is valid",
+    "28/28 тестов проходят (23 + 5)",
+    "SKILL.md go-to-task и задокументируй обновлены с правилами отражения в архитектуре",
+    "Nовые unit-тесты отвергают невалидный task_id, kind, scope, risk, authority"
+  ],
+  "status": "completed"
+}

@@ -1,0 +1,58 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0002",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "chmod +x doc/tools/arch.py",
+      "expected": "exit 0, файл исполняемый",
+      "actual": "chmod выполнен, -rwxr-xr-x, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "doc/tools/arch.py validate",
+      "expected": "Architecture documentation is valid, exit 0",
+      "actual": "Architecture documentation is valid, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "doc/tools/arch.py index check",
+      "expected": "Index is current, exit 0",
+      "actual": "Index is current, exit 0; index build → 29 документов",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "bash doc/tests/run.sh",
+      "expected": "All environment acceptance tests passed, 13/13",
+      "actual": "All environment acceptance tests passed, 13/13, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-5",
+      "command": "python3 -m unittest discover -s doc/tools/tests",
+      "expected": "5 tests OK, exit 0",
+      "actual": "5 tests OK, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-6",
+      "command": "cat /home/user/README.md",
+      "expected": "существует, содержит разделы по doc/, корню, data/, CLI quickstart, создание задач",
+      "actual": "/home/user/README.md создан, содержит все разделы включая «Как работать с data/»",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "arch.py validate → Architecture documentation is valid",
+    "arch.py index check → Index is current",
+    "arch.py index build → 29 документов",
+    "arch.py list → 29 записей (ADR, CAP, DOM, ENT, FLOW, GLO, REG, SYS, VIEW)",
+    "doc/tests/run.sh → 13/13 pass",
+    "python3 -m unittest discover → 5/5 pass",
+    "Создан /home/user/README.md со структурой песочника, CLI quickstart, порядком создания задач и разделом «Как работать с data/»"
+  ],
+  "status": "completed"
+}

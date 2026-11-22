@@ -1,0 +1,24 @@
+id: research-first
+title: Исследование первым делом
+type: research
+description: |
+  Поток для задач, где сначала требуется сбор информации и сравнение вариантов,
+  а решение о реализации принимается после conclusions.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: research
+    name: Исследование
+    action: desk_research
+    output: plan.md с выводами и вариантами
+    gate: findings_documented
+  - id: recommend
+    name: Рекомендация
+    action: decision_recommendation
+    output: verification.json с рекомендацией
+    gate: recommendation_made
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed

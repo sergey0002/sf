@@ -1,0 +1,633 @@
+{
+  "index_schema_version": 1,
+  "documents": [
+    {
+      "id": "ADR-0001",
+      "type": "decision",
+      "title": "Хранилище архитектурной документации: Markdown + YAML frontmatter, .doc/architecture/, сгенерированный индекс",
+      "summary": "Единственный канонический репозиторий документов, поиск, ориентированный на агента, сгенерированный индекс, детерминированный CLI; ADR живут в decisions/.",
+      "status": "accepted",
+      "path": "decisions/ADR-0001-architecture-docs-store.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "GLO-system",
+        "VIEW-components",
+        "VIEW-context",
+        "VIEW-data",
+        "VIEW-quality",
+        "VIEW-security",
+        "VIEW-open-constraints"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "ARCH-audit",
+      "type": "constraints-risks",
+      "title": "Глубокий аудит doc.architecture.md",
+      "summary": "Дата: 2026-11-21. Объект: первоначальная версия doc.architecture.md и актуализированная версия 1.2.",
+      "status": "draft",
+      "path": "system/architecture-audit.md",
+      "domain": "system",
+      "related": [
+        "ARCH-contract",
+        "MAN-software-factory",
+        "SYS-simple-factory"
+      ],
+      "source_refs": [
+        "/home/user/doc.architecture-audit.md"
+      ]
+    },
+    {
+      "id": "ARCH-contract",
+      "type": "architecture-view",
+      "title": "Целевая модель .doc/architecture: хранение, форматы, обновление и CLI",
+      "summary": "Версия: 1.3 — добавлена иерархическая task-conf (типы задач + флоу), конфиг-driven валидация task.json, исследовательская папка research/, детекторы путей и мусора в CLI. CLI/schema реализованы и подтверждены валидатором проекта.",
+      "status": "accepted",
+      "path": "system/architecture-contract.md",
+      "domain": "system",
+      "related": [
+        "MAN-software-factory",
+        "ARCH-audit",
+        "SYS-simple-factory",
+        "DOM-project-knowledge",
+        "REG-task-number-registry",
+        "VIEW-cli-package",
+        "REG-cli-validation-rules"
+      ],
+      "source_refs": [
+        "/home/user/doc/config/paths.yaml",
+        "/home/user/doc/config/task-conf/types/jira-incoming/config.yaml"
+      ]
+    },
+    {
+      "id": "CAP-configurable-model-cli",
+      "type": "capability",
+      "title": "Настраиваемая CLI модели",
+      "summary": "Предоставляет настраиваемость модели/провайдера, сохраняя рабочий процесс одного агента.",
+      "status": "draft",
+      "path": "domains/model-routing/capability.md",
+      "domain": "model-routing",
+      "related": [
+        "DOM-model-routing",
+        "SYS-simple-factory"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "CAP-doc-integrity",
+      "type": "capability-spec",
+      "title": "Валидация структуры архитектурной документации",
+      "summary": "Детерминированная валидация индекса, frontmatter, ссылок и ID документации CLI архитектуры.",
+      "status": "draft",
+      "path": "domains/execution-verification/capabilities/doc-integrity.md",
+      "domain": "execution-verification",
+      "related": [
+        "DOM-project-knowledge",
+        "FLOW-document-session"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "CAP-knowledge-retrieval",
+      "type": "capability",
+      "title": "Извлечение знаний, ориентированное на агента",
+      "summary": "Ориентируйтесь через индекс, затем выберите релевантные канонические документы семантически и следуйте за доказательствами.",
+      "status": "draft",
+      "path": "domains/project-knowledge/capability.md",
+      "domain": "project-knowledge",
+      "related": [
+        "DOM-project-knowledge",
+        "SYS-simple-factory"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "CAP-role-model-routing",
+      "type": "capability-spec",
+      "title": "Опциональная консультация модели на основе ролей без сохранения состояния",
+      "summary": "Запасная возможность для явных вызовов настроенных моделей через совместимый API; не среда выполнения суб-агентов.",
+      "status": "draft",
+      "path": "domains/model-routing/capabilities/role-model-routing.md",
+      "domain": "model-routing",
+      "related": [
+        "DOM-model-routing",
+        "VIEW-security"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "CAP-single-agent-execution",
+      "type": "capability-spec",
+      "title": "Выполнение ограниченной задачи одним агентом с независимыми доказательствами",
+      "summary": "Контракт ядра одного агента и границы ответственности CLI/агента/человека.",
+      "status": "draft",
+      "path": "domains/execution-verification/capabilities/single-agent-execution.md",
+      "domain": "execution-verification",
+      "related": [
+        "FLOW-execute-task",
+        "ENT-stage-artifact"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "CAP-task-intake",
+      "type": "capability-spec",
+      "title": "Нормализация входящих задач в task.json",
+      "summary": "Контракт поведения для приёма задач, осведомленного об источнике; загружать при изменении отображений источников, вопросов чата или идентичности задачи.",
+      "status": "draft",
+      "path": "domains/task-intake/capabilities/task-intake.md",
+      "domain": "task-intake",
+      "related": [
+        "FLOW-create-task",
+        "DOM-task-intake"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "DOM-execution-verification",
+      "type": "domain",
+      "title": "Выполнение и верификация",
+      "summary": "Границы выполнения задачи одним агентом, одобрения, изолированные рабочие пространства и доказательства.",
+      "status": "draft",
+      "path": "domains/execution-verification/README.md",
+      "domain": "execution-verification",
+      "related": [
+        "CAP-single-agent-execution",
+        "FLOW-verify-task"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "DOM-model-routing",
+      "type": "domain",
+      "title": "Маршрутизация моделей",
+      "summary": "Настраиваемая маршрутизация CLI моделей, включая отображение ролей на модели как опциональный запасной вариант.",
+      "status": "draft",
+      "path": "domains/model-routing/README.md",
+      "domain": "model-routing",
+      "related": [
+        "CAP-configurable-model-cli"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "DOM-project-knowledge",
+      "type": "domain",
+      "title": "Знания проекта",
+      "summary": "Архитектурные и репозиторийные знания, ориентированные на агента, границы извлечения, происхождение и ревью.",
+      "status": "draft",
+      "path": "domains/project-knowledge/README.md",
+      "domain": "project-knowledge",
+      "related": [
+        "SYS-simple-factory",
+        "CAP-knowledge-retrieval"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "DOM-task-intake",
+      "type": "domain",
+      "title": "Приём задач",
+      "summary": "Как запросы из чата или трекера становятся каноническим task.json; загружать перед изменением границ приёма.",
+      "status": "draft",
+      "path": "domains/task-intake/README.md",
+      "domain": "task-intake",
+      "related": [
+        "CAP-task-intake",
+        "FLOW-create-task"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "DOM-task-lifecycle",
+      "type": "domain",
+      "title": "Жизненный цикл задачи",
+      "summary": "Идентичность и historia задачи/этапа, записи доказательств; загружать при изменении жизненного состояния или происхождения.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/README.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-task-input",
+        "ENT-stage-artifact",
+        "ENT-verification-evidence"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "ENT-stage-artifact",
+      "type": "entity",
+      "title": "Артефакт этапа задачи",
+      "summary": "Запись итерации задачи с границами: план, прогресс, дельта и ссылки на доказательства.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/entities/stage-artifact.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-task-input",
+        "ENT-verification-evidence"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "ENT-task-input",
+      "type": "entity",
+      "title": "Канонический ввод задачи",
+      "summary": "Версионированная запись JSON для одной задачи, осведомленная об источнике; единственный канонический ввод задачи.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/entities/task-input.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "DOM-task-intake",
+        "CAP-task-intake",
+        "FLOW-create-task"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "ENT-verification-evidence",
+      "type": "entity",
+      "title": "Запись доказательств верификации",
+      "summary": "Машиночитаемая запись, связывающая выполненную проверку с точным состоянием кода и выводами; загружать при изменении захвата верификации.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/entities/verification-evidence.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-stage-artifact",
+        "CAP-single-agent-execution"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "EXAMPLES-cli-usage",
+      "type": "examples",
+      "title": "Примеры использования CLI и task.json",
+      "summary": "Полные примеры task.json, сценарии команд CLI, обработка ошибок, E2E потоки для всех типов задач.",
+      "status": "draft",
+      "path": "system/examples.md",
+      "domain": "system",
+      "related": [
+        "SPEC-cli-implementation",
+        "REG-cli-validation-rules",
+        "REG-cli-command-map"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-cli-subtask-lifecycle",
+      "type": "flow",
+      "title": "Жизненный цикл субтаски — init, validate, status",
+      "summary": "Документирует, как работают `arch task subtask init/validate/status`, контракт директории субтаски и правила рекурсии.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/cli-subtask-lifecycle.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "DOM-task-lifecycle",
+        "FLOW-cli-task-lifecycle",
+        "REG-cli-validation-rules",
+        "REG-cli-command-map"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "FLOW-cli-task-lifecycle",
+      "type": "flow",
+      "title": "Жизненный цикл задачи — init, validate, workspace, status",
+      "summary": "Документирует, как работают `arch task init/validate/workspace/status`, что они создают и какие инварианты соблюдают.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/cli-task-lifecycle.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "DOM-task-lifecycle",
+        "ENT-task-input",
+        "REG-cli-validation-rules",
+        "REG-cli-command-map"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "FLOW-create-task",
+      "type": "flow",
+      "title": "Создание и нормализация задачи",
+      "summary": "Путь от Jira/другого tracker/chat до canonical task.json; загружать при изменении intake flow.",
+      "status": "draft",
+      "path": "domains/task-intake/flows/create-task.md",
+      "domain": "task-intake",
+      "related": [
+        "CAP-task-intake",
+        "ENT-task-input",
+        "DOM-task-lifecycle"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-document-session",
+      "type": "flow",
+      "title": "Захват подтверждённых изменений сессии в документации проекта",
+      "summary": "Поведение `задокументируй` с активной задачей и без неё.",
+      "status": "draft",
+      "path": "domains/execution-verification/flows/document-session.md",
+      "domain": "execution-verification",
+      "related": [
+        "CAP-doc-integrity",
+        "DOM-project-knowledge",
+        "ENT-stage-artifact"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-execute-task",
+      "type": "flow",
+      "title": "Выполнение и верификация одной задачи",
+      "summary": "Поток одной задачи от go-to-task через песочницу, тесты и ревью человеком; загружать при изменении основного выполнения.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/flows/execute-task.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-task-input",
+        "ENT-stage-artifact",
+        "CAP-single-agent-execution"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-task-lifecycle",
+      "type": "flow",
+      "title": "Возобновление жизненного цикла задачи и этапа",
+      "summary": "Валидация исходной задачи и состояния рабочего пространства перед планированием или продолжением этапа.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/flow.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "DOM-task-lifecycle",
+        "ENT-task-input",
+        "ENT-stage-artifact",
+        "ENT-verification-evidence"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-verify-task",
+      "type": "flow",
+      "title": "Верификация и ревью изменений задачи",
+      "summary": "Запуск авторизованных проверок против конкретного состояния кода и подготовка доказательств для ревью человеком.",
+      "status": "draft",
+      "path": "domains/execution-verification/flow.md",
+      "domain": "execution-verification",
+      "related": [
+        "DOM-execution-verification",
+        "CAP-single-agent-execution",
+        "ENT-verification-evidence"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "GLO-system",
+      "type": "glossary",
+      "title": "Словарь программной фабрики",
+      "summary": "Значения терминов, квалифицированные доменом; загружать при интерпретации терминологии задач/документов/CLI.",
+      "status": "draft",
+      "path": "glossary.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "DOM-task-intake",
+        "DOM-task-lifecycle"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "MAN-software-factory",
+      "type": "system",
+      "title": "Манифест агентной software factory",
+      "summary": "Загружайте при проектировании ядра agentic software factory: single-agent task intake, project knowledge, CLI/agent responsibility split, workflow, verification и границы безопасности.",
+      "status": "draft",
+      "path": "system/manifest.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "DOM-task-intake",
+        "DOM-task-lifecycle",
+        "DOM-project-knowledge",
+        "DOM-execution-verification",
+        "DOM-model-routing"
+      ],
+      "source_refs": [
+        "/home/user/Манифест агентной software factory.md"
+      ]
+    },
+    {
+      "id": "REG-cli-command-map",
+      "type": "rule-set",
+      "title": "Отображение команд CLI на модули и функции",
+      "summary": "Сопоставляет каждую команду и подкоманду arch CLI с модулем и функцией, которые её реализуют, для архитектурной прослеживаемости.",
+      "status": "draft",
+      "path": "system/cli-command-map.md",
+      "domain": "system",
+      "related": [
+        "VIEW-cli-package",
+        "DOM-task-lifecycle"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "REG-cli-validation-rules",
+      "type": "rule-set",
+      "title": "Правила валидации task.json и ограничения перечислений",
+      "summary": "Перечисляет все валидируемые поля task.json, принимаемые ими перечисления и условия ошибок, которые применяет CLI.",
+      "status": "draft",
+      "path": "system/cli-validation-rules.md",
+      "domain": "system",
+      "related": [
+        "ENT-task-input",
+        "REG-cli-command-map",
+        "DOM-task-lifecycle"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "REG-task-number-registry",
+      "type": "rule-set",
+      "title": "Политика выделения и реестра номеров задач",
+      "summary": "Четырёхзначный task_number, ключ, производный от источника, без автоматического выделения; дубли останавливают.",
+      "status": "draft",
+      "path": "system/task-number-registry.md",
+      "domain": "system",
+      "related": [
+        "ENT-task-input",
+        "CAP-task-intake",
+        "FLOW-create-task",
+        "GLO-system"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "RUNBOOK-arch-operations",
+      "type": "runbook",
+      "title": "Операционное руководство Arch CLI",
+      "summary": "Процедуры восстановления после сбоев, отката изменений, миграции task-conf, обслуживания и диагностики проблем.",
+      "status": "draft",
+      "path": "system/runbook.md",
+      "domain": "system",
+      "related": [
+        "SPEC-cli-implementation",
+        "REG-cli-validation-rules",
+        "REG-cli-command-map",
+        "VIEW-open-constraints"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "SPEC-cli-implementation",
+      "type": "implementation-spec",
+      "title": "Спецификация реализации Arch CLI",
+      "summary": "Сигнатуры функций, структура argparse, обработка ошибок, форматы файлов и процедуры, необходимые для восстановления CLI из документации без исходного кода.",
+      "status": "draft",
+      "path": "system/implementation-spec.md",
+      "domain": "system",
+      "related": [
+        "REG-cli-command-map",
+        "VIEW-cli-package",
+        "REG-cli-validation-rules",
+        "SPEC-cli-implementation"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "SPEC-cli-testing",
+      "type": "testing-spec",
+      "title": "Стратегия тестирования Arch CLI",
+      "summary": "Что тестировать, как запускать тесты, какие сценарии покрыты, критерии приёмки для CLI и task.json валидации.",
+      "status": "draft",
+      "path": "system/testing.md",
+      "domain": "system",
+      "related": [
+        "SPEC-cli-implementation",
+        "REG-cli-command-map",
+        "REG-cli-validation-rules"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "SYS-simple-factory",
+      "type": "system",
+      "title": "Фабрика программного обеспечения одного агента",
+      "summary": "Точка входа для текущей архитектуры фабрики и её явных нецелей.",
+      "status": "draft",
+      "path": "system/overview.md",
+      "domain": "system",
+      "related": [
+        "DOM-task-intake",
+        "DOM-task-lifecycle",
+        "DOM-project-knowledge",
+        "DOM-execution-verification",
+        "DOM-model-routing"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-cli-package",
+      "type": "component-view",
+      "title": "Структура пакета Arch CLI и ответственность модулей",
+      "summary": "Модульный Python-пакет под doc/tools/arch/; ответственность каждого модуля и граф зависимостей между ними.",
+      "status": "draft",
+      "path": "system/cli-package.md",
+      "domain": "system",
+      "related": [
+        "REG-cli-command-map",
+        "SYS-simple-factory",
+        "DOM-task-lifecycle"
+      ],
+      "implemented": true
+    },
+    {
+      "id": "VIEW-components",
+      "type": "component-view",
+      "title": "Логические компоненты",
+      "summary": "Логические обязанности и запретное зацепление в дизайне фабрики.",
+      "status": "draft",
+      "path": "system/components.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "DOM-task-intake",
+        "DOM-project-knowledge",
+        "DOM-model-routing"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-context",
+      "type": "system-context",
+      "title": "Контекст системы и внешние актёры",
+      "summary": "Актёры, входы и границы доверия вокруг фабрики одного агента.",
+      "status": "draft",
+      "path": "system/context.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "DOM-task-intake",
+        "DOM-execution-verification"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-data",
+      "type": "data-view",
+      "title": "Границы данных и записей",
+      "summary": "Канонические, производные и типы записей доказательств; точные производные схемы остаются открытыми.",
+      "status": "draft",
+      "path": "system/data.md",
+      "domain": "system",
+      "related": [
+        "ENT-task-input",
+        "ENT-stage-artifact",
+        "ENT-verification-evidence",
+        "CAP-knowledge-retrieval"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-open-constraints",
+      "type": "constraints-risks",
+      "title": "Открытые ограничения и риски",
+      "summary": "Неуказанные входные данные дизайна из манифеста; загружать, чтобы не превращать гипотезы в решения.",
+      "status": "draft",
+      "path": "system/constraints-risks.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-quality",
+      "type": "quality-attributes",
+      "title": "Атрибуты качества и сценарии",
+      "summary": "Цели качества и проверяемые сценарии; метрики/цели всё ещё требуют решений владельца.",
+      "status": "draft",
+      "path": "system/quality.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "CAP-knowledge-retrieval",
+        "CAP-single-agent-execution"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "VIEW-security",
+      "type": "security-view",
+      "title": "Безопасность и границы доверия",
+      "summary": "Угрозы и границы политики, актуальные для приёма задач, работы с репозиторием и использования модели.",
+      "status": "draft",
+      "path": "system/security.md",
+      "domain": "system",
+      "related": [
+        "SYS-simple-factory",
+        "FLOW-create-task",
+        "CAP-single-agent-execution"
+      ],
+      "implemented": false
+    }
+  ]
+}

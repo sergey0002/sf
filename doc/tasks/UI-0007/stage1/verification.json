@@ -1,0 +1,80 @@
+{
+  "stage_id": "stage1",
+  "task_key": "UI-0007",
+  "checks": [
+    {
+      "id": "V-1",
+      "command": "task.json поля: task_type, subtasks, depends_on, phase, rollback_plan",
+      "expected": "Новые поля добавлены в task.json UI-0001 и UI-0004",
+      "actual": "task_type, subtasks, depends_on, phase, rollback_plan добавлены в оба task.json",
+      "status": "passed"
+    },
+    {
+      "id": "V-2",
+      "command": "arch task subtask init UI-0001 0001",
+      "expected": "Создаёт subtasks/0001/ с task.json и stage1/",
+      "actual": "Создаёт directory, task.json с правильным task_key (UI-0001-0001), stage1/",
+      "status": "passed"
+    },
+    {
+      "id": "V-3",
+      "command": "arch task subtask validate UI-0001 0001",
+      "expected": "Код возврата 0",
+      "actual": "subtask UI-0001-0001 is valid, exit 0",
+      "status": "passed"
+    },
+    {
+      "id": "V-4",
+      "command": "arch task subtask status UI-0001 0001",
+      "expected": "Статус сабтаска с phase, task_type",
+      "actual": "Возвращает JSON с subtask_key, directory, stages, phase, task_type",
+      "status": "passed"
+    },
+    {
+      "id": "V-5",
+      "command": "task_type enum validation",
+      "expected": "research/planning/audit/feature/bugfix/docs/refactor/scaffold",
+      "actual": "Невалидный task_type отвергается, валидные проходят",
+      "status": "passed"
+    },
+    {
+      "id": "V-6",
+      "command": "phase enum validation",
+      "expected": "intake/planning/execution/verification/completed/blocked",
+      "actual": "Невалидная фаза отвергается, валидные проходят",
+      "status": "passed"
+    },
+    {
+      "id": "V-7",
+      "command": "subtask зависимость от родителя",
+      "expected": "parent_task_key в task.json сабтаска, рекурсивная структура",
+      "actual": "subtask task_key = parent-subtask_id, parent_task_key ссылка",
+      "status": "passed"
+    },
+    {
+      "id": "V-8",
+      "command": "SKILL.md обновлены",
+      "expected": "go-to-task и задокументируй содержат новые поля и правила сабтасков",
+      "actual": "Оба SKILL.md обновлены с task_type, phase, subtasks, depends_on, rollback_plan и разделом Subtasks",
+      "status": "passed"
+    },
+    {
+      "id": "V-9",
+      "command": "bash doc/tests/run.sh + unittest discover",
+      "expected": "Все тесты pass",
+      "actual": "test_task_identity.py: 31/31 pass; test_arch.py: 5/5 pass; Итого 36/36; arch.py validate → valid; index check → current",
+      "status": "passed"
+    }
+  ],
+  "evidence": [
+    "task.json UI-0001 → валиден с новыми полями (task_type, subtasks, depends_on, phase, rollback_plan)",
+    "task.json UI-0004 → валиден с новыми полями",
+    "arch task subtask init UI-0001 0001 → создаёт subtasks/0001/ с task.json + stage1/",
+    "arch task subtask validate UI-0001 0001 → subtask UI-0001-0001 is valid",
+    "arch task subtask status UI-0001 0001 → JSON со статусом сабтаска",
+    "36/36 тестов проходят",
+    "arch.py validate → valid, index check → current",
+    "SKILL.md go-to-task и задокументируй обновлены с новыми полями и правилами сабтасков"
+  ],
+  "status": "completed"
+}

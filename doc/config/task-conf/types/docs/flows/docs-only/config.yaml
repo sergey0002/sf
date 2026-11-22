@@ -1,0 +1,24 @@
+id: docs-only
+title: Только документация
+type: docs
+description: |
+  Поток для задач, которые меняют только архитектурную документацию,
+  скиллы, конфиги путей. Требует структурной валидации путей и frontmatter.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: change
+    name: Изменение документации
+    action: bounded_markdown_diff
+    output: changed .md files under doc/architecture/
+    gate: paths_declared_and_frontmatter_valid
+  - id: validate
+    name: Структурная валидация
+    action: run_cli_validation
+    output: stage1/verification.json
+    gate: arch_validate_and_paths_check_passed
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed

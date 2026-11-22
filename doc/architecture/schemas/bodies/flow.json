@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Flow document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["## Шаги", "## Пути отказа", "## Состояние модели"]
+      },
+      "minItems": 1
+    },
+    "has_steps_table_or_list": { "type": "boolean", "const": true }
+  },
+  "required": ["required_sections", "has_steps_table_or_list"]
+}

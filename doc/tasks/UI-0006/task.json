@@ -1,0 +1,127 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": "ui:0006",
+  "task_key": "UI-0006",
+  "task_number": "0006",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-task-format-and-arch-reflection",
+    "provenance": "user request in chat",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Изучить best practices форматов задач из data/, дополнить task.json и правила отражения в архитектуре после завершения",
+  "intent": "Прочитать data/machinedocs-encyclopedia (Контракт задачи для агента, Исследование формата документации проекта и входящей задачи, Тесты), data/sdd-encyclopedia (Сущности SDD), сравнить с текущим task.json, определить дополнительные поля (task_id, source.revision/captured_at, kind, scope.in/out, current_behavior/evidence, contracts_and_invariants, risk/authority, execution_state), сформулировать правила отражения завершённой задачи в архитектурной документации (ADR, related_docs, changed_files, stage_history, обновление ENT/FLOW docs), добавить валидацию в arch.py task validate, обновить навыки, добавить тесты.",
+  "kind": "analysis",
+  "scope": {
+    "in": [
+      "Прочитать data best practices по форматам задач",
+      "Сравнить с текущим task.json UI-0001 и UI-0004",
+      "Определить дополнительные поля task.json",
+      "Сформулировать правила отражения в архитектуре после завершения задачи",
+      "Обновить task.json примеры",
+      "Обновить arch.py task validate",
+      "Обновить SKILL.md навыки",
+      "Добавить unit-тесты"
+    ],
+    "out": [
+      "Не править data/ как проектные файлы",
+      "Не копировать корневой манифест в doc/",
+      "Не создавать task.md",
+      "Не реализовывать полный Jira adapter",
+      "Не делать фактические git push/merge/deploy"
+    ],
+    "allowed_files_modules": [
+      "doc/tasks/UI-0001/task.json",
+      "doc/tasks/UI-0004/task.json",
+      "doc/tools/arch.py",
+      "doc/skills/go-to-task/SKILL.md",
+      "doc/skills/document-session/SKILL.md",
+      "doc/tests/test_task_identity.py"
+    ]
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "verification": "Прочитать обновлённые task.json UI-0001 и UI-0004, убедиться в наличии полей",
+      "statement": "task.json содержит новые поля: task_id, source.revision, source.captured_at, kind, scope.in/out, allowed_files_modules, current_behavior, evidence, contracts_and_invariants, risk, authority, execution_state"
+    },
+    {
+      "id": "AC-2",
+      "verification": "Запустить arch task validate UI-0001 и UI-0004, код возврата 0",
+      "statement": "arch task validate проходит для обновлённых task.json с новыми полями"
+    },
+    {
+      "id": "AC-3",
+      "verification": "Прочитать cli.skill.plan.md или новый раздел, проверить наличие правил",
+      "statement": "Сформулированы правила отражения завершённой задачи в архитектурной документации (ADR, related_docs, changed_files, stage_history, обновление ENT/FLOW docs)"
+    },
+    {
+      "id": "AC-4",
+      "verification": "Прочитать SKILL.md, проверить наличие упоминаний",
+      "statement": "SKILL.md go-to-task и задокументируй содержат ссылки на новые поля task.json и правила отражения в архитектуре"
+    },
+    {
+      "id": "AC-5",
+      "verification": "doc/tests/run.sh — все pass",
+      "statement": "Все тесты завода проходят после изменений"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md",
+    "../../../cli.skill.plan.md",
+    "../../../data/machinedocs-encyclopedia/Практики/Контракт задачи для агента.md",
+    "../../../data/machinedocs-encyclopedia/Практики/Исследование формата документации проекта и входящей задачи.md",
+    "../../../data/sdd-encyclopedia/Сущности SDD.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "Не копировать корневой манифест в doc/",
+    "data/ — внешний справочник, только чтение"
+  ],
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests",
+      "create_branch",
+      "open_pr"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "open_questions": [],
+  "related_docs": [],
+  "related_tests": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "task_type": "research",
+  "flow": "research-first",
+  "complexity": "medium",
+  "phase": "completed",
+  "approvals": [],
+  "subtasks": [],
+  "depends_on": [],
+  "rollback_plan": null,
+  "research_docs": [],
+  "assumptions": [],
+  "evidence": []
+}

@@ -1,0 +1,23 @@
+id: minimal-scaffold
+title: Минимальный каркас
+type: bugfix
+description: |
+  Минимальный flujo для простого бага: создаётся каркас задачи, фикс вносится без полной декомпозиции.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: scaffold
+    name: Каркас
+    action: create_task_scaffold
+    output: task.json, stage1/
+    gate: scaffold_created
+  - id: fix
+    name: Исправление
+    action: apply_fix
+    output: changed files
+    gate: fix_applied
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed

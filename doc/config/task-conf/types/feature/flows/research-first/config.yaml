@@ -1,0 +1,24 @@
+id: research-first
+title: Исследование первым делом
+type: feature
+description: |
+  Сначала собирается информация и сравниваются варианты, решение о реализации
+  принимается после выводов исследования.
+subtask_policy: required
+close_policy: all_subtasks_required
+steps:
+  - id: research
+    name: Исследование
+    action: desk_research
+    output: plan.md с выводами и вариантами
+    gate: findings_documented
+  - id: recommend
+    name: Рекомендация
+    action: decision_recommendation
+    output: verification.json с рекомендацией
+    gate: recommendation_made
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed

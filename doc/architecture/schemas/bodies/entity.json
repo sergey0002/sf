@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Entity document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["## Назначение", "## Концептуальное содержание", "## Инварианты"]
+      },
+      "minItems": 3
+    },
+    "has_invariants": { "type": "boolean", "const": true }
+  },
+  "required": ["required_sections", "has_invariants"]
+}

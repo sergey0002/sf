@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Domain document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["## Назначение и граница", "## Принадлежит", "## Не принадлежит"]
+      },
+      "minItems": 3
+    },
+    "has_key_records": { "type": "boolean" }
+  },
+  "required": ["required_sections"]
+}

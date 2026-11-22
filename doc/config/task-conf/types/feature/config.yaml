@@ -1,0 +1,24 @@
+id: feature
+title: Новая функциональность
+description: |
+  Разработка новой функциональности или расширение существующей. Требует плана,
+  реализации, проверки и документирования изменений.
+complexity_default: medium
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows:
+  - standard-implementation
+  - research-first
+default_flow: standard-implementation
+subtask_policy: required
+close_policy: all_subtasks_required
+required_fields:
+  - rollback_plan
+  - acceptance_criteria
+  - implementation_plan
+forbidden_in_scope:
+  - "data/ как проектный файл"
+  - "task.md как альтернатива task.json"

@@ -1,0 +1,19 @@
+id: docs
+title: Документация
+description: |
+  Изменение или добавление архитектурной документации, скиллов, конфигов путей.
+complexity_default: low
+complexity_allowed:
+  - low
+  - medium
+  - high
+allowed_flows:
+  - docs-only
+default_flow: docs-only
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - rollback_plan
+  - changed_files
+forbidden_in_scope:
+  - "семантическое содержимое без структурной валидации"

@@ -1,0 +1,55 @@
+{
+  "stage_id": "stage1",
+  "status": "completed",
+  "checks": [
+    {
+      "id": "AC-1",
+      "description": "JSON Schema для тел документов по типам в doc/architecture/schemas/bodies/",
+      "passed": true,
+      "evidence": "15 схем создано: decision, flow, entity, component-view, rule-set, glossary, domain, system, capability, capability-spec, data-view, quality-attributes, security-view, system-context, constraints-risks"
+    },
+    {
+      "id": "AC-2",
+      "description": "arch validate проверяет тела документов по схеме типа",
+      "passed": true,
+      "evidence": "arch validate проходит без ошибок; body_validation.py интегрировано в store.validate()"
+    },
+    {
+      "id": "AC-3",
+      "description": "arch docs related <id> выводит дерево связанных документов",
+      "passed": true,
+      "evidence": "Команда docs related реализована с параметром --depth; тест test_docs_related_command проходит"
+    },
+    {
+      "id": "AC-4",
+      "description": "Поле implemented в frontmatter и index.json",
+      "passed": true,
+      "evidence": "Все 34 документа имеют поле implemented; index.schema.json обновлено; index.json содержит implemented для каждой записи"
+    },
+    {
+      "id": "AC-5",
+      "description": "Все существующие документы doc/architecture имеют поле implemented",
+      "passed": true,
+      "evidence": "Поле implemented добавлено ко всем документам через скрипт; тест test_implemented_field_in_index проходит"
+    },
+    {
+      "id": "AC-6",
+      "description": "Тесты покрывают новую валидацию и команду related",
+      "passed": true,
+      "evidence": "4 новых теста: test_docs_related_command, test_docs_related_unknown_id, test_implemented_field_in_index, test_body_validation_all_types"
+    },
+    {
+      "id": "AC-7",
+      "description": "arch validate и arch index check проходят без ошибок",
+      "passed": true,
+      "evidence": "Обе команды возвращают exit 0"
+    },
+    {
+      "id": "AC-8",
+      "description": "Полный тестовый цикл проходит",
+      "passed": true,
+      "evidence": "35 passed, 10 subtests passed (было 31 passed, 10 subtests passed)"
+    }
+  ],
+  "summary": "Все 8 критериев приёма выполнены. Архитектурная документация теперь имеет строгую валидацию тел документов, команду обхода связанных документов и поле implemented для отметки реализованного."
+}

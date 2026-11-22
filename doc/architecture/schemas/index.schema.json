@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/simple-factory/index.schema.json",
+  "title": "Generated architecture index",
+  "type": "object",
+  "required": ["index_schema_version", "documents"],
+  "properties": {
+    "index_schema_version": {"const": 1},
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "title", "summary", "status", "path"],
+        "properties": {
+          "id": {"type": "string"},
+          "type": {"type": "string"},
+          "title": {"type": "string"},
+          "summary": {"type": "string"},
+          "status": {"type": "string"},
+          "path": {"type": "string"},
+          "domain": {"type": "string"},
+          "related": {"type": "array", "items": {"type": "string"}},
+          "source_refs": {"type": "array", "items": {"type": "string"}},
+          "applies_to": {"type": "array", "items": {"type": "string"}},
+          "implemented": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

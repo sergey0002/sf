@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "System-context document body schema",
+  "type": "object",
+  "properties": {
+    "has_table": { "type": "boolean", "const": true },
+    "has_information_flow": { "type": "boolean", "const": true },
+    "has_trust_boundary": { "type": "boolean", "const": true }
+  },
+  "required": ["has_table", "has_information_flow", "has_trust_boundary"]
+}

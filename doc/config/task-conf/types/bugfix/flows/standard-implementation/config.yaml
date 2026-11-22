@@ -1,0 +1,33 @@
+id: standard-implementation
+title: Стандартная реализация
+type: bugfix
+description: |
+  Стандартный flujo исправления: воспроизведение → план → фикс → тест → верификация → закрытие.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: reproduce
+    name: Воспроизведение
+    action: reproduce_bug
+    output: evidence of bug
+    gate: bug_reproduced
+  - id: plan
+    name: Планирование
+    action: create_plan
+    output: stage1/plan.md
+    gate: plan_approved
+  - id: fix
+    name: Исправление
+    action: apply_fix
+    output: changed files + regression test
+    gate: fix_applied_and_test_added
+  - id: verify
+    name: Верификация
+    action: run_tests
+    output: stage1/verification.json
+    gate: tests_passed
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed_and_approval_obtained

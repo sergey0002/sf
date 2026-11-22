@@ -1,0 +1,15 @@
+id: scaffold
+title: Создание каркаса
+description: |
+  Создание начальной структуры задачи, директорий, шаблонов task.json.
+complexity_default: low
+complexity_allowed:
+  - low
+allowed_flows:
+  - minimal-scaffold
+default_flow: minimal-scaffold
+subtask_policy: forbidden
+close_policy: all_subtasks_required
+required_fields: []
+forbidden_in_scope:
+  - "семантическое содержимое задачи"

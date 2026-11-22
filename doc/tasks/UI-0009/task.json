@@ -1,0 +1,241 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0009",
+  "task_number": "0009",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by user request",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Разработка строгой структуры документации: декларированные пути, скилл, валидатор и детектор мусора",
+  "kind": "feature",
+  "intent": "Ввести жёсткое регулирование структуры doc/: только задекларированные пути допустимы, произвольные файлы в документации недопустимы. Создать YAML-конфиг путей в корне doc, строгий скилл по работе с архитектурной документацией, CLI-команду валидации путей и детектора мусора с диагностикой несоответствий формату и регламенту структуры.",
+  "scope": {
+    "in": [
+      "YAML-конфиг путей doc/config/paths.yaml с декларацией всех допустимых путей в doc/",
+      "Строгий скилл architecture-docs для работы с архитектурной документацией",
+      "CLI-команда валидации путей (детектор мусора) с диагностикой несоответствий формату и регламенту",
+      "Возможность доработки структуры и формата при необходимости",
+      "Чтение конфига путей и прочих настроек CLI из doc/config/"
+    ],
+    "out": [
+      "Изменение kanoničeskogo формата task.json",
+      "Автоматическое удаление файлов без подтверждения пользователя",
+      "Семантическая классификация файлов CLI",
+      "Редактирование data/ как проектных файлов"
+    ],
+    "allowed_files_modules": [
+      "doc/config/paths.yaml",
+      "doc/skills/architecture-docs/SKILL.md",
+      "doc/tools/arch/cli.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/constants.py",
+      "doc/tools/arch/store.py",
+      "doc/tests/test_task_identity.py"
+    ]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [
+    "task.json остаётся единственным каноническим входом задачи",
+    "task.md не создаётся",
+    "data/ не редактируется как проектный файл",
+    "CLI детерминирован; семантические решения за агентом",
+    "Только задекларированные пути допустимы в doc/"
+  ],
+  "acceptance_criteria": [
+    "AC-1: doc/config/paths.yaml декларирует все допустимые пути в doc/ и читается CLI",
+    "AC-2: doc/skills/architecture-docs/SKILL.md описывает строгий регламент работы с архитектурной документацией",
+    "AC-3: CLI команда `arch docs paths --check` выявляет файлы вне декларированных путей и диагностирует несоответствие формату/регламенту",
+    "AC-4: `arch validate` и `arch index check` проходят без ошибок после изменений",
+    "AC-5: Тесты покрывают новую валидацию путей — полный проход pytest",
+    "AC-6: task-conf/types/*.yaml — конфиги всех типов задач с allowed_flows, subtask_policy, close_policy",
+    "AC-7: task-conf/flows/*.yaml — конфиги всех потоков с agent_instructions и чек-листом",
+    "AC-8: Поле flow в task.json — поток закреплён за задачей, совместим с типом",
+    "AC-9: CLI `arch task types`, `arch task flows --type`, `arch task diagnose`, `arch task close`",
+    "AC-10: Задача не закрывается, если есть незакрытые подзадачи (контроль на уровне CLI)"
+  ],
+  "implementation_plan": "Создать task-conf иерархию (типы + флоу), конфиг путей, скилл архитектурной документации, CLI валидатор путей, исследовательскую папку research/. Задача разбита на подзадачи 0001 и 0002.",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Никакого автоматического выделения task_number",
+    "Никакого task.md",
+    "data/ не редактируется как проектный файл",
+    "CLI детерминирован; семантические решения за агентом",
+    "В doc/ сохраняются только задекларированные пути"
+  ],
+  "assumptions": [],
+  "open_questions": [
+    "Нужно ли подтверждение task_number UI-0009 или использовать другой источник/номер",
+    "Какие именно пути считать декларированными для текущей структуры doc/architecture/"
+  ],
+  "risk": "medium",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Создать task-conf типы",
+      "status": "open",
+      "path": "subtasks/0001/task.json"
+    },
+    {
+      "id": "0002",
+      "title": "Создать task-conf потоки",
+      "status": "open",
+      "path": "subtasks/0002/task.json"
+    }
+  ],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": "Удалить doc/config/paths.yaml, doc/skills/architecture-docs/SKILL.md, откатить изменения в doc/tools/arch/ к предыдущей версии; удалить команду docs paths из CLI.",
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [
+    {
+      "id": "res-001",
+      "title": "Исследование дизайна task-conf (типы и флоу задач)",
+      "path": "doc/tasks/UI-0009/research/task-conf-design-notes.md",
+      "source_type": "internal",
+      "source_ref": "doc/tasks/UI-0009/research/task-conf-design-notes.md",
+      "summary": "Иерархическая конфигурация типов и потоков задач: config.yaml + prompt.md для каждого типа, внутри flows/ — конфиг и промпт для каждого flujo. Гипотезы о совместимости типа и flujo, валидация CLI.",
+      "status": "confirmed"
+    }
+  ],
+  "changed_files": {
+    "added": [
+      "doc/config/paths.yaml",
+      "doc/tasks/UI-0009/research/task-conf-design-notes.md",
+      "doc/config/task-conf/types/jira-incoming/config.yaml",
+      "doc/config/task-conf/types/jira-incoming/prompt.md",
+      "doc/config/task-conf/types/jira-incoming/flows/jira-process/config.yaml",
+      "doc/config/task-conf/types/jira-incoming/flows/jira-process/prompt.md",
+      "doc/config/task-conf/types/feature/config.yaml",
+      "doc/config/task-conf/types/feature/prompt.md",
+      "doc/config/task-conf/types/feature/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/feature/flows/standard-implementation/prompt.md",
+      "doc/config/task-conf/types/feature/flows/research-first/config.yaml",
+      "doc/config/task-conf/types/feature/flows/research-first/prompt.md",
+      "doc/config/task-conf/types/bugfix/config.yaml",
+      "doc/config/task-conf/types/bugfix/prompt.md",
+      "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/bugfix/flows/standard-implementation/prompt.md",
+      "doc/config/task-conf/types/bugfix/flows/minimal-scaffold/config.yaml",
+      "doc/config/task-conf/types/bugfix/flows/minimal-scaffold/prompt.md",
+      "doc/config/task-conf/types/docs/config.yaml",
+      "doc/config/task-conf/types/docs/prompt.md",
+      "doc/config/task-conf/types/docs/flows/docs-only/config.yaml",
+      "doc/config/task-conf/types/docs/flows/docs-only/prompt.md",
+      "doc/config/task-conf/types/refactor/config.yaml",
+      "doc/config/task-conf/types/refactor/prompt.md",
+      "doc/config/task-conf/types/refactor/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/refactor/flows/standard-implementation/prompt.md",
+      "doc/config/task-conf/types/refactor/flows/minimal-scaffold/config.yaml",
+      "doc/config/task-conf/types/refactor/flows/minimal-scaffold/prompt.md",
+      "doc/config/task-conf/types/research/config.yaml",
+      "doc/config/task-conf/types/research/prompt.md",
+      "doc/config/task-conf/types/research/flows/research-first/config.yaml",
+      "doc/config/task-conf/types/research/flows/research-first/prompt.md",
+      "doc/config/task-conf/types/planning/config.yaml",
+      "doc/config/task-conf/types/planning/prompt.md",
+      "doc/config/task-conf/types/planning/flows/research-first/config.yaml",
+      "doc/config/task-conf/types/planning/flows/research-first/prompt.md",
+      "doc/config/task-conf/types/planning/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/planning/flows/standard-implementation/prompt.md",
+      "doc/config/task-conf/types/audit/config.yaml",
+      "doc/config/task-conf/types/audit/prompt.md",
+      "doc/config/task-conf/types/audit/flows/research-first/config.yaml",
+      "doc/config/task-conf/types/audit/flows/research-first/prompt.md",
+      "doc/config/task-conf/types/scaffold/config.yaml",
+      "doc/config/task-conf/types/scaffold/prompt.md",
+      "doc/config/task-conf/types/scaffold/flows/minimal-scaffold/config.yaml",
+      "doc/config/task-conf/types/scaffold/flows/minimal-scaffold/prompt.md",
+      "doc/skills/architecture-docs/SKILL.md",
+      "doc/skills/create-task/SKILL.md",
+      "doc/tasks/UI-0009/task.json"
+    ],
+    "modified": [
+      "doc/tools/arch/cli.py",
+      "doc/tools/arch/constants.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/schema.py",
+      "doc/tools/arch/subtask.py",
+      "doc/architecture/system/architecture-contract.md",
+      "doc/architecture/system/manifest.md"
+    ],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed",
+      "result": "Создан task.json, YAML-конфиг путей doc/config/paths.yaml, строгий скилл doc/skills/architecture-docs/SKILL.md, команда CLI arch docs paths --check с детектором мусора. Валидация task.json и paths --check проходят без ошибок.",
+      "evidence_refs": [
+        "doc/config/paths.yaml",
+        "doc/skills/architecture-docs/SKILL.md",
+        "doc/tools/arch/cli.py",
+        "doc/tools/arch/constants.py",
+        "doc/tools/arch/validation.py"
+      ]
+    },
+    {
+      "stage_id": "stage2",
+      "status": "completed",
+      "result": "Доработан скилл постановки задачи: task-conf/types/*.yaml (8 типов задач), task-conf/flows/*.yaml (4 потока), поле flow и complexity в task.json, команды CLI task types/flows/diagnose/close/decompose, контроль закрытия подзадач, скилл create-task с декомпозицией и оценкой сложности.",
+      "evidence_refs": [
+        "doc/config/task-conf/types/",
+        "doc/tools/arch/cli.py",
+        "doc/tools/arch/validation.py",
+        "doc/tools/arch/schema.py",
+        "doc/tools/arch/subtask.py",
+        "doc/skills/create-task/SKILL.md"
+      ]
+    },
+    {
+      "stage_id": "stage3",
+      "status": "completed",
+      "result": "Переделан task-conf на иерархическую структуру: каждый тип — папка с config.yaml и prompt.md, внутри flows/ — каждая папка с config.yaml и prompt.md. Добавлен тип jira-incoming с единственным flujo jira-process. CLI команды task types, task flows, task type-prompt, task flow-prompt. Валидация совместимости типа и flujo через task-conf.",
+      "evidence_refs": [
+        "doc/config/task-conf/types/jira-incoming/",
+        "doc/config/task-conf/types/feature/",
+        "doc/config/task-conf/types/bugfix/",
+        "doc/config/task-conf/types/docs/",
+        "doc/config/task-conf/types/refactor/",
+        "doc/config/task-conf/types/research/",
+        "doc/config/task-conf/types/planning/",
+        "doc/config/task-conf/types/audit/",
+        "doc/config/task-conf/types/scaffold/",
+        "doc/tools/arch/validation.py",
+        "doc/tools/arch/cli.py"
+      ]
+    },
+    {
+      "stage_id": "stage4",
+      "status": "completed",
+      "result": "Обновлён корневой манифест doc/architecture/system/manifest.md: добавлен раздел о иерархической структуре task-conf (типы — папки с config.yaml и prompt.md, внутри flows/ — каждая папка с config.yaml и prompt.md), поля task_type/flow/complexity в task.json, контроль закрытия задач на уровне CLI (arch task close отказывает при незакрытых подзадачах), команды task types/flows/type-prompt/flow-prompt/decompose/diagnose/close, обновлён E2E поток с task-conf и flujo. Обновлён doc/config/paths.yaml — декларируются все пути task-conf иерархии. task.json UI-0009 валиден, paths --check проходит.",
+      "evidence_refs": [
+        "doc/architecture/system/manifest.md",
+        "doc/config/paths.yaml",
+        "doc/config/task-conf/types/",
+        "doc/tools/arch/validation.py",
+        "doc/tools/arch/cli.py"
+      ]
+    }
+  ]
+}

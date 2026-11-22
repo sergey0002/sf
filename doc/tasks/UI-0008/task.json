@@ -1,0 +1,212 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0008",
+  "task_number": "0008",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Доработать архитектурную документацию и CLI: валидация тел документов, обход связанных документов, отметка реализованного",
+  "kind": "feature",
+  "intent": "Закрыть пробелы в архитектурной документации и CLI: добавить JSON Schema валидацию тел документов по типам, команду обхода связанных документов, отметку реализованного/нереализованного, покрыть тестами.",
+  "scope": {
+    "in": [
+      "JSON Schema для тел архитектурных документов по типам (decision, flow, entity, component-view, rule-set, glossary, domain, system, capability, capability-spec, data-view, quality-attributes, security-view, system-context, constraints-risks)",
+      "CLI команда `arch docs related <id>` для обхода графа связанных документов",
+      "Поле `implemented` в frontmatter и отметка в index.json о реализованности",
+      "Тесты для новой валидации и команды related",
+      "Обновление существующих документов doc/architecture полями implemented"
+    ],
+    "out": [
+      "Автоматическое исправление семантического содержимого документов",
+      "Изменение формата task.json",
+      "Изменение существующих CLI команд (кроме добавления новой)"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/cli.py",
+      "doc/tools/arch/store.py",
+      "doc/tools/arch/constants.py",
+      "doc/tests/test_task_identity.py",
+      "doc/architecture/schemas/*.json",
+      "doc/architecture/*.md",
+      "doc/architecture/**/*.md"
+    ]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [
+    "task.json остаётся единственным каноническим входом задачи",
+    "task.md не создаётся",
+    "CLI не делает семантических угадываний",
+    "Все новые схемы валидируются arch validate"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "AC-1: doc/architecture/schemas/ содержит JSON Schema для тел документов по основным типам",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-2",
+      "statement": "AC-2: `arch validate` проверяет не только frontmatter, но и тело документов по схеме типа",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-3",
+      "statement": "AC-3: `arch docs related <id>` выводит дерево связанных документов с глубиной и статусами",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-4",
+      "statement": "AC-4: frontmatter содержит поле `implemented` (boolean), index.json отражает его",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-5",
+      "statement": "AC-5: Все существующие документы doc/architecture имеют поле implemented",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-6",
+      "statement": "AC-6: Тесты покрывают новую валидацию и команду related — полный проход pytest",
+      "verification": "Проверено при приведении к новому формате"
+    },
+    {
+      "id": "AC-7",
+      "statement": "AC-7: `arch validate` и `arch index check` проходят без ошибок",
+      "verification": "Проверено при приведении к новому формате"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [
+    "Никакого автоматического выделения task_number",
+    "Никакого task.md",
+    "data/ не редактируется как проектный файл",
+    "CLI детерминирован; семантические решения за агентом"
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": "Откатить изменения в doc/tools/arch/ и doc/architecture/schemas/ к предыдущей версии; удалить команду docs related из CLI; вернуть тесты к предыдущему состоянию.",
+  "related_docs": [
+    {
+      "id": "VIEW-cli-package"
+    },
+    {
+      "id": "REG-cli-command-map"
+    },
+    {
+      "id": "REG-cli-validation-rules"
+    },
+    {
+      "id": "SYS-simple-factory"
+    }
+  ],
+  "related_tests": [
+    {
+      "test_id": "test_docs_related_command",
+      "location": "doc/tests/test_task_identity.py"
+    },
+    {
+      "test_id": "test_docs_related_unknown_id",
+      "location": "doc/tests/test_task_identity.py"
+    },
+    {
+      "test_id": "test_implemented_field_in_index",
+      "location": "doc/tests/test_task_identity.py"
+    },
+    {
+      "test_id": "test_body_validation_all_types",
+      "location": "doc/tests/test_task_identity.py"
+    }
+  ],
+  "changed_files": {
+    "added": [
+      "doc/tools/arch/body_validation.py",
+      "doc/architecture/schemas/bodies/decision.json",
+      "doc/architecture/schemas/bodies/flow.json",
+      "doc/architecture/schemas/bodies/entity.json",
+      "doc/architecture/schemas/bodies/component-view.json",
+      "doc/architecture/schemas/bodies/rule-set.json",
+      "doc/architecture/schemas/bodies/glossary.json",
+      "doc/architecture/schemas/bodies/domain.json",
+      "doc/architecture/schemas/bodies/system.json",
+      "doc/architecture/schemas/bodies/capability.json",
+      "doc/architecture/schemas/bodies/capability-spec.json",
+      "doc/architecture/schemas/bodies/data-view.json",
+      "doc/architecture/schemas/bodies/quality-attributes.json",
+      "doc/architecture/schemas/bodies/security-view.json",
+      "doc/architecture/schemas/bodies/system-context.json",
+      "doc/architecture/schemas/bodies/constraints-risks.json"
+    ],
+    "modified": [
+      "doc/tools/arch/store.py",
+      "doc/tools/arch/cli.py",
+      "doc/tools/arch/__init__.py",
+      "doc/architecture/schemas/index.schema.json",
+      "doc/tests/test_task_identity.py",
+      "doc/architecture/README.md",
+      "doc/architecture/decisions/ADR-0001-architecture-docs-store.md",
+      "doc/architecture/domains/execution-verification/README.md",
+      "doc/architecture/domains/execution-verification/capabilities/doc-integrity.md",
+      "doc/architecture/domains/execution-verification/capabilities/single-agent-execution.md",
+      "doc/architecture/domains/execution-verification/flow.md",
+      "doc/architecture/domains/execution-verification/flows/document-session.md",
+      "doc/architecture/domains/model-routing/README.md",
+      "doc/architecture/domains/model-routing/capabilities/role-model-routing.md",
+      "doc/architecture/domains/model-routing/capability.md",
+      "doc/architecture/domains/project-knowledge/README.md",
+      "doc/architecture/domains/project-knowledge/capability.md",
+      "doc/architecture/domains/task-intake/README.md",
+      "doc/architecture/domains/task-intake/capabilities/task-intake.md",
+      "doc/architecture/domains/task-intake/flows/create-task.md",
+      "doc/architecture/domains/task-lifecycle/README.md",
+      "doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md",
+      "doc/architecture/domains/task-lifecycle/cli-subtask-lifecycle.md",
+      "doc/architecture/domains/task-lifecycle/entities/stage-artifact.md",
+      "doc/architecture/domains/task-lifecycle/entities/task-input.md",
+      "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md",
+      "doc/architecture/domains/task-lifecycle/flow.md",
+      "doc/architecture/domains/task-lifecycle/flows/execute-task.md",
+      "doc/architecture/glossary.md",
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/cli-package.md",
+      "doc/architecture/system/cli-validation-rules.md",
+      "doc/architecture/system/components.md",
+      "doc/architecture/system/constraints-risks.md",
+      "doc/architecture/system/context.md",
+      "doc/architecture/system/data.md",
+      "doc/architecture/system/overview.md",
+      "doc/architecture/system/quality.md",
+      "doc/architecture/system/security.md",
+      "doc/architecture/system/task-number-registry.md"
+    ],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "flow": "docs-only",
+  "complexity": "low",
+  "research_docs": [],
+  "implementation_plan": "Добавить JSON Schema валидацию тел документов, команду docs related, поле implemented, обновить существующие документы"
+}

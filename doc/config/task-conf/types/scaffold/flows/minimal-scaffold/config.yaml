@@ -1,0 +1,18 @@
+id: minimal-scaffold
+title: Минимальный каркас
+type: scaffold
+description: |
+  Поток для создания каркаса задачи: директории, task.json, этап 1.
+subtask_policy: forbidden
+close_policy: all_subtasks_required
+steps:
+  - id: scaffold
+    name: Создание каркаса
+    action: create_task_scaffold
+    output: task.json, stage1/
+    gate: scaffold_created
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: scaffold_created

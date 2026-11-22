@@ -1,0 +1,145 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": "ui:0007",
+  "task_key": "UI-0007",
+  "task_number": "0007",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-task-json-improvements-subtasks",
+    "provenance": "user request in chat",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Дополнить task.json: task_type, subtasks, depends_on, phase, rollback_plan; реализовать механизм subtasks/",
+  "kind": "feature",
+  "intent": "Добавить в task.json поля task_type (research/planning/audit/feature/bugfix/docs/refactor), subtasks (список дочерних задач), depends_on (зависимости), phase (фаза жизненного цикла), rollback_plan (план отката). Реализовать CLI-команды task subtask init/validate/status для работы с папкой subtasks/. Сабтаски: ручные, нумерация уникальна только внутри родителя, parent_task_key, рекурсия. Обновить arch.py task validate, навыки go-to-task и задокументируй, добавить тесты.",
+  "scope": {
+    "in": [
+      "Добавить task.json поля: task_type, subtasks, depends_on, phase, rollback_plan",
+      "Реализовать arch task subtask init <parent_key> <subtask_id> — создать subtasks/<id>/ с task.json + stage1/",
+      "Реализовать arch task subtask validate <parent_key> <subtask_id> — валидация task.json сабтаска",
+      "Реализовать arch task subtask status <parent_key> <subtask_id> — статус сабтаска",
+      "Обновить arch task validate — проверка task_type, subtasks, depends_on, phase, rollback_plan",
+      "Обновить task.json UI-0001 и UI-0004 примером новых полей",
+      "Обновить SKILL.md go-to-task и задокументируй — новые поля + правила работы с сабтасками",
+      "Добавить unit-тесты для subtask команд и новых полей",
+      "Прогнать все тесты"
+    ],
+    "out": [
+      "Не аллоцировать task_number автоматически",
+      "Не создавать task.md",
+      "Не копировать корневой манифест в doc/",
+      "Не привязывать сабтаски к внешним источникам (всегда ручные)",
+      "Не править data/",
+      "Не делать git push/merge/deploy"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch.py",
+      "doc/tests/test_task_identity.py",
+      "doc/tasks/UI-0001/task.json",
+      "doc/tasks/UI-0004/task.json",
+      "doc/skills/go-to-task/SKILL.md",
+      "doc/skills/document-session/SKILL.md"
+    ]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "task.json содержит новые поля: task_type, subtasks, depends_on, phase, rollback_plan",
+      "verification": "Прочитать обновлённые task.json UI-0001 и UI-0004"
+    },
+    {
+      "id": "AC-2",
+      "statement": "arch task subtask init UI-0001 0001 создаёт subtasks/0001/ с task.json и stage1/",
+      "verification": "Запустить команду, проверить файлы"
+    },
+    {
+      "id": "AC-3",
+      "statement": "arch task subtask validate UI-0001 0001 проходит для валидного сабтаска",
+      "verification": "Код возврата 0"
+    },
+    {
+      "id": "AC-4",
+      "statement": "task_type принимает только research/planning/audit/feature/bugfix/docs/refactor",
+      "verification": "Попробовать невалидный task_type → ошибка"
+    },
+    {
+      "id": "AC-5",
+      "statement": "phase принимает только intake/planning/execution/verification/completed/blocked",
+      "verification": "Попробовать невалидную фазу → ошибка"
+    },
+    {
+      "id": "AC-6",
+      "statement": "Все тесты завода проходят",
+      "verification": "doc/tests/run.sh — все pass"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md",
+    "../../../cli.skill.plan.md",
+    "../../../data/sdd-encyclopedia/Сущности SDD.md",
+    "../../../data/machinedocs-encyclopedia/Практики/Контракт задачи для агента.md",
+    "../../../data/subagents-encyclopedia/Паттерны/Паттерны оркестрации.md",
+    "../../../data/cli-skills-encyclopedia/Практики/Agent-Friendly CLI Design.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "Сабтаски всегда ручные, без привязки к внешним источникам",
+    "Нумерация сабтасков уникальна только внутри родителя",
+    "Не копировать корневой манифест в doc/",
+    "data/ — внешний справочник, только чтение"
+  ],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests",
+      "create_branch",
+      "open_pr"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "open_questions": [
+    "Нужна ли глобальная уникальность subtask ID или достаточно уникальности внутри родителя",
+    "Как обрабатывать циклические зависимости в depends_on"
+  ],
+  "related_docs": [],
+  "related_tests": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "low",
+  "phase": "completed",
+  "approvals": [],
+  "subtasks": [],
+  "depends_on": [],
+  "rollback_plan": null,
+  "research_docs": [],
+  "implementation_plan": "Добавить task_type, subtasks, depends_on, phase, rollback_plan в task.json, реализовать subtask init/validate/status команды",
+  "assumptions": []
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data-view document body schema",
+  "type": "object",
+  "properties": {
+    "has_table": { "type": "boolean", "const": true },
+    "has_format_policy": { "type": "boolean", "const": true }
+  },
+  "required": ["has_table", "has_format_policy"]
+}

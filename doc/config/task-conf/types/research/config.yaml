@@ -1,0 +1,19 @@
+id: research
+title: Исследование
+description: |
+  Сбор информации, сравнение вариантов, desk research. Не приводит к коду
+  без отдельного решения владельца.
+complexity_default: low
+complexity_allowed:
+  - low
+  - medium
+allowed_flows:
+  - research-first
+default_flow: research-first
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - open_questions
+  - evidence
+forbidden_in_scope:
+  - "реализация без отдельного решения владельца"

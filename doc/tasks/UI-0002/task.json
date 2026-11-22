@@ -1,0 +1,106 @@
+{
+  "schema_version": "draft-0.2",
+  "task_key": "UI-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-cli-env-and-readme",
+    "provenance": "user request in chat"
+  },
+  "title": "Развернуть CLI-среду завода, тестировать по ходу и дополнить корневой README инструкцией по data/",
+  "intent": "Подготовить рабочую среду агентной software factory в песочнице: сделать arch.py исполняемым, проверить валидацию и индекс, доработать завод при необходимости, добавить в корневой README инструкцию по работе с data/ как внешним справочником.",
+  "scope": {
+    "in": [
+      "Сделать doc/tools/arch.py исполняемым (chmod +x) и задокументировать способы вызова",
+      "Проверить arch.py validate, index build, index check, list, show в песочнице",
+      "При необходимости доработать архитектрные документы и навыки завода",
+      "Создать /home/user/README.md с правилами работы с песочником и инструкцией по data/",
+      "Прогнать все тесты завода (13/13) после изменений"
+    ],
+    "out": []
+  },
+  "exclusions": [
+    "Не править data/ как проектные файлы (внешний справочник, только чтение)",
+    "Не копировать корневой манифест в doc/",
+    "Не создавать task.md (task.json единственный canonical input)",
+    "Не реализовывать пилот, multi-agent, сканер кода или деплой"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "arch.py выполняется напрямую (./doc/tools/arch.py или python3 doc/tools/arch.py) и проходит validate + index check без ошибок",
+      "verification": "Запустить arch.py validate и arch.py index check, код возврата 0"
+    },
+    {
+      "id": "AC-2",
+      "condition": "Корневой README.md создан и содержит правила работы с песочником + раздел «Как работать с data/»",
+      "statement": "README.md содержит разделы: структура песочника, границы doc/ vs корень vs data/, CLI quickstart, порядок создания задач (task.json), работа с data/ (только чтение, навигация через MOC/Оглавления, не править как проектные файлы)",
+      "verification": "Прочитать /home/user/README.md, убедиться в наличии всех разделов"
+    },
+    {
+      "id": "AC-3",
+      "statement": "Все 13 тестов завода проходят после изменений",
+      "verification": "Запустить doc/tests/run.sh и unittest discover — 13/13 pass"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс",
+    "data/ — внешний справочник вне репозитория, не править как проектные файлы",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "Не копировать корневой манифест в doc/"
+  ],
+  "assumptions": [
+    "Python 3.13 и pip доступны в песочнице",
+    "Зависимости PyYAML и jsonschema уже установлены"
+  ],
+  "open_questions": [
+    "Нужен ли 별도 установщик (Makefile/setup.py) для arch.py, или достаточно chmod +x + документации"
+  ],
+  "approvals": [
+    "Никаких push/merge/deploy не запрашивается этой задачей"
+  ],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "low",
+  "phase": "completed",
+  "kind": "feature",
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests",
+      "create_branch",
+      "open_pr"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "subtasks": [],
+  "depends_on": [],
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [],
+  "implementation_plan": "Создать arch.py исполняемым, проверить validate + index check, создать README, прогнать 13 тестов"
+}

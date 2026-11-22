@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Security-view document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["## Активы", "## Ненадёжные входные данные", "## Требуемые свойства дизайна", "## Риски / пробелы"]
+      },
+      "minItems": 4
+    }
+  },
+  "required": ["required_sections"]
+}

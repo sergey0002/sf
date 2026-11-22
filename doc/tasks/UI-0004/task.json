@@ -1,0 +1,136 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": "ui:0004",
+  "task_key": "UI-0004",
+  "task_number": "0004",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-implement-task-cli-commands",
+    "provenance": "user request in chat",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Реализовать CLI-команды task init/validate/workspace/status в arch.py",
+  "kind": "feature",
+  "intent": "Добавить в doc/tools/arch.py группу команд `task` для работы с задачами завода: init (создание task.json + directory), validate (валидация task.json), workspace (подготовка workspace), status (статус задачи). Все операции детерминированные, CLI не аллоцирует task_number, task.md не создаётся.",
+  "scope": {
+    "in": [
+      "Добавить аргументы парсера для группы команд `task` с подкомандами init, validate, workspace, status",
+      "Реализовать `arch task init <task_key>` — создать task directory + scaffold task.json, проверить коллизии, не аллоцировать номер",
+      "Реализовать `arch task validate <task_key>` — валидация task.json: JSON, task_number (4 цифры), task_key совпадает с каталогом, источник/префикс, отсутствие task.md",
+      "Реализовать `arch task workspace <task_key>` — проверить task.json, подготовить workspace (базовый коммит, ветка по правилам task_key)",
+      "Реализовать `arch task status <task_key>` — показать состояние задачи, стадии, верификацию",
+      "Не ломать существующие 13 тестов",
+      "Добавить unit-тесты для новых команд в doc/tools/tests/test_arch.py",
+      "Прогнать все тесты (13/13) после изменений"
+    ],
+    "out": [
+      "Не аллоцировать task_number автоматически (CLI никогда не выделяет номер)",
+      "Не создавать task.md (manifest запрещает)",
+      "Не копировать корневой манифест в doc/",
+      "Не реализовывать семантические решения агента (только детерминированные операции)",
+      "Не править data/",
+      "Не делать фактические git push/merge/deploy",
+      "Не реализовывать model invoke (отложено на следующий этап)"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch.py",
+      "doc/tests/test_task_identity.py"
+    ]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "`arch task init UI-0004` создаёт каталог doc/tasks/UI-0004/ с task.json и stage1/",
+      "verification": "Запустить команду, проверить существование файлов"
+    },
+    {
+      "id": "AC-2",
+      "statement": "`arch task validate UI-0001` проходит для существующей фикстуры",
+      "verification": "Запустить validate на UI-0001, код возврата 0"
+    },
+    {
+      "id": "AC-3",
+      "statement": "`arch task init UI-0001` возвращает ошибку о коллизии (каталог уже существует)",
+      "verification": "Запустить init на существующий ключ, код возврата != 0"
+    },
+    {
+      "id": "AC-4",
+      "statement": "`arch task init` с некорректным task_key (не 4 цифры, неверный префикс) возвращает ошибку",
+      "verification": "Попробовать некорректные ключи, код возврата != 0"
+    },
+    {
+      "id": "AC-5",
+      "statement": "Все 13 тестов завода проходят после изменений",
+      "verification": "doc/tests/run.sh — 13/13 pass"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md",
+    "../../../cli.skill.plan.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "CLI никогда не аллоцирует task_number",
+    "Не копировать корневой манифест в doc/",
+    "data/ — внешний справочник, только чтение"
+  ],
+  "assumptions": [
+    "Python 3.13 доступен",
+    "arch.py уже исполняемый",
+    "task-number-registry.md существует в doc/architecture/system/"
+  ],
+  "open_questions": [
+    "Нужна ли схема JSON для task.json валидации (пока используется структурная проверка без схема-файла)"
+  ],
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests",
+      "create_branch",
+      "open_pr"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "approvals": [
+    "Никаких push/merge/deploy не запрашивается этой задачей"
+  ],
+  "related_docs": [],
+  "related_tests": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "task_type": "docs",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": null,
+  "stage_history": [],
+  "flow": "docs-only",
+  "complexity": "low",
+  "research_docs": [],
+  "implementation_plan": "Добавить task init/validate/workspace/status команды, не аллоцировать task_number, не создавать task.md, добавить тесты"
+}

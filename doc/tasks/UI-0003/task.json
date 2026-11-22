@@ -1,0 +1,113 @@
+{
+  "schema_version": "draft-0.2",
+  "task_key": "UI-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": "user-request-cli-skill-plan-analysis",
+    "provenance": "user request in chat"
+  },
+  "title": "Анализ необходимых CLI и скилов завода по манифесту и data/; создать cli.skill.plan.md в корне",
+  "intent": "Перечитать корневой манифест и энциклопедии data/ (MOC-first), провести анализ лучших практик, определить какие CLI-команды и агенто-скилы нужны для полноценной работы завода по задачам, архитектурной документации и планированию, составить предварительное решение и описать всё в корневом документе cli.skill.plan.md",
+  "scope": {
+    "in": [
+      "Перечитать Манифест агентной software factory.md — разделы о CLI, скилах, задачах, архитектуре",
+      "Перечитать data/README.md, data/cli-skills-encyclopedia/Главная.md, data/machinedocs-encyclopedia/Главная.md + Индекс.md, data/sdd-encyclopedia/Главная.md, data/subagents-encyclopedia/Главная.md — через MOC навигацию",
+      "Проанализировать существующий arch.py CLI — какие команды есть, чего не хватает",
+      "Составить предварительный анализ необходимых CLI-команд (группы: задачи, архитектура, индекс, валидация, планирование)",
+      "Составить предварительный анализ необходимых скилов (create-task, go-to-task, задокументируй + posibles новые)",
+      "Описать принятые решения и обоснования",
+      "Создать /home/user/cli.skill.plan.md с полным описанием",
+      "Прогнать тесты завода (13/13) после изменений"
+    ],
+    "out": []
+  },
+  "exclusions": [
+    "Не править data/ как проектные файлы",
+    "Не копировать корневой манифест в doc/",
+    "Не создавать task.md",
+    "Не реализовывать новые CLI-команды в коде (только план/спецификация в cli.skill.plan.md)",
+    "Не реализовывать пилот, multi-agent, сканер, деплой"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "statement": "cli.skill.plan.md создан в корне (/home/user/cli.skill.plan.md)",
+      "verification": "Файл существует и читается"
+    },
+    {
+      "id": "AC-2",
+      "statement": "Документ содержит анализ CLI-команд по группам (задачи, архитектура, индекс, валидация, планирование) с обоснованием из манифеста и data/",
+      "verification": "Прочитать cli.skill.plan.md, проверить наличие разделов"
+    },
+    {
+      "id": "AC-3",
+      "statement": "Документ содержит анализ необходимых скилов с описанием purpose/procedure/must-not",
+      "verification": "Прочитать cli.skill.plan.md, проверить раздел со скилами"
+    },
+    {
+      "id": "AC-4",
+      "statement": "Все 13 тестов завода проходят после создания документа",
+      "verification": "Запустить doc/tests/run.sh — 13/13 pass"
+    }
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc.architecture.md",
+    "../../../doc.architecture-audit.md",
+    "../../../data/README.md"
+  ],
+  "constraints": [
+    "task.json — единственный canonical task input; task.md не создавать",
+    "data/ — внешний справочник, только чтение, навигация через MOC/Оглавления",
+    "CLI детерминированный; смысловые решения принадлежат агенту/навыкам",
+    "Не копировать корневой манифест в doc/",
+    "task_number ровно 4 цифры; Jira bare, UI с префиксом UI-, иные — явный префикс"
+  ],
+  "assumptions": [
+    "Манифест и data/ доступны для чтения",
+    "Существующий arch.py CLI является базой для анализа"
+  ],
+  "open_questions": [
+    "Нужны ли отдельные CLI-команды для работы с data/ (поиск по энциклопедиям), или data/ только читается агентом вручную",
+    "Нужна ли команда arch apply для атомарного применения change-set, или достаточно прямой правки Markdown + git"
+  ],
+  "approvals": [
+    "Никаких push/merge/deploy не запрашивается этой задачей"
+  ],
+  "task_type": "planning",
+  "flow": "research-first",
+  "complexity": "medium",
+  "phase": "completed",
+  "kind": "planning",
+  "risk": "low",
+  "authority": {
+    "allowed": [
+      "inspect",
+      "edit_task_scope",
+      "run_local_tests"
+    ],
+    "forbidden": [
+      "merge",
+      "deploy"
+    ],
+    "approval_required": [
+      "merge"
+    ]
+  },
+  "subtasks": [],
+  "depends_on": [],
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

@@ -1,0 +1,22 @@
+id: bugfix
+title: Исправление ошибки
+description: |
+  Исправление дефекта. Требует воспроизведения, фикса, регресс-теста и верификации.
+complexity_default: low
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows:
+  - standard-implementation
+  - minimal-scaffold
+default_flow: standard-implementation
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - current_behavior
+  - evidence
+  - acceptance_criteria
+forbidden_in_scope:
+  - "изменение API контрактов без отдельного одобрения"

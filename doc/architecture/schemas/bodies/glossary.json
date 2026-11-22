@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Glossary document body schema",
+  "type": "object",
+  "properties": {
+    "has_terms": { "type": "boolean", "const": true },
+    "term_format": {
+      "type": "string",
+      "pattern": "^### .+ — `TERM-.+`
+"
+    }
+  },
+  "required": ["has_terms"]
+}

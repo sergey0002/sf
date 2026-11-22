@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ADR/decision document body schema",
+  "type": "object",
+  "properties": {
+    "required_sections": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "## Контекст и проблема",
+          "## Драйверы решения",
+          "## Рассмотренные варианты",
+          "## Итог решения",
+          "## Последствия"
+        ]
+      },
+      "minItems": 5
+    },
+    "has_consequences": { "type": "boolean", "const": true },
+    "has_links": { "type": "boolean", "const": true }
+  },
+  "required": ["required_sections", "has_consequences", "has_links"]
+}

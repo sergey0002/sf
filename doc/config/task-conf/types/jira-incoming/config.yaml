@@ -1,0 +1,44 @@
+# Конфиг типа задачи: jira-incoming (вcoming задача из Jira)
+# Источник практик: Корневой манифест, Контракт задачи для агента, Сквозной цикл разработки.
+
+id: jira-incoming
+title: Вcoming задача из Jira
+description: |
+  Задача, поступившая из внешнего трекера Jira. Имеет единственный flujo процесса,
+  который регламентирует работу с такой задачей от приёма до закрытия.
+complexity_default: medium
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows:
+  - jira-process
+default_flow: jira-process
+subtask_policy: required
+close_policy: all_subtasks_required
+required_fields:
+  - rollback_plan
+  - acceptance_criteria
+  - implementation_plan
+forbidden_in_scope:
+  - "data/ как проектный файл"
+  - "task.md как альтернатива task.json"
+  - "автоматическое выделение task_number"
+stage_template:
+  - id: stage1
+    name: Приём и уточнение
+    artifacts: [task.json]
+    gates: [task_validated]
+  - id: stage2
+    name: Планирование
+    artifacts: [plan.md]
+    gates: [plan_approved]
+  - id: stage3
+    name: Реализация
+    artifacts: [changed_files, tests]
+    gates: [tests_passed]
+  - id: stage4
+    name: Верификация
+    artifacts: [verification.json, evidence]
+    gates: [approval_obtained]

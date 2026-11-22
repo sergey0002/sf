@@ -1,0 +1,58 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0009-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Создать task-conf типы",
+  "kind": "feature",
+  "intent": "",
+  "scope": {
+    "in": [],
+    "out": [],
+    "allowed_files_modules": []
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": [],
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "research_docs": [],
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

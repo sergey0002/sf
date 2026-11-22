@@ -1,0 +1,36 @@
+# Конфиг flujo jira-process для типа jira-incoming
+
+id: jira-process
+title: Процесс обработки входящей задачи из Jira
+type: jira-incoming
+description: |
+  Единственный flujo для задач из Jira. Регламентирует действия от приёма задачи
+  до закрытия: валидация task.json, планирование, реализация, верификация, закрытие.
+subtask_policy: required
+close_policy: all_subtasks_required
+steps:
+  - id: intake
+    name: Приём и валидация
+    action: validate_task_json
+    output: task.json прошёл валидацию
+    gate: task_validated
+  - id: plan
+    name: Планирование
+    action: create_plan
+    output: stage1/plan.md
+    gate: plan_approved
+  - id: implement
+    name: Реализация
+    action: bounded_implementation
+    output: изменения в рамках allowed_files_modules
+    gate: scope_respected
+  - id: verify
+    name: Верификация
+    action: run_validation_and_tests
+    output: stage1/verification.json
+    gate: tests_passed_and_paths_valid
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals, stage_history
+    gate: all_subtasks_closed_and_approval_obtained

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Constraints-risks document body schema",
+  "type": "object",
+  "properties": {
+    "has_table": { "type": "boolean", "const": true },
+    "has_stop_rule": { "type": "boolean", "const": true }
+  },
+  "required": ["has_table", "has_stop_rule"]
+}

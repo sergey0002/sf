@@ -1,0 +1,22 @@
+id: refactor
+title: Рефакторинг
+description: |
+  Улучшение внутренней структуры без изменения внешнего поведения. Требует
+  тестов и доказательства эквивалентности.
+complexity_default: medium
+complexity_allowed:
+  - low
+  - medium
+  - high
+allowed_flows:
+  - standard-implementation
+  - minimal-scaffold
+default_flow: standard-implementation
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - rollback_plan
+  - acceptance_criteria
+  - contracts_and_invariants
+forbidden_in_scope:
+  - "изменение observable behavior без отдельного одобрения"

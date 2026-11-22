@@ -1,0 +1,20 @@
+id: planning
+title: Планирование
+description: |
+  Составление технического плана, спецификации, архитектурных решений.
+complexity_default: medium
+complexity_allowed:
+  - low
+  - medium
+  - high
+allowed_flows:
+  - research-first
+  - standard-implementation
+default_flow: research-first
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - acceptance_criteria
+  - rollback_plan
+forbidden_in_scope:
+  - "реализация кода в рамках этой задачи"
