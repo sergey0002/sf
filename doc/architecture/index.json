@@ -36,7 +36,8 @@
       ],
       "source_refs": [
         "/home/user/doc.architecture-audit.md"
-      ]
+      ],
+      "implemented": false
     },
     {
       "id": "ARCH-contract",
@@ -58,7 +59,8 @@
       "source_refs": [
         "/home/user/doc/config/paths.yaml",
         "/home/user/doc/config/task-conf/types/jira-incoming/config.yaml"
-      ]
+      ],
+      "implemented": false
     },
     {
       "id": "CAP-configurable-model-cli",
@@ -413,7 +415,8 @@
       ],
       "source_refs": [
         "/home/user/Манифест агентной software factory.md"
-      ]
+      ],
+      "implemented": false
     },
     {
       "id": "REG-cli-command-map",

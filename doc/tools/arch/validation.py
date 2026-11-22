@@ -8,6 +8,7 @@ No hardcoded task_type, phase, risk, source.type or required-field list in Pytho
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -69,17 +70,6 @@ def _get_list(project: dict[str, Any], key: str) -> list[str]:
     return value if isinstance(value, list) else []
 
 
-def _validate_array_of_objects(data: Any, field_name: str, errors: list[str]) -> None:
-    """Базовая структура: поле — массив, элементы — объекты."""
-    if data is not None:
-        if not isinstance(data, list):
-            errors.append(f"task.json: {field_name} must be an array")
-        else:
-            for i, item in enumerate(data):
-                if not isinstance(item, dict):
-                    errors.append(f"task.json: {field_name}[{i}] must be an object")
-
-
 def _validate_array_of_strings(data: Any, field_name: str, errors: list[str]) -> None:
     """Базовая структура: поле — массив строк."""
     if data is not None:
@@ -89,6 +79,80 @@ def _validate_array_of_strings(data: Any, field_name: str, errors: list[str]) ->
             for i, item in enumerate(data):
                 if not isinstance(item, str):
                     errors.append(f"task.json: {field_name}[{i}] must be a string")
+
+
+_RELATED_DOC_ID_RE = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)+$")
+
+
+def _validate_subtasks(value: Any, errors: list[str]) -> None:
+    """Validate the subtask array shape: id, title, status and path are required."""
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append("task.json: subtasks must be an array")
+        return
+    for i, item in enumerate(value):
+        if not isinstance(item, dict):
+            errors.append(f"task.json: subtasks[{i}] must be an object")
+            continue
+        for required in ("id", "title", "status", "path"):
+            if required not in item:
+                errors.append(
+                    f"task.json: subtasks[{i}] missing required field {required!r}"
+                )
+
+
+def _validate_related_docs(value: Any, errors: list[str]) -> None:
+    """Validate related_docs as an array of stable architecture document IDs."""
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append("task.json: related_docs must be an array")
+        return
+    for i, item in enumerate(value):
+        if not isinstance(item, str):
+            errors.append(f"task.json: related_docs[{i}] must be a string")
+        elif not _RELATED_DOC_ID_RE.fullmatch(item):
+            errors.append(
+                f"task.json: related_docs[{i}] must be a stable document ID "
+                f"(e.g. SYS-simple-factory), got {item!r}"
+            )
+
+
+def _validate_related_tests(value: Any, errors: list[str]) -> None:
+    """Validate related_tests entries: each requires test_id and location."""
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append("task.json: related_tests must be an array")
+        return
+    for i, item in enumerate(value):
+        if not isinstance(item, dict):
+            errors.append(f"task.json: related_tests[{i}] must be an object")
+            continue
+        for required in ("test_id", "location"):
+            if required not in item:
+                errors.append(
+                    f"task.json: related_tests[{i}] missing required field {required!r}"
+                )
+
+
+def _validate_stage_history(value: Any, errors: list[str]) -> None:
+    """Validate stage_history entries: each requires stage_id and status."""
+    if value is None:
+        return
+    if not isinstance(value, list):
+        errors.append("task.json: stage_history must be an array")
+        return
+    for i, item in enumerate(value):
+        if not isinstance(item, dict):
+            errors.append(f"task.json: stage_history[{i}] must be an object")
+            continue
+        for required in ("stage_id", "status"):
+            if required not in item:
+                errors.append(
+                    f"task.json: stage_history[{i}] missing required field {required!r}"
+                )
 
 
 def _validate_source_field(source: Any, source_types: list[str], task_key: str, errors: list[str]) -> None:
@@ -193,8 +257,11 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
 
     # --- Load project config -------------------------------------------------
     project, proj_errors = _load_project_config(root) if root else (None, [])
-    if proj_errors:
-        return proj_errors
+    # A missing/broken project config is an error, but structural field checks
+    # must still run so the caller gets actionable field-level diagnostics.
+    errors.extend(proj_errors)
+    if project is None:
+        project = {}
 
     task_types = _get_list(project, PROJECT_TASK_TYPES_KEY)
     phases = _get_list(project, PROJECT_PHASES_KEY)
@@ -306,46 +373,41 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
                     f"task.json: subtask_policy is 'forbidden' but subtasks is not empty"
                 )
 
-    # --- Structural checks for array/object fields (from required_fields) ---
-    # These fields are expected to be arrays/objects if present; checked generically
-    # without hardcoding their names — they come from required_fields config.
-    array_fields = ("related_docs", "related_tests", "research_docs", "changed_files",
-                    "stage_history", "scope", "authority", "source")
-    for field_name in array_fields:
-        value = data.get(field_name)
-        if value is None:
-            continue
-        if field_name == "source":
-            continue  # handled separately
-        if field_name == "scope":
-            if not isinstance(value, dict):
-                errors.append(f"task.json: {field_name} must be an object")
-            else:
-                for side in ("in", "out"):
-                    v = value.get(side)
-                    if v is not None and not isinstance(v, list):
-                        errors.append(f"task.json: {field_name}.{side} must be an array")
-            continue
-        if field_name == "changed_files":
-            if not isinstance(value, dict):
-                errors.append(f"task.json: {field_name} must be an object")
-            else:
-                for side in ("added", "modified", "deleted"):
-                    v = value.get(side)
-                    if v is not None and not isinstance(v, list):
-                        errors.append(f"task.json: {field_name}.{side} must be an array")
-            continue
-        if field_name == "authority":
-            if not isinstance(value, dict):
-                errors.append(f"task.json: {field_name} must be an object")
-            else:
-                for side in ("allowed", "forbidden", "approval_required"):
-                    v = value.get(side)
-                    if v is not None and not isinstance(v, list):
-                        errors.append(f"task.json: {field_name}.{side} must be an array")
-            continue
-        # Generic array-of-objects for related_docs, related_tests, research_docs, stage_history
-        _validate_array_of_objects(value, field_name, errors)
+    # --- Structural checks for object fields --------------------------------
+    scope = data.get("scope")
+    if scope is not None:
+        if not isinstance(scope, dict):
+            errors.append("task.json: scope must be an object")
+        else:
+            for side in ("in", "out"):
+                v = scope.get(side)
+                if v is not None and not isinstance(v, list):
+                    errors.append(f"task.json: scope.{side} must be an array")
+
+    changed_files = data.get("changed_files")
+    if changed_files is not None:
+        if not isinstance(changed_files, dict):
+            errors.append("task.json: changed_files must be an object")
+        else:
+            for side in ("added", "modified", "deleted"):
+                v = changed_files.get(side)
+                if v is not None and not isinstance(v, list):
+                    errors.append(f"task.json: changed_files.{side} must be an array")
+
+    authority = data.get("authority")
+    if authority is not None:
+        if not isinstance(authority, dict):
+            errors.append("task.json: authority must be an object")
+        else:
+            for side in ("allowed", "forbidden", "approval_required"):
+                v = authority.get(side)
+                if v is not None and not isinstance(v, list):
+                    errors.append(f"task.json: authority.{side} must be an array")
+
+    _validate_subtasks(data.get("subtasks"), errors)
+    _validate_related_docs(data.get("related_docs"), errors)
+    _validate_related_tests(data.get("related_tests"), errors)
+    _validate_stage_history(data.get("stage_history"), errors)
 
     # --- Simple string fields (if present) -----------------------------------
     simple_string_fields = ("task_id", "kind", "current_behavior", "rollback_plan", "owner", "priority")

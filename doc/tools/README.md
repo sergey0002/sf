@@ -4,21 +4,24 @@ Small deterministic helper for `doc/architecture/`. It validates structure and r
 
 ## Requirements / invocation
 
-From `simple/`:
+From the repository root:
 
 ```sh
 python3 -m pip install -r doc/tools/requirements.txt
-python3 doc/tools/arch.py list
-python3 doc/tools/arch.py list --domain task-intake
-python3 doc/tools/arch.py show CAP-task-intake
-python3 doc/tools/arch.py index build
-python3 doc/tools/arch.py index check
-python3 doc/tools/arch.py validate
-python3 doc/tools/arch.py task-key --source jira --number 0042
-python3 doc/tools/arch.py task-key --source ui --number 0042
-python3 doc/tools/arch.py task-key --source github --prefix GH --number 0042
+python3 doc/tools/arch/__main__.py list
+python3 doc/tools/arch/__main__.py list --domain task-intake
+python3 doc/tools/arch/__main__.py show CAP-task-intake
+python3 doc/tools/arch/__main__.py index build
+python3 doc/tools/arch/__main__.py index check
+python3 doc/tools/arch/__main__.py validate
+python3 doc/tools/arch/__main__.py docs paths --check
+python3 doc/tools/arch/__main__.py task-key --source jira --number 0042
+python3 doc/tools/arch/__main__.py task-key --source ui --number 0042
+python3 doc/tools/arch/__main__.py task-key --source github --prefix GH --number 0042
 python3 -m unittest discover -s doc/tools/tests -v
 ```
+
+All structured commands emit the single JSON envelope `{ok, code, data, errors, hints}`. `task-key` output is available under `data`.
 
 Index build is an explicit deterministic write. Other commands are read-only. `index.json` is generated and must not be hand-edited. The CLI requires Python 3.10+ and the pinned-major dependency ranges in requirements.txt.
 

@@ -21,7 +21,15 @@ implemented: false
 doc/tools/arch/
 ├── __init__.py        — публичный API, версия 0.2.0
 ├── __main__.py        — точка входа python -m arch и прямой запуск
-├── cli.py             — argparse парсер, main(), все обработчики команд
+├── cli/
+│   ├── app.py         — argparse парсер, run(), диспетчеризация
+│   ├── errors.py      — CliError, CliEnvelope, семантические exit-коды
+│   ├── output.py      — JSON-envelope и human/brief/quiet/verbose вывод
+│   └── commands/      — Command-интерфейс, реестр и команды
+│       ├── base.py
+│       ├── registry.py
+│       ├── builtin.py — list/show/index/validate/scan/docs/task
+│       └── task_key.py — task-key
 ├── constants.py       — regex, имена ключей для YAML, path_is_allowed()
 ├── identity.py        — task-key derive, task_dir(), parse_task_key()
 ├── schema.py          — task.json шаблон (draft-0.2), scaffold_task_json()
@@ -35,7 +43,7 @@ doc/tools/arch/
 
 - `python3 -m arch` — из директории `doc/tools/`
 - `python3 doc/tools/arch/__main__.py` — прямой запуск, работает из любого cwd
-- Аргумент `--root <path>` — опционально, проектный корень (по умолчанию: `Path(__file__).resolve().parents[3]`)
+- Аргумент `--root <path>` — опционально, проектный корень (по умолчанию: `Path(__file__).resolve().parents[4]` из `cli/app.py`)
 
 ## 2. Константы и регулярные выражения (constants.py)
 
@@ -325,21 +333,23 @@ def get_supported_body_types() -> list[str]:
 
 ```python
 def build_parser() -> argparse.ArgumentParser:
-    """Строит argparse парсер со всеми командами и подпарсерами."""
+    """Строит argparse парсер из зарегистрированных команд реестра."""
 ```
 
-### 9.2 main
+### 9.2 run
 
 ```python
-def main(argv: list[str] | None = None) -> int:
+def run(argv: list[str] | None = None) -> int:
     """Главная точка входа CLI.
-    
-    Возвращает exit code:
+
+    Возвращает семантический exit code:
       0 — успех
-      1 — ошибка валидации, отсутствующий файл или коллизия (ERROR: на stderr)
-      2 — необработанная команда / внутренняя ошибка
-    
-    Все структурированные ошибки выводятся как "ERROR: <message>" на stderr.
+      1 — ошибка валидации/индекса
+      2 — ошибка аргументов
+      5 — конфликт
+      10 — ошибка авторизации
+      20 — не найдено
+      75 — временная ошибка
     """
 ```
 
@@ -526,8 +536,12 @@ arch docs related <id> [--depth N]
 | Код | Смысл |
 |-----|-------|
 | 0 | Успех |
-| 1 | Ошибка валидации, отсутствующий файл, коллизия (сообщение ERROR: на stderr) |
-| 2 | Необработанная команда / внутренняя ошибка |
+| 1 | Ошибка валидации/индекса |
+| 2 | Ошибка аргументов / неизвестная команда |
+| 5 | Конфликт (например, существующая директория) |
+| 10 | Ошибка авторизации |
+| 20 | Объект не найден |
+| 75 | Временная ошибка |
 
 ### 9.22 Обработка ошибок
 

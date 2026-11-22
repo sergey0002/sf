@@ -25,7 +25,16 @@ implemented: false
 
 | task_key | источник | task_number | статус | примечания |
 |----------|----------|-------------|--------|----------|
-| UI-0001 | ui | 0001 | scaffold | Локальная фикстура; никакого глобального резервирования не подразумевается |
+| UI-0001 | ui | 0001 | completed | Локальная фикстура scaffold; глобального резервирования не подразумевается |
+| UI-0002 | ui | 0002 | completed | CLI-среда завода и README |
+| UI-0003 | ui | 0003 | completed | Анализ CLI и скиллов по манифесту и data/ |
+| UI-0004 | ui | 0004 | completed | CLI-команды task init/validate/workspace/status |
+| UI-0005 | ui | 0005 | completed | Расширение traceability task.json |
+| UI-0006 | ui | 0006 | completed | Исследование форматов задач из data/ |
+| UI-0007 | ui | 0007 | completed | task_type, subtasks, depends_on, phase |
+| UI-0008 | ui | 0008 | completed | Валидация тел документов и архитектурная документация |
+| UI-0009 | ui | 0009 | completed | task-conf иерархия, пути, детектор мусора |
+| UI-0010 | ui | 0010 | completed | Починка приёмочных тестов и CLI-контракта |
 
 ## Правило остановки
 

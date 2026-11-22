@@ -1,0 +1,176 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0010",
+  "task_number": "0010",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "user request in chat: fix tests and CLI",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Починить приёмочные тесты и CLI-контракт: task-key, вывод, валидация",
+  "kind": "bugfix",
+  "intent": "Привести factory-контур в зелёное состояние: восстановить запуск приёмочных тестов, зарегистрировать команду task-key, исправить вывод структурированных команд, довести валидацию task.json до заявленных правил и синхронизировать документацию с фактическим путём CLI.",
+  "scope": {
+    "in": [
+      "doc/tests/run.sh и doc/tests/test_task_identity.py",
+      "doc/tools/arch/cli/commands/task_key.py",
+      "doc/tools/arch/cli/output.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/store.py",
+      "doc/architecture/index.json",
+      "README.md, doc/AGENTS.md, doc/tools/README.md, doc/tests/SCENARIOS.md",
+      "doc/architecture/README.md, doc/architecture/system/examples.md",
+      "doc/architecture/system/task-number-registry.md"
+    ],
+    "out": [
+      "Изменение data/ как проектных файлов",
+      "Создание task.md",
+      "Реализация Фаз 1-3 nextplan (constitution, clarify, delta-спеки, allocator, MCP)",
+      "Push/merge/deploy"
+    ],
+    "allowed_files_modules": [
+      "doc/tests/",
+      "doc/tools/arch/",
+      "doc/architecture/",
+      "README.md",
+      "doc/AGENTS.md"
+    ]
+  },
+  "current_behavior": "doc/tests/run.sh ссылался на удалённый doc/tools/arch.py; команда task-key была описана, но не зарегистрирована; task workspace/status в человеческом режиме печатали scan-сводку вместо данных; 20 из 35 приёмочных тестов падали; docs paths --check падал из-за Windows-артефактов *:Zone.Identifier; index.json не содержал implemented у трёх документов.",
+  "evidence": [
+    "Before: python3 -m unittest discover -s doc/tests -p 'test_*.py' -> Ran 35 tests, FAILED (failures=17, errors=3)",
+    "Before: python3 doc/tools/arch/__main__.py --help -> no task-key command",
+    "Before: python3 doc/tools/arch/__main__.py task status UI-0001 -> 'Scan complete: 0 documents scanned'",
+    "Before: python3 doc/tools/arch/__main__.py docs paths --check -> undeclared *:Zone.Identifier files"
+  ],
+  "contracts_and_invariants": [
+    "task.json остаётся единственным каноническим входом задачи",
+    "task.md не создаётся",
+    "data/ не редактируется как проектный файл",
+    "CLI детерминирован; семантические решения за агентом",
+    "Все структурированные команды отдают единый JSON envelope {ok, code, data, errors, hints}",
+    "Валидация task.json остаётся конфиг-driven: enum'ы и обязательные поля читаются из YAML"
+  ],
+  "acceptance_criteria": [
+    "AC-1: bash doc/tests/run.sh завершается с кодом 0; 35/35 приёмочных и 5/5 unit-тестов проходят",
+    "AC-2: arch task-key --source ui --number 0010 возвращает task_key UI-0010",
+    "AC-3: arch task status/workspace отдают JSON envelope с данными, а не scan-сводку",
+    "AC-4: arch task validate отклоняет неверные task_id, kind, scope, risk, task_type, phase, subtasks, depends_on, authority, related_docs, related_tests, changed_files",
+    "AC-5: arch docs paths --check проходит без ошибок",
+    "AC-6: arch index check проходит; каждый документ в index.json содержит boolean implemented",
+    "AC-7: документация ссылается на фактический путь CLI doc/tools/arch/__main__.py"
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "../../../Манифест агентной software factory.md",
+    "../../../doc/architecture/system/architecture-contract.md",
+    "../../../doc/architecture/system/implementation-spec.md",
+    "../../../doc/architecture/system/testing.md"
+  ],
+  "constraints": [
+    "Не менять data/ как проектные файлы",
+    "Не создавать task.md",
+    "Не добавлять новые функции из nextplan.md в этой задаче",
+    "Не выполнять push/merge/deploy"
+  ],
+  "assumptions": [
+    "Номер UI-0010 — следующий свободный после UI-0009; реестр синхронизируется этой задачей",
+    "Zone.Identifier — Windows-артефакты, не проектные файлы"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "edit doc/tests/, doc/tools/arch/, doc/architecture/, README.md, doc/AGENTS.md"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "edit data/"
+    ],
+    "approval_required": [
+      "release",
+      "destructive cleanup outside doc/"
+    ]
+  },
+  "approvals": [],
+  "task_type": "bugfix",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "completed",
+  "rollback_plan": "Откатить изменения через git revert коммита задачи; восстановить прежние doc/tests/run.sh, test_task_identity.py и модули doc/tools/arch/; пересобрать index.json.",
+  "related_docs": [
+    "REG-cli-command-map",
+    "VIEW-cli-package",
+    "REG-cli-validation-rules",
+    "SPEC-cli-implementation",
+    "SPEC-cli-testing",
+    "EXAMPLES-cli-usage"
+  ],
+  "related_tests": [
+    {
+      "test_id": "acceptance-suite",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "bash doc/tests/run.sh"
+    },
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [
+      ".gitignore",
+      "doc/tasks/UI-0010/task.json",
+      "doc/tasks/UI-0010/stage1/plan.md",
+      "doc/tasks/UI-0010/stage1/verification.json"
+    ],
+    "modified": [
+      "README.md",
+      "doc/AGENTS.md",
+      "doc/architecture/README.md",
+      "doc/architecture/index.json",
+      "doc/architecture/system/cli-package.md",
+      "doc/architecture/system/examples.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/architecture/system/task-number-registry.md",
+      "doc/tasks/UI-0001/task.json",
+      "doc/tasks/UI-0008/task.json",
+      "doc/tests/SCENARIOS.md",
+      "doc/tests/run.sh",
+      "doc/tests/test_task_identity.py",
+      "doc/tools/README.md",
+      "doc/tools/arch/cli/commands/task_key.py",
+      "doc/tools/arch/cli/output.py",
+      "doc/tools/arch/store.py",
+      "doc/tools/arch/validation.py"
+    ],
+    "deleted": []
+  },
+  "owner": "agent",
+  "priority": "high",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed",
+      "result": "Восстановлен тестовый контур: run.sh переведён на doc/tools/arch/__main__.py; task-key зарегистрирован и отдаёт envelope; вывод структурированных команд исправлен; валидация task.json дополнена проверками subtasks/related_docs/related_tests/stage_history и продолжает структурные проверки при отсутствии конфига; index.json всегда содержит implemented; документация синхронизирована с фактическим путём CLI.",
+      "evidence_refs": [
+        "bash doc/tests/run.sh -> 35/35 OK, 5/5 OK, validate OK, index current, paths OK",
+        "python3 doc/tools/arch/__main__.py task-key --source ui --number 0010 -> UI-0010",
+        "python3 doc/tools/arch/__main__.py task status UI-0001 -> JSON envelope",
+        "python3 doc/tools/arch/__main__.py index check -> Index is current"
+      ]
+    }
+  ]
+}

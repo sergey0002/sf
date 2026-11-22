@@ -4,9 +4,9 @@ These are local acceptance scenarios with deterministic outputs—not a claim th
 
 | Scenario | Skill contract used | Operation under test | Expected | Result |
 |---|---|---|---|---|
-| User describes work in chat | `create-task`: classify as `source.type: ui`, ask for/obtain a number, do not invent | `arch.py task-key --source ui --number 0042` | `UI-0042` | Automated test passed |
-| Jira work item | `create-task`: preserve Jira source, no key prefix | `arch.py task-key --source jira --number 0427` | `0427` | Automated test passed |
-| Other provider | `create-task`: require configured source prefix | `arch.py task-key --source github --prefix gh --number 0042` | `GH-0042` | Automated test passed |
+| User describes work in chat | `create-task`: classify as `source.type: ui`, ask for/obtain a number, do not invent | `arch task-key --source ui --number 0042` | `UI-0042` | Automated test passed |
+| Jira work item | `create-task`: preserve Jira source, no key prefix | `arch task-key --source jira --number 0427` | `0427` | Automated test passed |
+| Other provider | `create-task`: require configured source prefix | `arch task-key --source github --prefix gh --number 0042` | `GH-0042` | Automated test passed |
 | Invalid number / disallowed prefix | Intake must fail closed | CLI cases: 3/5 digits, alphabetic digit, Jira prefix, non-UI prefix on UI, UI prefix on another provider | Nonzero exit | Automated tests passed |
 | Resume numbered task | `go-to-task`: exact key, validate source/number form, inspect task/stage | Load `doc/tasks/UI-0001/task.json` and compare `task_number`, `task_key`, source and directory | Consistent UI task fixture | Automated test passed |
 | Document the current task | `задокументируй`: report only actual facts; preserve task/evidence | Inspect task plan and verification JSON; run architecture validation | Numbered task, reproducible checks, no false pass claim | Automated checks passed |

@@ -7,7 +7,7 @@
 ## Точка входа
 
 1. Читайте `doc/architecture/README.md` — краткая карта архитектуры и протокол чтения.
-2. Используйте `doc/tools/arch.py` только для детерминированных операций: `list`, `show <id>`, `index build`, `index check`, `validate`. CLI не принимает смысловых решений.
+2. Используйте `python3 doc/tools/arch/__main__.py` только для детерминированных операций: `list`, `show <id>`, `index build`, `index check`, `validate`, `docs paths --check`, `task ...`. CLI не принимает смысловых решений.
 3. Навыки — в `doc/skills/` (`create-task`, `go-to-task`, `задокументируй`). Используйте только навык, relevant к текущему intent.
 
 ## Задача — контракт

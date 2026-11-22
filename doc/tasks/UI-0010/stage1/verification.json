@@ -1,0 +1,52 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0010",
+  "task_number": "0010",
+  "stage_id": "stage1",
+  "status": "passed",
+  "checks": [
+    {
+      "command": "bash doc/tests/run.sh",
+      "exit_code": 0,
+      "result": "5/5 CLI unit tests passed; 35/35 acceptance tests passed; index built for 41 documents; architecture validation passed; index freshness passed; docs paths --check passed.",
+      "covers": ["AC-1", "AC-5", "AC-6"]
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py task-key --source ui --number 0010",
+      "exit_code": 0,
+      "result": "Envelope with data.task_key=UI-0010, data.task_number=0010, data.source_prefix=UI.",
+      "covers": ["AC-2"]
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py task status UI-0001",
+      "exit_code": 0,
+      "result": "JSON envelope with task data (task_key, stages, verification_files, has_task_md), not a scan summary.",
+      "covers": ["AC-3"]
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_task_validate_rejects_bad_task_id",
+      "exit_code": 0,
+      "result": "Bad task_id is rejected with a field-level task_id error.",
+      "covers": ["AC-4"]
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py index check",
+      "exit_code": 0,
+      "result": "Index is current; all 41 documents carry boolean implemented.",
+      "covers": ["AC-6"]
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py task validate UI-0010",
+      "exit_code": 0,
+      "result": "task UI-0010 is valid.",
+      "covers": ["AC-1", "AC-7"]
+    }
+  ],
+  "verification_state": "Executed against the local factory repository. No external product repository, live tracker, model runtime or CI was available; this task covers factory tooling only.",
+  "limitations": [
+    "Skills remain Markdown instructions; static checks do not prove live agent compliance.",
+    "UI-0010 is the next free local number after UI-0009; the registry was updated in this task, but no global allocator exists.",
+    "The task schema is still draft-0.2; there is no approved full JSON Schema.",
+    "Push/merge/deploy and release approval were not performed."
+  ]
+}

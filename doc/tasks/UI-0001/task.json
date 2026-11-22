@@ -64,7 +64,7 @@
   "target_release": "unset",
   "project_context_refs": [
     "../../../Манифест агентной software factory.md",
-    "../../../doc.architecture.md"
+    "../../../doc/architecture/system/architecture-contract.md"
   ],
   "constraints": [
     "Current factory core is single-agent.",

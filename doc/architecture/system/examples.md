@@ -354,26 +354,38 @@ $ arch task decompose UI-0010 --subtask-id 0001 --subtask-title "Исследо�
 ```
 $ arch task-key --source jira --number 2045
 {
-  "task_key": "2045",
-  "task_number": "2045",
-  "source_type": "jira",
-  "source_prefix": null
+  "ok": true,
+  "code": 0,
+  "data": {
+    "task_key": "2045",
+    "task_number": "2045",
+    "source_type": "jira",
+    "source_prefix": null
+  }
 }
 
 $ arch task-key --source ui --number 2045
 {
-  "task_key": "UI-2045",
-  "task_number": "2045",
-  "source_type": "ui",
-  "source_prefix": null
+  "ok": true,
+  "code": 0,
+  "data": {
+    "task_key": "UI-2045",
+    "task_number": "2045",
+    "source_type": "ui",
+    "source_prefix": "UI"
+  }
 }
 
 $ arch task-key --source other --number 2045 --prefix GH
 {
-  "task_key": "GH-2045",
-  "task_number": "2045",
-  "source_type": "other",
-  "source_prefix": "GH"
+  "ok": true,
+  "code": 0,
+  "data": {
+    "task_key": "GH-2045",
+    "task_number": "2045",
+    "source_type": "other",
+    "source_prefix": "GH"
+  }
 }
 ```
 

@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from arch.cli.commands.base import Command
+from arch.cli.commands.registry import register
 from arch.cli.errors import error_envelope
 from arch.cli.output import print_envelope
 from arch.identity import normalize_task_identity
 
 
+@register
 class TaskKeyCommand(Command):
     """Derive a task key from a four-digit number and source."""
 
@@ -51,7 +53,7 @@ class TaskKeyCommand(Command):
             print_envelope(envelope, json_mode=getattr(args, "json", False), stream=sys.stderr)
             return 2
         print_envelope(
-            self._ok(result), json_mode=getattr(args, "json", False)
+            self._ok(result), json_mode=True
         )
         return 0
 

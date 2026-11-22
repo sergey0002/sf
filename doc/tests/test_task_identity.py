@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 import subprocess
 import sys
 import unittest
@@ -22,7 +23,7 @@ class TaskIdentityContractTests(unittest.TestCase):
     def test_jira_has_four_digit_bare_key(self):
         result = cli("task-key", "--source", "jira", "--number", "0427")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["task_key"], "0427")
         self.assertEqual(value["source_prefix"], None)
         self.assertEqual(value["task_number"], "0427")
@@ -30,7 +31,7 @@ class TaskIdentityContractTests(unittest.TestCase):
     def test_user_input_is_ui_source_and_prefixed(self):
         result = cli("task-key", "--source", "ui", "--number", "0042")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["source_type"], "ui")
         self.assertEqual(value["task_key"], "UI-0042")
 
@@ -39,7 +40,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertNotEqual(missing.returncode, 0)
         success = cli("task-key", "--source", "github", "--prefix", "gh", "--number", "0042")
         self.assertEqual(success.returncode, 0, success.stderr)
-        self.assertEqual(json.loads(success.stdout)["task_key"], "GH-0042")
+        self.assertEqual(json.loads(success.stdout)["data"]["task_key"], "GH-0042")
 
     def test_rejects_bad_number_and_wrong_prefix_policy(self):
         for number in ("123", "12345", "12A4", "-123"):
@@ -59,7 +60,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertRegex(data["task_number"], re.compile(r"^[0-9]{4}$"))
         derived = cli("task-key", "--source", data["source"]["type"], "--number", data["task_number"])
         self.assertEqual(derived.returncode, 0, derived.stderr)
-        self.assertEqual(json.loads(derived.stdout)["task_key"], data["task_key"])
+        self.assertEqual(json.loads(derived.stdout)["data"]["task_key"], data["task_key"])
         for reference in data["project_context_refs"]:
             self.assertTrue((task_path.parent / reference).resolve().exists(), reference)
         self.assertFalse(task_path.parent.joinpath("task.md").exists())
@@ -132,12 +133,12 @@ class TaskIdentityContractTests(unittest.TestCase):
     def test_task_workspace_and_status(self):
         result = cli("task", "workspace", "UI-0001")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["task_key"], "UI-0001")
 
         result = cli("task", "status", "UI-0001")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["task_key"], "UI-0001")
         self.assertFalse(value["has_task_md"])
 
@@ -171,6 +172,18 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertIn("owner", data)
         self.assertIn("priority", data)
         self.assertIn("stage_history", data)
+
+    def _cli_at(self, root, *args):
+        return subprocess.run(
+            [sys.executable, str(CLI), "--root", str(root), *args],
+            text=True, capture_output=True, check=False,
+        )
+
+    def _prepare_temp_root(self, temp):
+        """Isolated root that still carries the real config contracts."""
+        root = Path(temp.name)
+        shutil.copytree(ROOT / "doc" / "config", root / "doc" / "config")
+        return root
 
     def _make_minimal_task(self, overrides=None):
         base = {
@@ -210,7 +223,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9999"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"task_id": 123})
@@ -227,7 +240,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9998"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"kind": 123})
@@ -244,7 +257,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9997"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"scope": []})  # must be object, not array
@@ -261,7 +274,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9996"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"risk": "extreme"})
@@ -278,7 +291,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9995"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"authority": {"allowed": "not-an-array"}})
@@ -310,7 +323,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9994"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"related_docs": ["not-a-valid-id", "lowercase-invalid"]})
@@ -327,7 +340,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9993"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"related_tests": [{"test_id": "T-1"}]})  # missing location
@@ -344,7 +357,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9992"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"changed_files": {"added": "not-an-array"}})
@@ -371,7 +384,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9991"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"task_type": "invalid-type"})
@@ -388,7 +401,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9990"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"phase": "invalid-phase"})
@@ -401,41 +414,48 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertIn("phase", result.stderr)
 
     def test_task_subtask_init_validate_status(self):
-        import shutil
-        # Cleanup from any previous run
-        shutil.rmtree(ROOT / "doc/tasks/UI-0001/subtasks", ignore_errors=True)
-        # Init a subtask under UI-0001
-        result = cli("task", "subtask", "init", "UI-0001", "0001")
+        import tempfile
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        root = self._prepare_temp_root(temp)
+        parent = root / "doc" / "tasks" / "UI-0001"
+        parent.mkdir(parents=True)
+        (parent / "task.json").write_text("{}", encoding="utf-8")
+
+        # Init a subtask under UI-0001 in the isolated root
+        result = self._cli_at(root, "task", "subtask", "init", "UI-0001", "0001")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["parent_task_key"], "UI-0001")
         self.assertEqual(value["subtask_id"], "0001")
         self.assertEqual(value["subtask_key"], "UI-0001-0001")
 
         # Validate the subtask
-        result = cli("task", "subtask", "validate", "UI-0001", "0001")
+        result = self._cli_at(root, "task", "subtask", "validate", "UI-0001", "0001")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("is valid", result.stdout)
 
         # Status of the subtask
-        result = cli("task", "subtask", "status", "UI-0001", "0001")
+        result = self._cli_at(root, "task", "subtask", "status", "UI-0001", "0001")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["subtask_key"], "UI-0001-0001")
 
-        # Cleanup
-        import shutil
-        shutil.rmtree(ROOT / "doc/tasks/UI-0001/subtasks")
-
     def test_task_subtask_init_rejects_collision(self):
+        import tempfile
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        root = self._prepare_temp_root(temp)
+        parent = root / "doc" / "tasks" / "UI-0004"
+        parent.mkdir(parents=True)
+        (parent / "task.json").write_text("{}", encoding="utf-8")
+
         # First create, then try again
-        result = cli("task", "subtask", "init", "UI-0004", "0001")
+        result = self._cli_at(root, "task", "subtask", "init", "UI-0004", "0001")
         self.assertEqual(result.returncode, 0, result.stderr)
-        result = cli("task", "subtask", "init", "UI-0004", "0001")
+        result = self._cli_at(root, "task", "subtask", "init", "UI-0004", "0001")
         self.assertNotEqual(result.returncode, 0, "subtask collision should fail")
         self.assertIn("already exists", result.stderr)
-        import shutil
-        shutil.rmtree(ROOT / "doc/tasks/UI-0004/subtasks")
 
     def test_task_subtask_init_rejects_bad_id(self):
         result = cli("task", "subtask", "init", "UI-0001", "bad")
@@ -447,7 +467,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9989"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"subtasks": [{"id": "0001"}]})  # missing title, status, path
@@ -464,7 +484,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         from pathlib import Path
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
-        root = Path(temp.name)
+        root = self._prepare_temp_root(temp)
         tdir = root / "doc" / "tasks" / "UI-9988"
         tdir.mkdir(parents=True)
         bad = self._make_minimal_task({"depends_on": "not-an-array"})
@@ -479,7 +499,7 @@ class TaskIdentityContractTests(unittest.TestCase):
     def test_docs_related_command(self):
         result = cli("docs", "related", "SYS-simple-factory", "--depth", "1")
         self.assertEqual(result.returncode, 0, result.stderr)
-        value = json.loads(result.stdout)
+        value = json.loads(result.stdout)["data"]
         self.assertEqual(value["root"], "SYS-simple-factory")
         self.assertEqual(value["max_depth"], 1)
         ids = [d["id"] for d in value["documents"]]

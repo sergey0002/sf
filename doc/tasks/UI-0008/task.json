@@ -108,18 +108,10 @@
   "phase": "completed",
   "rollback_plan": "Откатить изменения в doc/tools/arch/ и doc/architecture/schemas/ к предыдущей версии; удалить команду docs related из CLI; вернуть тесты к предыдущему состоянию.",
   "related_docs": [
-    {
-      "id": "VIEW-cli-package"
-    },
-    {
-      "id": "REG-cli-command-map"
-    },
-    {
-      "id": "REG-cli-validation-rules"
-    },
-    {
-      "id": "SYS-simple-factory"
-    }
+    "VIEW-cli-package",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SYS-simple-factory"
   ],
   "related_tests": [
     {

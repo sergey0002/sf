@@ -91,20 +91,42 @@ def _print_quiet(envelope: CliEnvelope, stream: Any) -> None:
 
 
 def _print_verbose(envelope: CliEnvelope, stream: Any) -> None:
-    """Full per-incident detail (default for non-JSON, non-brief, non-quiet)."""
-    data = envelope.data or {}
-    incident_count = data.get("incident_count", 0)
-    scanned = data.get("scanned_documents", 0)
+    """Full detail (default for non-JSON, non-brief, non-quiet).
 
-    if incident_count == 0:
-        stream.write(f"Scan complete: {scanned} documents scanned, 0 incident(s) found\n")
-        stream.write("No issues. All documentation is valid.\n")
-    else:
-        stream.write(
-            f"Scan complete: {scanned} documents scanned, {incident_count} incident(s) found\n"
-        )
-        stream.write("\n")
-        errors = envelope.errors or []
+    Scan/validate commands carry ``incident_count``/``valid`` in their data and
+    get the incident summary. Other structured commands fall back to their JSON
+    envelope so that human mode never replaces real data with a scan summary.
+    """
+    data = envelope.data or {}
+    is_scan = (
+        "incident_count" in data
+        or "scanned_documents" in data
+        or "valid" in data
+    )
+    errors = envelope.errors or []
+
+    if is_scan:
+        incident_count = data.get("incident_count", 0)
+        scanned = data.get("scanned_documents", 0)
+        if incident_count == 0:
+            stream.write(f"Scan complete: {scanned} documents scanned, 0 incident(s) found\n")
+            stream.write("No issues. All documentation is valid.\n")
+        else:
+            stream.write(
+                f"Scan complete: {scanned} documents scanned, {incident_count} incident(s) found\n"
+            )
+            stream.write("\n")
+            for err in errors:
+                field_part = f" [{err.field}]" if err.field else ""
+                stream.write(
+                    f"[{err.code}] {err.message}{field_part} (exit {err.exit_code})\n"
+                )
+                if err.suggestion:
+                    stream.write(f"      fix: {err.suggestion}\n")
+        stream.flush()
+        return
+
+    if errors:
         for err in errors:
             field_part = f" [{err.field}]" if err.field else ""
             stream.write(
@@ -112,7 +134,10 @@ def _print_verbose(envelope: CliEnvelope, stream: Any) -> None:
             )
             if err.suggestion:
                 stream.write(f"      fix: {err.suggestion}\n")
-    stream.flush()
+        stream.flush()
+        return
+
+    _print_json(envelope, stream)
 
 
 def print_stderr(message: str) -> None:

@@ -23,9 +23,12 @@ CLI был рефакторен из одного файла `arch.py` (~900 с�
 | `validation.py` | `validate_task_json()` — валидация конфиг-driven (все правила из YAML), `load_task_conf_types()`, `load_task_conf_flows_for_type()`, `load_task_conf_prompt()`, `load_task_conf_flow_prompt()`, `check_subtasks_closed()`, `validate_paths()`, `load_paths_config()` | `constants`, `store` (для check_subtasks_closed) |
 | `store.py` | `ArchitectureStore` — загрузка документов с frontmatter, валидация ссылок/ID, сборка/проверка `index.json` | (внутри пакета arch — нет) |
 | `subtask.py` | Пути субтасок, скффолд JSON, перечисление этапов и вложенных субтасок | `identity`, `schema` |
-| `cli.py` | Парсер `argparse`, `main()`, все обработчики команд (включая task types/flows/type-prompt/flow-prompt/decompose/diagnose/close, docs paths --check) | `constants`, `identity`, `schema`, `validation`, `store`, `subtask` |
+| `cli/app.py` | Парсер `argparse`, `run()`, диспетчеризация зарегистрированных команд | `cli.commands`, `store` |
+| `cli/output.py` | JSON-envelope, human/brief/quiet/verbose режимы, scan-сводка | `cli.errors` |
+| `cli/errors.py` | `CliError`, `CliEnvelope`, семантические exit-коды, `ok_envelope`/`error_envelope` | — |
+| `cli/commands/` | `Command`-интерфейс, реестр и команды: `list`, `show`, `index`, `validate`, `scan`, `docs`, `task`, `task-key` | `identity`, `validation`, `store`, `subtask` |
 | `__init__.py` | Публичный API, версия пакета (`0.2.0`) | все (реэкспорт) |
-| `__main__.py` | Точка входа для `python -m arch` и прямого запуска файла | `cli` |
+| `__main__.py` | Точка входа для `python -m arch` и прямого запуска файла | `cli.app` |
 
 ## Граф зависимостей
 
@@ -39,8 +42,11 @@ identity.py  schema.py  validation.py  store.py
 subtask.py (identity, schema)
    ▲
    │
-   └──── cli.py ────────┘
+   └──── cli/commands/ ────────┘
          (identity, schema, validation, store, subtask, constants)
+         ▲
+         │
+    cli/app.py
          ▲
          │
     __main__.py
@@ -58,7 +64,7 @@ subtask.py (identity, schema)
 - **Субтаски всегда ручные:** нет привязки к внешним источникам (Jira, трекеры и т.д.).
 - **Контроль закрытия задач:** `arch task close` отказывает если есть подзадачи с `phase != completed` (close_policy).
 - **Детектор мусора:** `arch docs paths --check` выявляет файлы в `doc/` вне `allowed_paths`.
-- **Обработка ошибок:** все доменные модули возвращают списки ошибок или выбрасывают `ValueError`/`OSError`; `cli.main()` конвертирует их в код выхода 1 с сообщениями `ERROR:` на stderr.
+- **Обработка ошибок:** все доменные модули возвращают списки ошибок или выбрасывают `ValueError`/`OSError`; `cli.app.run()` конвертирует их в семантический exit-код и единый JSON-envelope. Структурированные команды в human-режиме печатают свой envelope, а не scan-сводку.
 
 ## Точки входа
 

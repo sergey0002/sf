@@ -218,9 +218,11 @@ class ArchitectureStore:
                 "status": md["status"],
                 "path": doc.relative_path,
             }
-            for key in ("domain", "related", "source_refs", "applies_to", "implemented"):
+            for key in ("domain", "related", "source_refs", "applies_to"):
                 if key in md:
                     record[key] = md[key]
+            # Every indexed document carries an explicit implementation flag.
+            record["implemented"] = md.get("implemented", False)
             records.append(record)
         records.sort(key=lambda x: x["id"])
         return {"index_schema_version": 1, "documents": records}
@@ -257,14 +259,14 @@ class ArchitectureStore:
                     actual = json.loads(self.index_path.read_text(encoding="utf-8"))
                 except FileNotFoundError:
                     errors.append(
-                        "doc/architecture/index.json: missing; run `arch.py index build`"
+                        "doc/architecture/index.json: missing; run `python3 doc/tools/arch/__main__.py index build`"
                     )
                 except json.JSONDecodeError as exc:
                     errors.append(f"doc/architecture/index.json: invalid JSON: {exc}")
                 else:
                     errors.extend(self._validate_instance(actual, index_schema, "index.json:"))
                     if actual != expected:
-                        errors.append("doc/architecture/index.json: stale; run `arch.py index build`")
+                        errors.append("doc/architecture/index.json: stale; run `python3 doc/tools/arch/__main__.py index build`")
         return errors
 
     def write_index(self, index: dict[str, Any]) -> None:
