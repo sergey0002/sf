@@ -45,8 +45,8 @@ related: [SYS-simple-factory, DOM-task-intake, DOM-task-lifecycle, DOM-project-k
    выполнение допустимо только для доказуемо независимых работ с контролируемой интеграцией.
 9. **Память не равна доступу.** Retrieval/context соблюдает permissions, tenant/repo boundary, freshness и provenance.
    Текстовые инструкции не заменяют runtime authorization.
-10. **Мягкие инструкции не являются security gates.** Least privilege, sandbox, policy-as-code, protected branches,
-    независимые CI проверки и approval для риска обеспечиваются системно, а не просьбой к модели.
+10. **Мягкие инструкции не являются security gates.** Least privilege, sandbox, policy-as-code, локальные воспроизводимые проверки
+    и approval для риска обеспечиваются системно, а не просьбой к модели.
 11. **Результат доказывается.** Изменение проходит релевантные unit/contract/property/integration/security/performance
     checks. Агент не может единолично менять защищённый acceptance oracle и объявлять свою работу проверенной.
 12. **Автономность растёт по evidence и риску.** Начинаем с read-only/предложений; права на запись, merge и deploy
@@ -73,6 +73,19 @@ related: [SYS-simple-factory, DOM-task-intake, DOM-task-lifecycle, DOM-project-k
     функциональной эквивалентности — без угадывания смыслов, которые принадлежат агенту/скиллам, но с полной
     детерминированной спецификацией всего, что CLI делает.
 
+### Запреты в рамках workflow
+
+> [!warning] Запрещено: CI/CD и Git-hosted workflow
+> Решение владельца от 2026-11-22: в этом проекте **не создаются и не поддерживаются CI/CD-конвейеры и Git-воркфлоу**.
+
+- Запрещено добавлять провайдерные конфигурации: `.github/workflows/`, GitLab CI, Jenkinsfile, CircleCI, Azure Pipelines, Bitbucket Pipelines и аналогичные.
+- Запрещено делать Git-hosted автоматизацию (push/pull-request triggers, branch protection как обязательный gate, status checks, bot-комментарии) частью контракта задачи или обязательной проверкой.
+- Запрещено требовать для закрытия задачи внешний pipeline, CI-статус или remote-runner.
+- Разрешены локальные проверки на проверенном снимке: `bash doc/tests/run.sh --gate` и отдельные команды `arch validate`, `arch index check`, `arch docs paths --check`, unit/acceptance тесты.
+- Git остаётся системой контроля версий (diff, history, review), но не workflow-движком и не источником обязательных проверок.
+
+Единственный обязательный gate — локальный, воспроизводимый и read-only относительно проверяемого checkout: stale index и drift обнаруживаются до любой пересборки, а пересборка выполняется только во временной копии. Требование «CI» в `nextplan.md` §7/§24 считается заменённым этим правилом.
+
 ## Четыре слоя, которые нужно спроектировать
 
 | Слой | Назначение | Минимальный контракт |
@@ -80,9 +93,9 @@ related: [SYS-simple-factory, DOM-task-intake, DOM-task-lifecycle, DOM-project-k
 | **1. Интеграция внешних задач** | Приём intent/priority, обратная ссылка, статусы результата | External ID, project/team, description, acceptance, priority, owner, status, source URL |
 | **2. Task lifecycle (MVP: один агент)** | Нормализованная задача, state, стадии/попытки, остановка и возобновление одного исполнения | `task.json`, source ID, scope, state/artifact refs, retry/stop rule; dependency graph и multi-agent assignment — вне текущего ядра |
 | **3. Project knowledge model** | Описывает текущие сущности, флоу, правила и архитектурные решения | Stable IDs, canonical page, source/provenance, validity/version, owner, linked tests/code |
-| **4. Execution & verification** | Sandbox/worktrees, tool permissions, CI, evidence, promotion/release | Pinned commit, isolated changes, test/scans, verifier identity, approval, rollout/rollback |
+| **4. Execution & verification** | Sandbox/worktrees, tool permissions, локальный gate, evidence, promotion/release | Pinned commit, isolated changes, test/scans, verifier identity, approval, rollout/rollback |
 
-Это логические области ответственности, не требование вводить четыре физических базы/сервиса или отдельные agent roles. В MVP один агент выполняет планирование/изменение последовательно; CI и человек обеспечивают независимые проверки/approval. Multi-agent task graph не проектируется сейчас.
+Это логические области ответственности, не требование вводить четыре физических базы/сервиса или отдельные agent roles. В MVP один агент выполняет планирование/изменение последовательно; локальный gate и человек обеспечивают независимые проверки/approval. CI/CD и Git-воркфлоу запрещены (см. «Запреты в рамках workflow»). Multi-agent task graph не проектируется сейчас.
 
 ## Черновой end-to-end поток
 
@@ -97,7 +110,7 @@ flowchart LR
     AGENT --> DELTA[Смысловые docs/spec deltas при необходимости]
     CODE --> CLI2[CLI: diff + test/evidence capture]
     DELTA --> OWNER[Owner review смысла/docs]
-    CLI2 --> VERIFY[Acceptance/CI + review человеком]
+    CLI2 --> VERIFY[Acceptance/локальный gate + review человеком]
     OWNER --> VERIFY
     VERIFY -->|доработка| AGENT
     VERIFY -->|согласовано| PR[Человек публикует/одобряет PR]
@@ -113,7 +126,7 @@ flowchart LR
 1. **Адаптеры источников и CLI.** Для каждого tracker CLI получает структурированные поля, comments/updates и attachments через соответствующий adapter, сохраняет исходный snapshot/provenance и выполняет только явное field mapping в общий schema. Неизвестные поля сохраняются как source data или явно маркируются unmapped; CLI не делает выводов о смысле задачи, её полноте или приоритете. Добавление источника — adapter + mapping/schema tests, без скрытого semantic classifier. Чтение источника по умолчанию read-only.
 2. **Постановка пользователем (UI / user input).** Навык `create task` ведёт диалог: понимает намерение, выявляет неоднозначности, задаёт необходимые вопросы и формирует полный `task.json` с `source.type: ui`, source/provenance и всеми известными полями. `ui` означает пользовательский ввод в чате/вручную, а не подключение к графическому интерфейсу. Это смысловая работа агента согласно skill/instructions, не shell/Python эвристика. CLI затем валидирует JSON, безопасно создаёт task directory и сохраняет input. Недостающие блокирующие данные не выдумываются: skill возвращает вопрос/ожидает ответ либо помечает поле как `unset` только когда это допустимо.
 3. **Единственный task input.** `task.json` содержит стабильную task identity: обязательный четырёхзначный десятичный `task_number` и детерминированный `task_key`, а также source/native ID/URL/revision/snapshot, title/intent, task kind при наличии, scope и exclusions, acceptance criteria с oracle/verification refs, project context refs, release target, ограничения/assumptions/open questions и требуемые approvals/owners. Он также содержит ссылки/IDs исходных comments/attachments и параметры, необходимые для детерминированного scaffold/branch selection. Полный schema/required fields будут специфицированы отдельно. CLI проверяет структуру/согласованность типов, но не оценивает качество смысла; agent skill отвечает за semantic completeness.
-4. **Task identity и folder.** Каждая задача имеет ровно четырёхзначный десятичный `task_number` (`0000`–`9999`); `task_key` и имя каталога строятся детерминированно из источника и этого номера: Jira — номер без префикса (например, `2045`); пользовательский ввод (`source.type: ui`) — `UI-2045`; любой другой источник — `<source-prefix>-2045` с обязательным явно настроенным префиксом. Нативный ID/URL сохраняется отдельно как provenance и не заменяет task number. CLI проверяет формат, правила префиксов, коллизии и безопасные пути, но не изобретает/не выделяет номер; пока нет утверждённого allocator/registry, отсутствующий номер, конфликт или неоднозначность — stop. Jira остаётся без префикса по умолчанию; обнаруженная коллизия не разрешается добавлением префикса молча.
+4. **Task identity и folder.** Каждая задача имеет ровно четырёхзначный десятичный `task_number` (`0000`–`9999`); `task_key` и имя каталога строятся детерминированно из источника и этого номера: Jira — номер без префикса (например, `2045`); пользовательский ввод (`source.type: ui`) — `UI-2045`; любой другой источник — `<source-prefix>-2045` с обязательным явно настроенным префиксом. Нативный ID/URL сохраняется отдельно как provenance и не заменяет task number. CLI проверяет формат, правила префиксов, коллизии и безопасные пути. Для `source: ui` команда `task new` выделяет следующий свободный номер из CLI-реестра `doc/config/task-registry.json`, создаёт задачу и добавляет запись; Jira и внешние номера приходят из трекера. Пока нет глобального allocator/уникальности, отсутствующий номер, конфликт или неоднозначность — stop. Jira остаётся без префикса по умолчанию; обнаруженная коллизия не разрешается добавлением префикса молча.
 5. **Snapshot и обновления.** `task.json` хранит нормализованный execution snapshot и source provenance; raw source payload хранится/ссылается отдельно в определённом формате, вложения — в `attachments/` с исходными именами/метаданными и безопасными локальными именами. Исходный tracker остаётся внешним source of truth, но текущий run опирается на зафиксированный snapshot. CLI выявляет технический факт изменения revision/hash и сообщает о drift; агент оценивает семантическое влияние изменения, задаёт вопросы и решает, нужен ли новый scope/stage. Никаких автоматических записей обратно в tracker без отдельного решения.
 6. **Запуск работы.** Пользователь вызывает `go to task <task_key>` либо `create task`. Skill/агент выбирает необходимый контекст и формулирует план по смыслу. CLI предоставляет предсказуемые команды для чтения/валидации task JSON, проверки repo/worktree/Git состояния и подготовки workspace. CLI не выбирает релевантные модули или архитектурные документы по fuzzy matching; это делает агент с правилами поиска в skill и ссылается на найденные evidence.
 7. **Release target и ветка.** Release-to-branch mapping хранится в project configuration; `task.json` содержит target release либо явное `unset`. CLI детерминированно разрешает точное соответствие, проверяет наличие/допустимость ветки и создаёт/checkout-ит task branch по safe naming rule на основе `task_key` (например, `futures/2045`, `bugfix/UI-2045`); веточные классификаторы и префиксы задаются отдельной политикой. Отсутствующий/неоднозначный mapping — ошибка/stop с сообщением, не угадывание. CLI фиксирует base commit, target branch и derived branch в task metadata/execution record. Существующие dirty changes не перезаписываются.
@@ -148,6 +161,7 @@ flowchart LR
 | `bugfix` | Исправление дефекта | Исправление существующего поведения | `standard-implementation`, `minimal-scaffold` | optional | все подзадачи должны быть закрыты |
 | `docs` | Документация | Изменение архитектурных/проектных документов | `docs-only` | optional | все подзадачи должны быть закрыты |
 | `refactor` | Рефакторинг | Изменение кода без изменения поведения | `standard-implementation`, `minimal-scaffold` | optional | все подзадачи должны быть закрыты |
+| `subtask` | Подзадача | Лист работы внутри родительской задачи; дальнейшая декомпозиция запрещена | нет | forbidden | все подзадачи должны быть закрыты |
 | `scaffold` | Создание заготовки | Инициализация структуры, шаблоны | `minimal-scaffold` | forbidden | все подзадачи должны быть закрыты |
 
 ### Поля task.json, добавленные структурой task-conf
@@ -157,7 +171,8 @@ flowchart LR
 - **`task_type`** — один из зарегистрированных типов (см. `arch task types`).
 - **`flow`** — идентификатор flujo, закреплённый за задачей; должен быть в `allowed_flows` для выбранного `task_type`. CLI валидирует совместимость при `arch task validate`.
 - **`complexity`** — `low` / `medium` / `high` / `critical`; стартовое значение берётся из `complexity_default` типа.
-- **`subtasks`** — массив `{id, title, status, path}`; задаётся при декомпозиции через `arch task decompose`.
+- **`estimate_hours`** — положительное число часов работы агента; ставит агент по перечню работ. Необязательное поле.
+- **`subtasks`** — массив `{id, title, status, path}`; задаётся при декомпозиции через `arch task decompose`. Запись может содержать выбранные агентом `task_type`, `flow`, `complexity` и `estimate_hours` ребёнка.
 
 `task_type` влияет на глубину ревью и обязательные поля. Точный перечень полей задают `paths.yaml` и `required_fields` выбранного типа. Для аудита сохраняйте findings и основания, для планирования — зависимости и приёмку. Для документации глубину проверки определяет затронутый контракт, для рефакторинга нужна проверка сохранённого поведения.
 
@@ -181,7 +196,7 @@ flowchart LR
 - **Короткий успех проверки.** В компактном режиме одна строка сообщает, какая проверка и область прошли. При отказе команда должна показать причину, место и следующий проверяемый шаг. Массовый вывод можно ограничить, указав общее число проблем и способ получить остаток.
 - **Компактность по назначению.** Проверка отвечает на вопрос о результате. Запрос состояния возвращает нужные данные и ссылки на артефакты. Выдачу JSON сохраняйте совместимой: exit code, envelope и обязательные поля проверяются тестами.
 - **У каждого проектного CLI есть краткий скилл оператора.** Он описывает точку входа, типовые сценарии, нужные флаги, выход и побочные эффекты. Агент использует скилл и точечный `--help`. Исходники читает только при изменении CLI или диагностике воспроизводимого расхождения с интерфейсом. Изменения публичной команды сопровождаются обновлением справочника и проверки её контракта. Текущий пример — [arch-cli](../../skills/arch-cli/SKILL.md).
-- **Правило входа доступно с корня проекта.** [Корневой AGENTS.md](../../../AGENTS.md) направляет оператора к публичному контракту CLI. Клиентские настройки подключения навыков и прав живут в конфиге клиента и проверяются отдельно. Для Kilo проект предоставляет профиль чтения `factory-operator` в [kilo.jsonc](../../../kilo.jsonc).
+- **Правило входа доступно с корня проекта.** [Корневой AGENTS.md](../../../AGENTS.md) направляет оператора к публичному контракту CLI. Конфиг фабрики находится в `doc/config/`; клиентские настройки агентной среды не входят в проект и проверяются отдельно.
 - **Минимальный цикл работы.** Начинайте с точного ключа или критерия приёмки. Читайте нужные источники и вызывайте целевую проверку. Полный прогон выполняйте на итоговом снимке. В evidence сохраняйте команду, исход, проверенный снимок и покрытые AC. Полный лог храните по ссылке, когда он нужен для разбора.
 - **Архитектура участвует в приёмке.** Типовой flow собирает ограничения манифеста и действующие правила до реализации. Свяжите точный раздел с AC, CASE или проверкой границ. После целевой проверки обновите затронутые записи или зафиксируйте, почему правило сохранено. Итоговый снимок проверяется по этим же правилам. [Этапы flow](../domains/task-lifecycle/flow.md#архитектура-в-этапах-типового-flow)
 
@@ -211,7 +226,7 @@ flowchart LR
     AGENT --> DELTA[Смысловые docs/spec deltas при необходимости]
     CODE --> CLI2[CLI: diff + test/evidence capture]
     DELTA --> OWNER[Owner review смысла/docs]
-    CLI2 --> VERIFY[Acceptance/CI + review человеком]
+    CLI2 --> VERIFY[Acceptance/локальный gate + review человеком]
     OWNER --> VERIFY
     VERIFY -->|доработка| AGENT
     VERIFY -->|согласовано| CLOSE[arch task close — проверка subtasks]
@@ -255,7 +270,9 @@ doc/tasks/<task_key>/
 
 **Разделение ответственности для субтасков:**
 - CLI создаёт каталог `subtasks/<id>/`, шаблон `task.json`, валидирует структуру, проверяет коллизии и enum-поля
-- Скилл (`go-to-task`) принимает решение о декомпозиции, заполняет смысловые поля (`intent`, `scope`, `related_docs`, `related_tests`), определяет зависимости
+- Агент принимает решение о декомпозиции, выбирает для каждого ребёнка `task_type`, `flow`, `complexity` и `estimate_hours` и передаёт их в `arch task decompose` или `arch task subtask init`
+- Агент заполняет смысловые поля (`intent`, `scope`, `acceptance_criteria`, `implementation_plan`, `related_docs`, `related_tests`), определяет зависимости и пишет план по навыку `plan-task`
+- Жёстко зашитый тип `scaffold` для ребёнка не используется: `scaffold` отключает обязательные семантические поля и шаги плана
 
 ## Исследовательская папка задачи: `research/`
 
@@ -609,7 +626,7 @@ Generated machine diff/evidence должен сохранять exact refs и с
 
 `stageN/diff.json` генерируется CLI от baseline этой стадии до её текущего результата. Корневой `diff.json` генерируется CLI напрямую от исходного task base SHA до текущего task HEAD; его нельзя получать склейкой stage diff, так как изменения могут пересекаться или отменять друг друга. Оба JSON diff — generated machine artifacts, вручную не редактируются, содержат точные base/head SHA и исключают собственный output из входного набора. `stageN/verification.json` сохраняет test map, точные команды/selectors, фактически проверенный commit или состояние рабочей копии, pass/fail/not run и evidence refs; verification последней стадии также подтверждает required checks на итоговом состоянии всей задачи. Человекочитаемый diff/report не создаётся по умолчанию; при будущей потребности он может быть чистой проекцией этих machine artifacts. Actual executable test code живёт в существующих тестовых каталогах репозитория и меняется в том же task branch, что и код; тяжёлые отчёты хранятся отдельно, в verification остаются краткий результат и ссылки.
 
-Для web-проекта можно начать с test map, не навязывая роли до аудита существующего кода: Playwright — браузерные end-to-end сценарии и диагностические артефакты; Codeception suites могут покрывать unit/functional/acceptance/integration слои в той мере, как настроено в проекте; дополнительно проверять релевантные static/lint, unit, API/contract, database/integration, security и migration checks. Какие именно gates запускать — определяется реальным test harness и risk/scope задачи. `verification.json` сохраняет точную команду, suite/test selector, commit или состояние рабочей копии, результат (pass/fail/not run), краткое сообщение об ошибке и ссылку на Playwright trace/screenshot, Codeception report или CI run при наличии. `not run` не трактовать как pass.
+Для web-проекта можно начать с test map, не навязывая роли до аудита существующего кода: Playwright — браузерные end-to-end сценарии и диагностические артефакты; Codeception suites могут покрывать unit/functional/acceptance/integration слои в той мере, как настроено в проекте; дополнительно проверять релевантные static/lint, unit, API/contract, database/integration, security и migration checks. Какие именно gates запускать — определяется реальным test harness и risk/scope задачи. `verification.json` сохраняет точную команду, suite/test selector, commit или состояние рабочей копии, результат (pass/fail/not run), краткое сообщение об ошибке и ссылку на Playwright trace/screenshot, Codeception report или локальную запись проверки при наличии. `not run` не трактовать как pass.
 
 CLI diff должен явно отражать состояние Git и включать согласованный набор tracked/staged/unstaged/untracked правок. Его собственный выходной `diff.json` исключается из входного набора, иначе артефакт будет включать сам себя. Собранный diff — review evidence, не замена файлов кода и не тестовый отчёт; будет ли он закоммичен в task PR или передан как отдельный артефакт, пока открыто.
 
@@ -663,13 +680,13 @@ This nuance captured in root manifest как future/out-of-scope note. Until sep
 
 - **Один агент** последовательно выполняет intake semantic normalization (через skill), inspection, planning, implementation и self-check в ограниченном worktree/sandbox; роли — этапы работы, не отдельные обязательно развёрнутые агенты.
 - **CLI** детерминированно получает/валидирует input, управляет filesystem/Git и сохраняет execution/evidence records; он не принимает смысловых решений.
-- **CI/tests** дают воспроизводимые проверки из заданного состояния; это независимый acceptance evidence, не самооценка агента.
+- **Локальный gate/tests** дают воспроизводимые проверки из заданного состояния; это независимый acceptance evidence, не самооценка агента. Внешний CI/CD запрещён.
 - **Человек/owner** решает неразрешённые вопросы смысла, утверждает domain/business rule changes и выполняет обязательные approval/promotion действия.
 - Структурированный task/stage state хранит текущую точку, unresolved questions, outputs, commit/run IDs и next action, чтобы один агент мог resume после остановки. Отдельные agent-to-agent handoffs и dependency graph не нужны для MVP; при будущем введении subagents потребуется отдельная спецификация permissions/ownership/handoff.
 
 ## Пока не решено — вопросы для штурма
 
-1. Как организовать авторизованный allocator/registry четырёхзначных номеров и обнаружение коллизий, особенно когда Jira projects могут иметь одинаковые bare issue numbers, при сохранении правила Jira без префикса? До решения коллизия или неоднозначность должна останавливать создание/resume.
+1. Как распространить allocator/registry на Jira и внешние источники и обнаруживать коллизии, особенно когда Jira projects могут иметь одинаковые bare issue numbers, при сохранении правила Jira без префикса? UI-реестр реализован в `doc/config/task-registry.json`; для остальных источников до решения коллизия или неоднозначность должна останавливать создание/resume.
 2. Какое минимальное durable state нужно одному агенту для status/resume/retry/audit, и где его хранить: в task directory/Git или отдельном store? Не предполагать multi-agent graph до отдельной потребности.
 3. Где начинается граница продукта: один репозиторий/монорепо, несколько репозиториев или несколько проектов?
 4. Кто утверждает изменение бизнес-правила и документации: code owner, product owner, доменный reviewer, release owner?
@@ -681,7 +698,7 @@ This nuance captured in root manifest как future/out-of-scope note. Until sep
 10. Нужны ли в будущем человеку generated views поверх task JSON и machine evidence; по умолчанию они не формируются и не являются task inputs.
 11. Если тот же fix нужен в другом релизе, заводить отдельную связанную Jira-задачу на backport?
 12. Где размещать canonical docs-root: общий локальный каталог или отдельный docs-repo? Учитывать concurrency нескольких релизов и будущих исполнителей только если она реально нужна; локальное хранение требует backup/snapshot и sync policy.
-13. Какой набор префиксов зарегистрировать для каждого источника, каковы допустимые символы/длина, и какой allocator/registry обеспечивает уникальность четырёхзначных номеров? Политика ключей зафиксирована: Jira — без префикса, `ui`/user input — `UI-`, остальные источники — с явным конфигурируемым префиксом; CLI не меняет эти правила при коллизии.
+13. Какой набор префиксов зарегистрировать для каждого источника и каковы допустимые символы/длина? Уникальность UI-номеров обеспечивает CLI-реестр; для Jira и внешних источников allocator не решён. Политика ключей зафиксирована: Jira — без префикса, `ui`/user input — `UI-`, остальные источники — с явным конфигурируемым префиксом; CLI не меняет эти правила при коллизии.
 14. Каков точный command surface v0 и контракт каждого CLI adapter: команды, inputs/outputs, exit codes, idempotency, side effects, dry-run и error handling; какие source поля обязательны для mapping? Семантические вопросы к пользователю остаются обязанностью skill, не CLI.
 15. Как задать schema/config versioning для providers, models и `role → model` mapping; какие endpoints/capabilities составляют поддерживаемый OpenAI-compatible subset?
 16. Какие role calls нужны в MVP, какие данные каждой роли можно передавать, какие output schemas/limits/evals обязательны и где хранить call evidence? Как отключить role/provider и ротировать secrets без изменения task data?

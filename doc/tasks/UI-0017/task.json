@@ -35,10 +35,12 @@
       "doc/architecture/"
     ]
   },
-  "current_behavior": "Исходные сведения и ограничения: nextplan.md §21. Уточнить baseline в начале выполнения.",
+  "current_behavior": "До изменения flow YAML не имел состояний и переходов, таблица выбора отсутствовала, task advance не применял события, а diagnose не вычислял готовность детей и зависимости.",
   "evidence": [
     "nextplan.md §21",
-    "nextplan.md §24, P07"
+    "nextplan.md §24, P07",
+    "python3 -m unittest discover -s doc/tests -p test_task_identity.py -q",
+    "python3 doc/tools/arch/__main__.py scan --scope task-conf --brief"
   ],
   "contracts_and_invariants": [
     "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
@@ -99,7 +101,7 @@
   "depends_on": [
     "UI-0016"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Описать таблицу выбора и два YAML flow: bugfix и docs-only.",
@@ -109,7 +111,8 @@
     "ARCH-contract",
     "REG-cli-command-map",
     "REG-cli-validation-rules",
-    "SPEC-cli-testing"
+    "SPEC-cli-testing",
+    "ENT-flow-definition"
   ],
   "related_tests": [
     {
@@ -118,15 +121,37 @@
       "command": "python3 -m unittest discover -s doc/tools/tests -q"
     },
     {
-      "test_id": "environment-acceptance",
+      "test_id": "task-flow-fixtures",
       "location": "doc/tests/test_task_identity.py",
-      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_task_identity.py' -q"
     }
   ],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/flows.py",
+      "doc/architecture/schemas/flow.schema.json",
+      "doc/architecture/schemas/flow-selection.schema.json",
+      "doc/config/task-conf/types/bugfix/flow-selection.yaml",
+      "doc/config/task-conf/types/docs/flow-selection.yaml",
+      "doc/architecture/domains/task-lifecycle/entities/flow-definition.md"
+    ],
+    "modified": [
+      "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/docs/flows/docs-only/config.yaml",
+      "doc/tools/arch/task_record.py",
+      "doc/tools/arch/task_ops.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/cli/commands/task.py",
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/config/paths.yaml",
+      "doc/tests/test_task_identity.py",
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/cli-validation-rules.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/architecture/domains/task-lifecycle/flow.md",
+      "doc/architecture/index.json"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -134,7 +159,8 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed",
+      "result": "Реализованы версионированные flow, выбор flow, переходы, готовность детей и диагностика схемы; целевые и итоговые проверки пройдены."
     }
   ]
 }

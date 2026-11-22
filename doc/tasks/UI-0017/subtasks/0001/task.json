@@ -37,10 +37,11 @@
       "doc/architecture/"
     ]
   },
-  "current_behavior": "Исходные сведения и ограничения: nextplan.md §21. Уточнить baseline в начале выполнения.",
+  "current_behavior": "До изменения не было вычисления переходов, flow_state и готовности детей; зависимости подзадач не проверялись.",
   "evidence": [
     "nextplan.md §21",
-    "nextplan.md §24, P07"
+    "nextplan.md §24, P07",
+    "python3 -m unittest discover -s doc/tests -p test_task_identity.py -q"
   ],
   "contracts_and_invariants": [
     "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
@@ -88,7 +89,7 @@
   "depends_on": [
     "UI-0016"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Сделать два версионированных YAML и их машинные проверки."
@@ -113,8 +114,20 @@
   ],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/flows.py",
+      "doc/architecture/schemas/flow.schema.json",
+      "doc/architecture/schemas/flow-selection.schema.json",
+      "doc/config/task-conf/types/bugfix/flow-selection.yaml",
+      "doc/config/task-conf/types/docs/flow-selection.yaml"
+    ],
+    "modified": [
+      "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "doc/config/task-conf/types/docs/flows/docs-only/config.yaml",
+      "doc/tools/arch/cli/commands/task.py",
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/tests/test_task_identity.py"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -122,7 +135,8 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed",
+      "result": "Добавлены схемы flow и выбора, два контрольных flow и диагностика ссылок, недостижимости и неоднозначности."
     }
   ]
 }

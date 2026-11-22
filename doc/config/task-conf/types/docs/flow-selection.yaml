@@ -1,0 +1,9 @@
+schema_version: flow-selection-1
+type: docs
+version: 1
+facts: {}
+rules:
+  - id: docs.docs-only
+    fallback: true
+    flow: docs-only
+    reason: Тип docs имеет один короткий документационный маршрут.

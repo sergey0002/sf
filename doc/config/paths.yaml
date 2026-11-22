@@ -38,7 +38,7 @@ roots:
 allowed_paths:
 
   # Корень doc
-  - "doc/AGENTS.md"
+  - "{doc_root}/AGENTS.md"
 
   # Архитектурная документация (использует architecture root)
   - "{architecture}/README.md"
@@ -69,6 +69,8 @@ allowed_paths:
   # Схемы архитектуры (использует schemas root)
   - "{schemas}/document.schema.json"
   - "{schemas}/index.schema.json"
+  - "{schemas}/flow.schema.json"
+  - "{schemas}/flow-selection.schema.json"
   - "{schemas}/bodies/capability-spec.json"
   - "{schemas}/bodies/capability.json"
   - "{schemas}/bodies/component-view.json"
@@ -100,9 +102,12 @@ allowed_paths:
 
   # Конфигурация проекта (использует config root)
   - "{config}/paths.yaml"
+  - "{config}/agent-policy.yaml"
+  - "{config}/task-registry.json"
   # Конфиги типов задач (иерархическая структура, использует task_conf root)
   - "{task_conf}/types/{type}/config.yaml"
   - "{task_conf}/types/{type}/prompt.md"
+  - "{task_conf}/types/{type}/flow-selection.yaml"
   - "{task_conf}/types/{type}/flows/{flow}/config.yaml"
   - "{task_conf}/types/{type}/flows/{flow}/prompt.md"
   - "{task_conf}/types/{type}/flows/{flow}/stepsprompt/{slug}.md"
@@ -113,10 +118,15 @@ allowed_paths:
 
   # Задачи — шаблон: {tasks}/{task_key}/...
   - "{tasks}/{task_key}/task.json"
+  - "{tasks}/{task_key}/state.json"
+  - "{tasks}/{task_key}/events.jsonl"
   - "{tasks}/{task_key}/.arch-write-journal.json"
   - "{tasks}/{task_key}/stage{stage}/plan.md"
   - "{tasks}/{task_key}/stage{stage}/verification.json"
+  - "{tasks}/{task_key}/baseline-{slug}.json"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/task.json"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/state.json"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/events.jsonl"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/plan.md"
   - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/verification.json"
   # Исследования задачи — свободные md-документы, привязанные к таску
@@ -128,6 +138,8 @@ allowed_paths:
   - "doc/tests/run.sh"
   - "doc/tests/test_task_identity.py"
   - "doc/tests/test_doc_contracts.py"
+  # Baseline замеры (тестовые артефакты)
+  - "doc/tests/baseline/{slug}.json"
 
   # Инструменты (CLI)
   - "doc/tools/README.md"
@@ -158,8 +170,11 @@ allowed_paths:
   - "doc/tools/arch/project_config.py"
   - "doc/tools/arch/acceptance.py"
   - "doc/tools/arch/evidence.py"
+  - "doc/tools/arch/flows.py"
   - "doc/tools/arch/fs_atomic.py"
   - "doc/tools/arch/task_ops.py"
+  - "doc/tools/arch/task_record.py"
+  - "doc/tools/arch/task_registry.py"
   - "doc/tools/arch/session_audit.py"
   - "doc/tools/tests/test_arch.py"
   - "doc/tools/tests/test_session_audit.py"
@@ -226,6 +241,7 @@ project:
     - docs
     - refactor
     - scaffold
+    - subtask
 
   # Допустимые phase
   phases:
@@ -297,17 +313,26 @@ project:
       - docs tree
       - task-key
       - task init
+      - task new
+      - task registry
+      - task registry init
+      - task registry add
       - task validate
       - task workspace
       - task status
       - task types
       - task flows --type <type>
+      - task select-flow --type <type>
       - task flow-steps
       - task flow-prompt
       - task evidence
       - task decompose <task_key>
       - task diagnose <task_key>
+      - task advance <task_key>
       - task close <task_key>
+      - task migrate <task_key>
+      - task event <task_key>
+      - task replay <task_key>
       - task subtask init
       - task subtask validate
       - task subtask status

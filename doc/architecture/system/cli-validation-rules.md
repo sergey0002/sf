@@ -92,10 +92,11 @@ implemented: true
 
 | Поле | Тип | Ограничение |
 |------|-----|-------------|
-| `subtasks` | массив объектов | каждый требует `id`, `title`, `status`, `path` |
+| `subtasks` | массив объектов | каждый требует `id`, `title`, `status`, `path`; запись может содержать `task_type`, `flow`, `complexity`, `estimate_hours` ребёнка |
 | `subtask_policy` | строка (из task-conf) | `required` → subtasks не пуст; `forbidden` → subtasks пуст; `optional` → без ограничений |
 | `depends_on` | массив | должен быть массивом, если присутствует |
 | `rollback_plan` | строка | null | должна быть строкой или `null` |
+| `estimate_hours` | число | положительное число часов; ставит агент, CLI проверяет диапазон |
 
 ## Управление типами и flujo (task-conf)
 
@@ -106,6 +107,71 @@ implemented: true
 | `complexity` | должен быть в `complexity_allowed` для выбранного `task_type` |
 
 Поля `steps`, `action`, `output` и `gate` задают порядок работы агента. CLI перечисляет потоки и выдаёт prompts. При закрытии CLI проверяет карточку и непосредственных детей. Если включена политика `case-coverage-v1`, проверяются план, обязательные кейсы и хеши заявленных файлов. Агент сверяет смысл приёмки и одобрение. [Запись доказательств](../domains/task-lifecycle/entities/verification-evidence.md) · [Поток жизненного цикла](../domains/task-lifecycle/flow.md)
+
+## Версионированный flow {#flow-schema}
+
+Flow с `schema_version: flow-1` дополнительно проверяется по `schemas/flow.schema.json` и графовым инвариантам. Остальные flow читаются в прежнем формате.
+
+| Условие | Ошибка |
+|---|---|
+| `initial_state`, `terminal_states`, `states` или `transitions` отсутствуют или имеют неверный тип | `flow <type>/<flow>: ...` |
+| `initial_state` или `terminal_states` ссылаются на недекларированное состояние | точное имя состояния |
+| `from` или `to` перехода ссылаются на недекларированное состояние | `transitions[N]: from/to must reference a declared state` |
+| Состояние недостижимо из `initial_state` | `state 'x' is unreachable from 'initial'` |
+| Два перехода имеют одинаковые `from` и `event` | `ambiguous transitions ...: id1, id2` |
+| ID состояния или перехода повторяется | duplicate id |
+| `steps` и `states` расходятся | `step 'x' is not declared in states` / `state 'x' has no declared step` |
+| `initial_state` не первый шаг | `initial_state ... must be the first step` |
+| Переход пропускает шаг вперёд | `transition 'id' skips steps: a -> c` |
+| Нет перехода между соседними шагами | `missing transition from step 'a' to 'b'` |
+
+Порядок `steps` — исполняемый контракт: happy path обязан совпадать с ним, обратные переходы (`verify → fix`) допустимы. `scan --scope task-conf` проверяет все flow типов. `task advance` повторно разрешает переход по `flow_state` и событию, поэтому неоднозначный или неизвестный переход отклоняется без записи. Для flow без `schema_version: flow-1` команда возвращает `UNSUPPORTED-FLOW` с подсказкой добавить версионированное определение.
+
+## Таблица выбора flow {#flow-selection}
+
+`types/<type>/flow-selection.yaml` с `schema_version: flow-selection-1` содержит типизированные факты и правила. `task select-flow` возвращает ID правила, flow и основание. Неизвестный факт даёт `UNKNOWN-FACT`, отсутствующий обязательный факт — `MISSING-FACT`, совпадение нескольких правил — `CONFLICT` с их ID. Fallback допускается только один и применяется после проверки остальных правил. Если тип объявляет больше одного `allowed_flows`, таблица обязательна: `scan --scope task-conf` сообщает об отсутствующем файле.
+
+## Зависимости и готовность детей {#subtask-readiness}
+
+`subtasks[].depends_on` содержит ID непосредственных детей. `task diagnose` и `task close` проверяют ссылки, циклы и вычисляют для каждого ребёнка `readiness`:
+
+| Значение | Условие |
+|---|---|
+| `completed` | фаза ребёнка `completed` и применимые evidence прошли |
+| `ready` | все объявленные зависимости `completed` |
+| `blocked` | есть незавершённая зависимость (`blocked_by`), отсутствующий/битый ребёнок или цикл |
+
+`task decompose` проверяет граф всего пакета до записи: неизвестная зависимость или цикл отклоняют пакет без создания каталогов и без изменения родителя.
+
+## Закрытие и evidence {#closure-evidence}
+
+`task close` атомарно фиксирует результат: объявленные дети с `phase: completed` получают `subtasks[].status: completed`, а текущая стадия — запись `stage_history` со `status: completed`. Эти поля изменяемы; immutable intent не затрагивается.
+
+Если `verification.json` содержит `snapshot_files`, устаревший снимок блокирует закрытие (`evidence <stage>: snapshot is stale: <path>`) и для задач без `case-coverage-v1`. Задача без evidence закрывается по остальным предусловиям. `diagnose --dry-run` показывает те же блокировки.
+
+## Версионированная запись
+
+Legacy-запись без `record_version` валидируется по общим правилам; её `phase`
+хранится в `task.json`.
+
+Для записи с `record_version` дополнительно проверяются:
+
+| Условие | Ошибка |
+|---|---|
+| `record_version` не равен поддерживаемой версии | `unsupported record_version` |
+| `intent_digest` отсутствует или не совпадает с текущими intent-полями | `intent fields changed since migration; intent is immutable` |
+| `flow_version` отсутствует | `flow_version is missing for a versioned record` |
+| `state.json` отсутствует | `record: state.json is missing; run arch task replay` |
+| `state.json.flow_state` не строка/null или не совпадает с журналом | `record: ...` |
+| `flow.transitioned` нарушает цепочку `from` | `EVENT ...` |
+| `state.json` не совпадает с пересчитанным журналом | `record: state.json does not match events.jsonl; run arch task replay` |
+| `state.json.intent_digest` или `flow_version` расходятся с `task.json` | `record: ... does not match task.json` |
+| `events.jsonl` содержит частичную строку, неизвестный тип, разрыв ревизии или цепочки `prev_digest`/`digest` | `EVENT ...` |
+
+`task migrate`, `task event` и `task replay` возвращают структурированную ошибку
+и exit 5 на конфликт ревизии или ключа идемпотентности, не изменяя запись.
+Повреждённый журнал не материализуется как успешное состояние.
+[Запись задачи](../domains/task-lifecycle/entities/task-record.md)
 
 ## Условия ошибок
 
@@ -124,6 +190,19 @@ implemented: true
 - `rollback_plan` не строка и не null → ошибка
 - `task.md` существует рядом с `task.json` → ошибка (правило манифеста)
 - `research_docs` элемент с неверным `source_type` / `status` / `path` → ошибка
+
+## Реестр номеров
+
+`doc/config/task-registry.json` — CLI-owned данные; `task new`, `task init` и `task registry add` пишут его, остальные команды только читают.
+
+- `schema_version` отсутствует или не равен `1` → ошибка
+- `tasks` не массив → ошибка
+- Элемент без `task_key`/`task_number` или с невалидным ключом → ошибка
+- `task_number` не совпадает с номером в `task_key` → ошибка
+- Дубль `task_key` или номера в одном семействе источника → ошибка, запись не меняется
+- `task-key --next` для источника кроме `ui` → ошибка
+- Конфликт при регистрации существующего ключа с другим номером → ошибка
+- Ошибка записи реестра в `task new` → созданный каталог задачи удаляется
 
 ## Пример валидного скффолда
 

@@ -49,6 +49,7 @@
   "acceptance_criteria": [
     "AC-1: Предпросмотр миграции сохраняет все обязательные данные и повторяем."
   ],
+  "acceptance_policy": "case-coverage-v1",
   "target_release": "unset",
   "project_context_refs": [
     "nextplan.md",
@@ -88,7 +89,7 @@
   "depends_on": [
     "UI-0013"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Определить версионирование и совместимое чтение прежних fixtures."
@@ -122,7 +123,7 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "verification"
     }
   ]
 }

@@ -3,12 +3,71 @@
   "task_key": "UI-0026-0002",
   "task_number": "0002",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:ae7b1cb5208d59b184bbe88351ef21ba5919d4d7730859d8e9a133fad3ded91f",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_contracts.ContextTests doc.tests.test_doc_contracts.ImpactTests -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-5",
+        "CASE-6",
+        "CASE-7"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
-    {"id": "CASE-5", "covers": ["AC-1"], "expected": "Явные связи и причины в пределах бюджета."},
-    {"id": "CASE-6", "covers": ["AC-2"], "expected": "Дельта верна, пробелы и конфликты явны."},
-    {"id": "CASE-7", "covers": ["AC-3"], "expected": "Impact отличает объявленную связь от неизвестного покрытия."}
+    {
+      "id": "CASE-5",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Явные связи и причины в пределах бюджета."
+    },
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Дельта верна, пробелы и конфликты явны."
+    },
+    {
+      "id": "CASE-7",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Impact отличает объявленную связь от неизвестного покрытия."
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/system/addressable-contracts.md",
+      "sha256": "ff8fc9a362c106f4a6919a4ac14d34b225b110d336fa87c19c6324e7462f080f"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "b0aa80cd8ecaa432a58b3f4f5841cd45137e87502e1cd262a0dbc3af362b97dc"
+    },
+    {
+      "path": "doc/tasks/UI-0026/subtasks/0002/stage1/plan.md",
+      "sha256": "1041fdc2c4899ca3b8bc37f514d02a3c210c6b4e14f46c9678c6856d02f04c01"
+    },
+    {
+      "path": "doc/tests/test_doc_contracts.py",
+      "sha256": "7d1916241230fe15284974307541f3d0dd323521aa165c9bbadef758e80edf16"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "5f666f263558ee15ae1fd8a4b40d8e2e690441ba9fbaa79a8884e2e0857e1fa5"
+    },
+    {
+      "path": "doc/tools/arch/doc_ops.py",
+      "sha256": "f7398df9fe4f7417015ec896cd01e5fb0eb3b184975e7c814dbac9ac9b436a3a"
+    },
+    {
+      "path": "doc/tools/arch/sections.py",
+      "sha256": "24f9b2b1005881c3ed75e6218389b1192eca1bb39be2e3b1dcbce046eb5109b1"
+    }
   ]
 }

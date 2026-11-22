@@ -193,6 +193,9 @@ class TaskIdentityContractTests(unittest.TestCase):
         for type_id, config in types.items():
             flows = config["flows"]
             self.assertEqual(set(config["allowed_flows"]), set(flows))
+            if not flows:
+                self.assertIsNone(config["default_flow"])
+                continue
             self.assertIn(config["default_flow"], flows)
             for flow_id, flow in flows.items():
                 with self.subTest(type=type_id, flow=flow_id):
@@ -238,6 +241,90 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertNotEqual(cli("task-key", "--source", "ui", "--prefix", "USR", "--number", "1234").returncode, 0)
         self.assertNotEqual(cli("task-key", "--source", "github", "--prefix", "UI", "--number", "1234").returncode, 0)
 
+    def _write_registry(self, root, tasks):
+        registry = root / "doc/config/task-registry.json"
+        registry.write_text(
+            json.dumps({"schema_version": 1, "tasks": tasks}), encoding="utf-8"
+        )
+        return registry
+
+    def test_task_key_next_reads_json_registry_without_scanning_tasks(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            self._write_registry(root, [
+                {"task_key": "UI-0007", "task_number": "0007", "source": "ui",
+                 "title": None, "created_at": None},
+                {"task_key": "UI-0009", "task_number": "0009", "source": "ui",
+                 "title": None, "created_at": None},
+            ])
+            (root / "doc/tasks/UI-0500").mkdir(parents=True)
+            result = self._cli_at(root, "task-key", "--source", "ui", "--next")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)["data"]["task_key"], "UI-0010")
+
+            jira = self._cli_at(root, "task-key", "--source", "jira", "--next")
+            self.assertNotEqual(jira.returncode, 0)
+            both = self._cli_at(
+                root, "task-key", "--source", "ui", "--next", "--number", "0042"
+            )
+            self.assertNotEqual(both.returncode, 0)
+
+    def test_task_new_allocates_creates_and_registers_in_one_command(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            self._write_registry(root, [
+                {"task_key": "UI-0007", "task_number": "0007", "source": "ui",
+                 "title": None, "created_at": None},
+            ])
+            result = self._cli_at(root, "task", "new", "--title", "First", "--json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            data = json.loads(result.stdout)["data"]
+            self.assertEqual(data["task_key"], "UI-0008")
+            task = json.loads((root / data["task_json"]).read_text(encoding="utf-8"))
+            self.assertEqual(task["title"], "First")
+            self.assertEqual(task["task_number"], "0008")
+            registry = json.loads(
+                (root / "doc/config/task-registry.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual([entry["task_key"] for entry in registry["tasks"]],
+                             ["UI-0007", "UI-0008"])
+            self.assertEqual(registry["tasks"][-1]["title"], "First")
+
+            second = self._cli_at(root, "task", "new", "--json")
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertEqual(json.loads(second.stdout)["data"]["task_key"], "UI-0009")
+
+    def test_task_new_stops_on_malformed_registry_without_writing(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            self._write_registry(root, [
+                {"task_key": "UI-0007", "task_number": "0007", "source": "ui"},
+                {"task_key": "UI-0007", "task_number": "0007", "source": "ui"},
+            ])
+            result = self._cli_at(root, "task", "new", "--json")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(list((root / "doc/tasks").iterdir()), [])
+
+    def test_task_init_registers_key_and_registry_init_bootstraps(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/config/task-registry.json").unlink()
+            init = self._cli_at(root, "task", "registry", "init")
+            self.assertEqual(init.returncode, 0, init.stderr)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            result = self._cli_at(root, "task", "init", "UI-0042")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            registry = self._cli_at(root, "task", "registry", "--json")
+            self.assertEqual(registry.returncode, 0, registry.stderr)
+            payload = json.loads(registry.stdout)["data"]
+            self.assertEqual([entry["task_key"] for entry in payload["tasks"]], ["UI-0042"])
+
     def test_numbered_fixture_is_consistent(self):
         task_path = ROOT / "doc/tasks/UI-0001/task.json"
         data = json.loads(task_path.read_text(encoding="utf-8"))
@@ -261,6 +348,11 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertIn("Jira `1234` (no prefix)", create)
         self.assertIn("UI-1234", create)
         self.assertIn("Never invent or allocate one yourself", create)
+        self.assertIn("arch task new", create)
+        self.assertIn("не читайте и не редактируйте `doc/config/task-registry.json`", create.lower())
+        self.assertIn("arch task-key --source ui --next", create)
+        self.assertIn("не выполняет задачу", create)
+        self.assertIn("Хотите, приступлю?", create)
         self.assertIn("four digits", resume)
 
     def test_architecture_documents_record_source_key_contract(self):
@@ -269,7 +361,10 @@ class TaskIdentityContractTests(unittest.TestCase):
         constraints = (ROOT / "doc/architecture/system/constraints-risks.md").read_text(encoding="utf-8")
         self.assertIn("ввод пользователя использует `UI-1234`", glossary)
         self.assertIn("Ключи Jira — чистый номер", task_entity)
-        self.assertIn("аллокатор номеров/глобальный реестр уникальности", constraints)
+        self.assertIn("UI-реестр ведёт CLI", constraints)
+        registry_doc = (ROOT / "doc/architecture/system/task-number-registry.md").read_text(encoding="utf-8")
+        self.assertIn("doc/config/task-registry.json", registry_doc)
+        self.assertIn("ведётся **только CLI**", registry_doc)
         manifest = (ROOT / "Манифест агентной software factory.md").read_text(encoding="utf-8")
         self.assertIn("source.type: ui", manifest)
         self.assertIn("Jira — номер без префикса", manifest)
@@ -281,21 +376,42 @@ class TaskIdentityContractTests(unittest.TestCase):
         result = cli("index", "check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_task_registry_add_reconciles_existing_card(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            self._write_registry(root, [])
+            created = self._cli_at(root, "task", "new", "--title", "Reconcile", "--json")
+            self.assertEqual(created.returncode, 0, created.stderr)
+            key = json.loads(created.stdout)["data"]["task_key"]
+            self._write_registry(root, [])
+            added = self._cli_at(root, "task", "registry", "add", key, "--json")
+            self.assertEqual(added.returncode, 0, added.stderr)
+            self.assertEqual(json.loads(added.stdout)["data"]["entry"]["title"], "Reconcile")
+            missing = self._cli_at(root, "task", "registry", "add", "UI-0999", "--json")
+            self.assertNotEqual(missing.returncode, 0)
+
     def test_task_init_creates_directory_and_task_json(self):
-        result = cli("task", "init", "UI-9999")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        task_dir = ROOT / "doc/tasks/UI-9999"
-        self.assertTrue(task_dir.is_dir(), "task directory should be created")
-        self.assertTrue((task_dir / "task.json").exists(), "task.json should be created")
-        self.assertTrue((task_dir / "stage1").is_dir(), "stage1 directory should be created")
-        data = json.loads((task_dir / "task.json").read_text(encoding="utf-8"))
-        self.assertEqual(data["task_key"], "UI-9999")
-        self.assertEqual(data["task_number"], "9999")
-        self.assertEqual(data["source"]["type"], "ui")
-        self.assertFalse((task_dir / "task.md").exists(), "task.md must not be created")
-        # cleanup
-        import shutil
-        shutil.rmtree(task_dir)
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            result = self._cli_at(root, "task", "init", "UI-9999")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            task_dir = root / "doc/tasks/UI-9999"
+            self.assertTrue(task_dir.is_dir(), "task directory should be created")
+            self.assertTrue((task_dir / "task.json").exists(), "task.json should be created")
+            self.assertTrue((task_dir / "stage1").is_dir(), "stage1 directory should be created")
+            data = json.loads((task_dir / "task.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["task_key"], "UI-9999")
+            self.assertEqual(data["task_number"], "9999")
+            self.assertEqual(data["source"]["type"], "ui")
+            self.assertFalse((task_dir / "task.md").exists(), "task.md must not be created")
+            registry = json.loads(
+                (root / "doc/config/task-registry.json").read_text(encoding="utf-8")
+            )
+            self.assertIn("UI-9999", [entry["task_key"] for entry in registry["tasks"]])
 
     def test_task_init_rejects_collision(self):
         result = cli("task", "init", "UI-0001")
@@ -385,18 +501,24 @@ class TaskIdentityContractTests(unittest.TestCase):
         config = yaml.safe_load((ROOT / "doc/config/paths.yaml").read_text(encoding="utf-8"))
         config.update(doc_root=docs, roots=roots, allowed_paths=[
             "{architecture}/sample.md", "{architecture}/{index}", "{schemas}/{slug}.json",
-            "{schemas}/bodies/{slug}.json", "{config}/paths.yaml",
+            "{schemas}/bodies/{slug}.json", "{config}/paths.yaml", "{config}/task-registry.json",
             "{task_conf}/types/{type}/{slug}.yaml", "{task_conf}/types/{type}/prompt.md",
             "{task_conf}/types/{type}/flows/{flow}/{slug}.yaml",
             "{task_conf}/types/{type}/flows/{flow}/prompt.md",
             "{task_conf}/types/{type}/flows/{flow}/stepsprompt/{slug}.md",
             "{tasks}/{task_key}/task.json", "{tasks}/{task_key}/stage{stage}/{slug}.md",
             "{tasks}/{task_key}/stage{stage}/{slug}.json",
+            "{tasks}/{task_key}/state.json", "{tasks}/{task_key}/events.jsonl",
             "{tasks}/{task_key}/subtasks/{subtask_id}/task.json",
+            "{tasks}/{task_key}/subtasks/{subtask_id}/state.json",
+            "{tasks}/{task_key}/subtasks/{subtask_id}/events.jsonl",
         ])
         config["project"]["document_types"] = ["note"]
         config_path = root / roots["config"] / "paths.yaml"
         config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+        (root / roots["config"] / "task-registry.json").write_text(
+            json.dumps({"schema_version": 1, "tasks": []}), encoding="utf-8"
+        )
         return config_path, config
 
     def test_configured_paths_work_on_clean_layouts(self):
@@ -500,6 +622,7 @@ class TaskIdentityContractTests(unittest.TestCase):
         shutil.copytree(ROOT / "doc" / "config", root / "doc" / "config")
         shutil.copytree(ROOT / "doc" / "architecture", root / "doc" / "architecture")
         shutil.copytree(ROOT / "doc" / "skills", root / "doc" / "skills")
+        (root / "doc" / "tasks").mkdir()
         return root
 
     def _make_minimal_task(self, overrides=None):
@@ -657,6 +780,100 @@ class TaskIdentityContractTests(unittest.TestCase):
             self.assertEqual(closed.returncode, 0, closed.stderr)
             self.assertEqual(json.loads(card.read_bytes())["phase"], "completed")
 
+    def test_docs_only_close_runs_structural_gates_on_current_project(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            config, _ = self._paths_fixture(root, "handbook", "index.json")
+            directory = root / "handbook/tasks/UI-9999"
+            stage = directory / "stage1"
+            stage.mkdir(parents=True)
+            card = directory / "task.json"
+            card.write_text(json.dumps(self._make_minimal_task({
+                "task_type": "docs", "flow": "docs-only", "phase": "verification",
+                "complexity": "low", "research_docs": [], "depends_on": [], "subtasks": [],
+                "rollback_plan": "Restore fixture", "acceptance_policy": "case-coverage-v1",
+                "acceptance_criteria": ["AC-1: sample has the expected body"],
+            })), encoding="utf-8")
+            plan = stage / "plan.md"
+            plan.write_text("# Verify the sample document body\n", encoding="utf-8")
+            verification = stage / "verification.json"
+            verification.write_text(json.dumps({
+                "task_key": "UI-9999", "stage_id": "stage1", "status": "not_run", "checks": [],
+                "planned_checks": [{"id": "CASE-1", "covers": ["AC-1"], "expected": "Example body"}],
+            }), encoding="utf-8")
+
+            def run(*args):
+                return self._cli_at(root, "--config", str(config), *args)
+
+            original = card.read_bytes()
+
+            def assert_blocked(reason):
+                before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
+                diagnosis = run("task", "diagnose", "UI-9999", "--json", "--brief")
+                self.assertEqual(diagnosis.returncode, 0, diagnosis.stderr)
+                data = json.loads(diagnosis.stdout)["data"]
+                self.assertFalse(data["can_close"])
+                preview = run("task", "close", "UI-9999", "--json", "--dry-run")
+                self.assertEqual(preview.returncode, 0, preview.stderr)
+                preview_data = json.loads(preview.stdout)["data"]
+                self.assertFalse(preview_data["would_close"])
+                self.assertIn(reason, " ".join(preview_data["blockers"]))
+                self.assertEqual(data["close_blockers"], preview_data["blockers"][:3])
+                refused = run("task", "close", "UI-9999", "--json")
+                self.assertEqual(refused.returncode, 1, refused.stderr)
+                self.assertEqual([entry["message"] for entry in json.loads(refused.stderr)["errors"]],
+                                 preview_data["blockers"])
+                self.assertEqual(before, {p: p.read_bytes() for p in root.rglob("*") if p.is_file()})
+
+            built = run("index", "build")
+            self.assertEqual(built.returncode, 0, built.stderr)
+            assert_blocked("CASE-1")
+            target = "handbook/architecture/sample.md"
+            failed = run("task", "evidence", "UI-9999", "--file", target, "--case", "CASE-1",
+                         "--run", sys.executable, "-c", "raise SystemExit(1)")
+            self.assertEqual(failed.returncode, 1, failed.stderr)
+            failed_evidence = json.loads(verification.read_bytes())
+            self.assertEqual(failed_evidence["status"], "failed")
+            failed_evidence["status"] = "passed"
+            verification.write_text(json.dumps(failed_evidence), encoding="utf-8")
+            assert_blocked("CASE-1")
+            recorded = run("task", "evidence", "UI-9999", "--file", target, "--case", "CASE-1",
+                           "--run", sys.executable, "-c",
+                           f"from pathlib import Path; assert Path({target!r}).read_text().endswith('Example\\n')")
+            self.assertEqual(recorded.returncode, 0, recorded.stderr)
+            recorded_bytes = verification.read_bytes()
+            original_plan = plan.read_bytes()
+            plan.write_bytes(original_plan + b"Changed after evidence\n")
+            assert_blocked("snapshot is stale")
+            plan.write_bytes(original_plan)
+
+            foreign = root / "handbook/foreign.txt"
+            foreign.write_text("Undeclared file\n", encoding="utf-8")
+            assert_blocked("docs-only paths-check:")
+            foreign.unlink()
+
+            index = root / "handbook/architecture/index.json"
+            original_index = index.read_bytes()
+            index.write_text("{}\n", encoding="utf-8")
+            forged = json.loads(recorded_bytes)
+            forged["checks"].append({"command": "true", "exit_code": 0,
+                                      "result": "claimed architecture validation", "cases": []})
+            verification.write_text(json.dumps(forged), encoding="utf-8")
+            assert_blocked("docs-only validate:")
+            index.write_bytes(original_index)
+            verification.write_bytes(recorded_bytes)
+            self.assertEqual(card.read_bytes(), original)
+
+            migrated = run("task", "migrate", "UI-9999")
+            self.assertEqual(migrated.returncode, 0, migrated.stderr)
+            refused = run("task", "event", "UI-9999", "--id", "bypass", "--type", "phase.changed",
+                          "--expected-revision", "1", "--phase", "completed")
+            self.assertNotEqual(refused.returncode, 0, refused.stderr)
+            self.assertIn("via arch task close", refused.stderr)
+            closed = run("task", "close", "UI-9999", "--json")
+            self.assertEqual(closed.returncode, 0, closed.stderr)
+            self.assertEqual(json.loads(closed.stdout)["data"]["phase"], "completed")
+
     def test_close_valid_task_and_brief_diagnosis(self):
         temp = tempfile.TemporaryDirectory()
         with temp:
@@ -703,6 +920,402 @@ class TaskIdentityContractTests(unittest.TestCase):
         )
         self.assertEqual(flow_prompt.returncode, 0, flow_prompt.stderr)
         self.assertIn("standard-implementation", flow_prompt.stdout)
+
+    def test_flow_selection_reports_unknown_missing_and_conflict(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            unknown = self._cli_at(root, "task", "select-flow", "--type", "bugfix",
+                                   "--fact", "not_a_fact=true")
+            self.assertEqual(unknown.returncode, 1, unknown.stderr)
+            self.assertIn("UNKNOWN-FACT", unknown.stderr)
+
+            missing = self._cli_at(root, "task", "select-flow", "--type", "bugfix",
+                                   "--fact", "symptom_confirmed=true")
+            self.assertEqual(missing.returncode, 1, missing.stderr)
+            self.assertIn("MISSING-FACT", missing.stderr)
+            self.assertIn("investigation_needed", missing.stderr)
+
+            selection = root / "doc/config/task-conf/types/bugfix/flow-selection.yaml"
+            data = yaml.safe_load(selection.read_text(encoding="utf-8"))
+            data["rules"] = [
+                {"id": "rule.one", "when": {"symptom_confirmed": True},
+                 "flow": "minimal-scaffold"},
+                {"id": "rule.two", "when": {"symptom_confirmed": True},
+                 "flow": "standard-implementation"},
+            ]
+            selection.write_text(yaml.safe_dump(data, allow_unicode=True), encoding="utf-8")
+            conflict = self._cli_at(root, "task", "select-flow", "--type", "bugfix",
+                                    "--fact", "symptom_confirmed=true")
+            self.assertEqual(conflict.returncode, 5, conflict.stderr)
+            self.assertIn("CONFLICT", conflict.stderr)
+            self.assertIn("rule.one", conflict.stderr)
+            self.assertIn("rule.two", conflict.stderr)
+
+            docs = self._cli_at(root, "task", "select-flow", "--type", "docs")
+            self.assertEqual(docs.returncode, 0, docs.stderr)
+            self.assertEqual(json.loads(docs.stdout)["data"]["flow"], "docs-only")
+
+    def test_bugfix_flow_returns_from_verify_to_fix_and_rejects_stale_events(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            directory = root / "doc/tasks/UI-9999"
+            (directory / "stage1").mkdir(parents=True)
+            card = directory / "task.json"
+            card.write_text(json.dumps(self._make_minimal_task({
+                "kind": "bugfix", "task_type": "bugfix", "flow": "standard-implementation",
+                "phase": "verification", "complexity": "low", "research_docs": [],
+                "depends_on": [], "rollback_plan": "Restore fixture", "subtasks": [],
+            })), encoding="utf-8")
+            migrated = self._cli_at(root, "task", "migrate", "UI-9999")
+            self.assertEqual(migrated.returncode, 0, migrated.stderr)
+
+            def advance(event, revision, event_id=None):
+                args = ["task", "advance", "UI-9999", "--event", event,
+                        "--expected-revision", str(revision)]
+                if event_id:
+                    args += ["--id", event_id]
+                result = self._cli_at(root, *args)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                return json.loads(result.stdout)["data"]
+
+            for event, revision in (
+                ("context.ready", 1), ("reproduction.recorded", 2), ("plan.ready", 3),
+                ("fix.applied", 4), ("review.passed", 5), ("architecture.synced", 6),
+            ):
+                advance(event, revision)
+
+            diagnosis = self._cli_at(root, "task", "diagnose", "UI-9999", "--json")
+            state = json.loads(diagnosis.stdout)["data"]
+            self.assertEqual(state["flow_state"], "verify")
+            self.assertEqual({item["event"] for item in state["available_transitions"]},
+                             {"checks.failed", "checks.passed"})
+
+            failed = advance("checks.failed", 7, "verify-failed")
+            self.assertEqual(failed["flow_state"], "fix")
+            self.assertEqual(failed["transition"]["to"], "fix")
+            state_bytes = (directory / "state.json").read_bytes()
+
+            unknown = self._cli_at(root, "task", "advance", "UI-9999", "--event", "unknown.event",
+                                   "--expected-revision", "8")
+            self.assertNotEqual(unknown.returncode, 0)
+            self.assertIn("UNKNOWN-EVENT", unknown.stderr)
+            self.assertEqual((directory / "state.json").read_bytes(), state_bytes)
+
+            stale = self._cli_at(root, "task", "advance", "UI-9999", "--event", "fix.applied",
+                                 "--expected-revision", "7")
+            self.assertEqual(stale.returncode, 5, stale.stderr)
+            self.assertIn("revision conflict", stale.stderr)
+            self.assertEqual((directory / "state.json").read_bytes(), state_bytes)
+
+            repeated = advance("checks.failed", 7, "verify-failed")
+            self.assertTrue(repeated["record"]["duplicate"])
+            self.assertEqual((directory / "state.json").read_bytes(), state_bytes)
+
+            self.assertEqual(advance("fix.applied", 8)["flow_state"], "review-implementation")
+            self.assertEqual(advance("review.passed", 9)["flow_state"], "architecture-sync")
+            self.assertEqual(advance("architecture.synced", 10)["flow_state"], "verify")
+            passed = advance("checks.passed", 11)
+            self.assertEqual(passed["flow_state"], "close")
+            self.assertTrue(passed["flow_terminal"])
+
+    def test_docs_only_flow_short_path_without_children(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            directory = root / "doc/tasks/UI-9999"
+            (directory / "stage1").mkdir(parents=True)
+            card = directory / "task.json"
+            card.write_text(json.dumps(self._make_minimal_task({
+                "kind": "docs", "task_type": "docs", "flow": "docs-only",
+                "phase": "verification", "complexity": "low", "research_docs": [],
+                "depends_on": [], "rollback_plan": "Restore fixture", "subtasks": [],
+            })), encoding="utf-8")
+            self.assertEqual(self._cli_at(root, "task", "migrate", "UI-9999").returncode, 0)
+
+            def advance(event, revision):
+                result = self._cli_at(root, "task", "advance", "UI-9999", "--event", event,
+                                      "--expected-revision", str(revision))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                return json.loads(result.stdout)["data"]
+
+            self.assertEqual(advance("context.ready", 1)["flow_state"], "change")
+            self.assertEqual(advance("change.ready", 2)["flow_state"], "validate")
+            self.assertEqual(advance("checks.failed", 3)["flow_state"], "change")
+            self.assertEqual(advance("change.ready", 4)["flow_state"], "validate")
+            terminal = advance("checks.passed", 5)
+            self.assertEqual(terminal["flow_state"], "close")
+            self.assertTrue(terminal["flow_terminal"])
+            self.assertEqual(terminal["subtask_count"], 0)
+
+            closed = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(closed.returncode, 0, closed.stderr)
+            self.assertEqual(json.loads(closed.stdout)["data"]["phase"], "completed")
+
+    def test_subtask_dependencies_compute_ready_blocked_and_cycles(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, _ = self._prepare_decompose_parent(root)
+            created = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0001", "--subtask-title", "First",
+                "--subtask-id", "0002", "--subtask-title", "Second",
+                "--subtask-id", "0003", "--subtask-title", "Third",
+                "--subtask-depends-on", "0002=0001",
+                "--subtask-depends-on", "0003=0002",
+            )
+            self.assertEqual(created.returncode, 0, created.stderr)
+            parent = json.loads((tdir / "task.json").read_text(encoding="utf-8"))
+            self.assertEqual(parent["subtasks"][1]["depends_on"], ["0001"])
+            child = json.loads((tdir / "subtasks/0002/task.json").read_text(encoding="utf-8"))
+            self.assertEqual(child["depends_on"], ["UI-9999-0001"])
+
+            def rows():
+                result = self._cli_at(root, "task", "diagnose", "UI-9999", "--json")
+                self.assertEqual(result.returncode, 0, result.stderr)
+                return {row["subtask_id"]: row for row in json.loads(result.stdout)["data"]["subtasks"]}
+
+            first = rows()
+            self.assertTrue(first["0001"]["ready"])
+            self.assertFalse(first["0002"]["ready"])
+            self.assertEqual(first["0002"]["blocked_by"], ["0001"])
+            self.assertEqual(first["0003"]["blocked_by"], ["0002"])
+
+            child_one = tdir / "subtasks/0001/task.json"
+            data = json.loads(child_one.read_text(encoding="utf-8"))
+            data["phase"] = "completed"
+            child_one.write_text(json.dumps(data), encoding="utf-8")
+            second = rows()
+            self.assertTrue(second["0002"]["ready"])
+            self.assertFalse(second["0003"]["ready"])
+            self.assertEqual(second["0003"]["blocked_by"], ["0002"])
+
+            cycle_tdir, _ = self._prepare_decompose_parent(root, "UI-9998")
+            cycle = self._cli_at(
+                root, "task", "decompose", "UI-9998",
+                "--subtask-id", "0001", "--subtask-title", "First",
+                "--subtask-id", "0002", "--subtask-title", "Second",
+                "--subtask-depends-on", "0001=0002",
+                "--subtask-depends-on", "0002=0001",
+            )
+            self.assertEqual(cycle.returncode, 5, cycle.stderr)
+            self.assertIn("dependency cycle", cycle.stderr)
+            self.assertFalse((cycle_tdir / "subtasks/0001").exists())
+            self.assertFalse((cycle_tdir / "subtasks/0002").exists())
+
+            unknown = self._cli_at(
+                root, "task", "decompose", "UI-9998",
+                "--subtask-id", "0001", "--subtask-title", "First",
+                "--subtask-depends-on", "0001=0009",
+            )
+            self.assertEqual(unknown.returncode, 1, unknown.stderr)
+            self.assertIn("unknown subtask", unknown.stderr)
+            self.assertFalse((cycle_tdir / "subtasks/0001").exists())
+
+    def test_decompose_uses_agent_chosen_shape_not_scaffold(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, _ = self._prepare_decompose_parent(root)
+            default = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0001", "--subtask-title", "Default shape",
+            )
+            self.assertEqual(default.returncode, 0, default.stderr)
+            child = json.loads((tdir / "subtasks/0001/task.json").read_text(encoding="utf-8"))
+            self.assertEqual(child["task_type"], "subtask")
+            self.assertIsNone(child["flow"])
+            self.assertEqual(child["complexity"], "medium")
+            self.assertEqual(
+                self._cli_at(root, "task", "subtask", "validate", "UI-9999", "0001").returncode,
+                0,
+            )
+
+            chosen = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0002", "--subtask-title", "Chosen shape",
+                "--subtask-type", "0002=bugfix",
+                "--subtask-flow", "0002=standard-implementation",
+                "--subtask-complexity", "0002=low",
+                "--subtask-estimate", "0002=3",
+            )
+            self.assertEqual(chosen.returncode, 0, chosen.stderr)
+            child = json.loads((tdir / "subtasks/0002/task.json").read_text(encoding="utf-8"))
+            self.assertEqual(child["task_type"], "bugfix")
+            self.assertEqual(child["flow"], "standard-implementation")
+            self.assertEqual(child["complexity"], "low")
+            self.assertEqual(child["estimate_hours"], 3)
+            parent = json.loads((tdir / "task.json").read_text(encoding="utf-8"))
+            record = {row["id"]: row for row in parent["subtasks"]}["0002"]
+            self.assertEqual(record["task_type"], "bugfix")
+            self.assertEqual(record["estimate_hours"], 3)
+
+            invalid = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0003", "--subtask-title", "Bad flow",
+                "--subtask-type", "0003=feature",
+                "--subtask-flow", "0003=minimal-scaffold",
+            )
+            self.assertEqual(invalid.returncode, 1, invalid.stderr)
+            self.assertIn("not allowed", invalid.stderr)
+            self.assertFalse((tdir / "subtasks/0003").exists())
+
+    def test_estimate_hours_must_be_positive_number(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, card = self._prepare_decompose_parent(root)
+            for value in (0, -1, "many"):
+                task = json.loads(card.read_bytes())
+                task["estimate_hours"] = value
+                card.write_text(json.dumps(task), encoding="utf-8")
+                result = self._cli_at(root, "task", "validate", "UI-9999")
+                self.assertNotEqual(result.returncode, 0, value)
+                self.assertIn("estimate_hours", result.stderr)
+            task = json.loads(card.read_bytes())
+            task["estimate_hours"] = 6
+            card.write_text(json.dumps(task), encoding="utf-8")
+            self.assertEqual(self._cli_at(root, "task", "validate", "UI-9999").returncode, 0)
+
+    def test_scan_task_conf_reports_unreachable_and_ambiguous_flow(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            flow_path = (root / "doc/config/task-conf/types/bugfix/flows/"
+                         "standard-implementation/config.yaml")
+            flow = yaml.safe_load(flow_path.read_text(encoding="utf-8"))
+            flow["states"].append("orphan")
+            flow_path.write_text(yaml.safe_dump(flow, allow_unicode=True), encoding="utf-8")
+            unreachable = self._cli_at(root, "scan", "--scope", "task-conf", "--brief")
+            self.assertEqual(unreachable.returncode, 1)
+            self.assertIn("unreachable", unreachable.stderr)
+
+            flow["states"].remove("orphan")
+            flow["transitions"].append({
+                "id": "bug.ambiguous", "from": "verify", "event": "checks.failed", "to": "fix",
+            })
+            flow_path.write_text(yaml.safe_dump(flow, allow_unicode=True), encoding="utf-8")
+            ambiguous = self._cli_at(root, "scan", "--scope", "task-conf", "--brief")
+            self.assertEqual(ambiguous.returncode, 1)
+            self.assertIn("ambiguous transitions", ambiguous.stderr)
+
+    def test_scan_requires_step_consistency_and_selection_table(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            selection = root / "doc/config/task-conf/types/feature/flow-selection.yaml"
+            selection.unlink()
+            missing = self._cli_at(root, "scan", "--scope", "task-conf", "--brief")
+            self.assertEqual(missing.returncode, 1)
+            self.assertIn("flow-selection.yaml", missing.stderr)
+
+            selection.write_text(
+                "schema_version: flow-selection-1\ntype: feature\nversion: 1\n"
+                "facts: {}\nrules:\n  - id: feature.default\n    fallback: true\n"
+                "    flow: standard-implementation\n",
+                encoding="utf-8",
+            )
+            flow_path = (root / "doc/config/task-conf/types/bugfix/flows/"
+                         "standard-implementation/config.yaml")
+            flow = yaml.safe_load(flow_path.read_text(encoding="utf-8"))
+            for transition in flow["transitions"]:
+                if transition["id"] == "bug.fix.applied":
+                    transition["to"] = "architecture-sync"
+                if transition["id"] == "bug.review.passed":
+                    transition["to"] = "close"
+            flow_path.write_text(yaml.safe_dump(flow, allow_unicode=True), encoding="utf-8")
+            reordered = self._cli_at(root, "scan", "--scope", "task-conf", "--brief")
+            self.assertEqual(reordered.returncode, 1)
+            self.assertIn("skips steps", reordered.stderr)
+            self.assertIn("missing transition from step 'fix'", reordered.stderr)
+
+    def test_advance_reports_unsupported_flow_for_legacy_template(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            (root / "doc/tasks").mkdir(exist_ok=True)
+            directory = root / "doc/tasks/UI-9999"
+            (directory / "stage1").mkdir(parents=True)
+            (directory / "task.json").write_text(json.dumps(self._make_minimal_task({
+                "task_type": "feature", "flow": "standard-implementation",
+                "phase": "verification", "complexity": "medium", "research_docs": [],
+                "depends_on": [], "rollback_plan": "Restore fixture",
+                "implementation_plan": ["legacy"], "subtasks": [],
+            })), encoding="utf-8")
+            self.assertEqual(self._cli_at(root, "task", "migrate", "UI-9999").returncode, 0)
+            state_before = (directory / "state.json").read_bytes()
+            result = self._cli_at(root, "task", "advance", "UI-9999",
+                                  "--event", "context.ready", "--expected-revision", "1")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("UNSUPPORTED-FLOW", result.stderr)
+            self.assertIn("flow-1", result.stderr)
+            self.assertEqual((directory / "state.json").read_bytes(), state_before)
+
+    def test_close_syncs_subtask_status_and_stage_history(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, parent = self._prepare_decompose_parent(root)
+            created = self._cli_at(
+                root, "task", "decompose", "UI-9999",
+                "--subtask-id", "0001", "--subtask-title", "First",
+                "--subtask-id", "0002", "--subtask-title", "Second",
+            )
+            self.assertEqual(created.returncode, 0, created.stderr)
+            for sub_id in ("0001", "0002"):
+                child = tdir / "subtasks" / sub_id / "task.json"
+                data = json.loads(child.read_text(encoding="utf-8"))
+                data["phase"] = "completed"
+                child.write_text(json.dumps(data), encoding="utf-8")
+
+            closed = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(closed.returncode, 0, closed.stderr)
+            card = json.loads(parent.read_text(encoding="utf-8"))
+            self.assertEqual(card["phase"], "completed")
+            self.assertEqual([entry["status"] for entry in card["subtasks"]],
+                             ["completed", "completed"])
+            self.assertEqual(card["stage_history"],
+                             [{"stage_id": "stage1", "status": "completed"}])
+
+    def test_stale_evidence_blocks_close_without_case_policy(self):
+        temp = tempfile.TemporaryDirectory()
+        with temp:
+            root = self._prepare_temp_root(temp)
+            tdir, parent = self._prepare_decompose_parent(root)
+            stage = tdir / "stage1"
+            (stage / "plan.md").write_text("# plan\n", encoding="utf-8")
+            (root / "input.txt").write_text("before", encoding="utf-8")
+
+            def write_evidence():
+                entries = []
+                for name in ("doc/tasks/UI-9999/stage1/plan.md", "input.txt"):
+                    entries.append({"path": name,
+                                    "sha256": hashlib.sha256((root / name).read_bytes()).hexdigest()})
+                (stage / "verification.json").write_text(json.dumps({
+                    "task_key": "UI-9999", "stage_id": "stage1", "status": "passed",
+                    "checked_revision": "sha256:fixture", "checks": [],
+                    "snapshot_files": entries,
+                }), encoding="utf-8")
+
+            write_evidence()
+            self.assertTrue(json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]["can_close"])
+            before = parent.read_bytes()
+            (root / "input.txt").write_text("after", encoding="utf-8")
+            refused = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(refused.returncode, 1, refused.stderr)
+            self.assertIn("snapshot is stale: input.txt", refused.stderr)
+            self.assertEqual(parent.read_bytes(), before)
+
+            write_evidence()
+            closed = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(closed.returncode, 0, closed.stderr)
 
     def _prepare_decompose_parent(self, root, task_key="UI-9999"):
         tdir = root / "doc" / "tasks" / task_key
@@ -974,6 +1587,195 @@ raise SystemExit(run(sys.argv[1:]))
                     self.assertEqual(self._snapshot_task_tree(tdir), before)
             result = self._cli_at(root, *decompose)
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def _record_fixture(self, root, task_key="UI-9999", overrides=None):
+        directory = root / "doc" / "tasks" / task_key
+        (directory / "stage1").mkdir(parents=True, exist_ok=True)
+        card = directory / "task.json"
+        task = self._make_minimal_task({
+            "task_key": task_key,
+            "task_number": task_key.split("-")[-1],
+            "task_type": "bugfix", "flow": "standard-implementation",
+            "complexity": "low", "research_docs": [], "depends_on": [],
+            "rollback_plan": "Restore fixture", "phase": "verification", "subtasks": [],
+            **(overrides or {}),
+        })
+        card.write_text(json.dumps(task), encoding="utf-8")
+        return directory, card, task
+
+    def _migrate_record(self, root, task_key="UI-9999"):
+        result = self._cli_at(root, "task", "migrate", task_key)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)["data"]
+
+    def test_versioned_record_migration_preserves_intent_and_is_repeatable(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            self._paths_fixture(root, "doc", "index.json")
+            directory, card, original = self._record_fixture(root)
+            before = card.read_bytes()
+            self.assertEqual(self._cli_at(root, "task", "validate", "UI-9999").returncode, 0)
+
+            preview = self._cli_at(root, "task", "migrate", "UI-9999", "--dry-run")
+            self.assertEqual(preview.returncode, 0, preview.stderr)
+            self.assertTrue(json.loads(preview.stdout)["data"]["migrated"])
+            self.assertEqual(card.read_bytes(), before)
+            self.assertFalse((directory / "state.json").exists())
+            self.assertFalse((directory / "events.jsonl").exists())
+
+            first = self._migrate_record(root)
+            self.assertTrue(first["migrated"])
+            migrated = json.loads(card.read_text(encoding="utf-8"))
+            for field in ("title", "intent", "scope", "acceptance_criteria", "authority", "source"):
+                self.assertEqual(migrated[field], original[field])
+            self.assertEqual(migrated["intent_digest"], first["intent_digest"])
+            self.assertEqual(migrated["record_version"], 1)
+            state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
+            events = (directory / "events.jsonl").read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(events), 1)
+            self.assertEqual(json.loads(events[0])["type"], "record.migrated")
+            self.assertEqual(state["revision"], 1)
+            self.assertEqual(state["phase"], "verification")
+            self.assertEqual(self._cli_at(root, "task", "validate", "UI-9999").returncode, 0)
+            diagnosis = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(diagnosis["phase"], "verification")
+            self.assertEqual(diagnosis["record"]["state"], "ok")
+
+            second = self._migrate_record(root)
+            self.assertFalse(second["migrated"])
+            self.assertEqual(second["revision"], 1)
+            self.assertEqual(second["intent_digest"], first["intent_digest"])
+            self.assertEqual(
+                (directory / "events.jsonl").read_text(encoding="utf-8").splitlines(), events
+            )
+            self.assertEqual(json.loads(card.read_text(encoding="utf-8"))["intent_digest"],
+                             first["intent_digest"])
+
+    def test_versioned_event_is_idempotent_and_rejects_revision_conflict(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            self._paths_fixture(root, "doc", "index.json")
+            directory, _, _ = self._record_fixture(root)
+            self._migrate_record(root)
+
+            first = self._cli_at(
+                root, "task", "event", "UI-9999", "--id", "event-1",
+                "--type", "phase.changed", "--expected-revision", "1", "--phase", "execution",
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+            payload = json.loads(first.stdout)["data"]
+            self.assertFalse(payload["duplicate"])
+            self.assertEqual(payload["revision"], 2)
+            state_after = (directory / "state.json").read_bytes()
+            events_after = (directory / "events.jsonl").read_bytes()
+
+            duplicate = self._cli_at(
+                root, "task", "event", "UI-9999", "--id", "event-1",
+                "--type", "phase.changed", "--expected-revision", "1", "--phase", "execution",
+            )
+            self.assertEqual(duplicate.returncode, 0, duplicate.stderr)
+            self.assertTrue(json.loads(duplicate.stdout)["data"]["duplicate"])
+            self.assertEqual((directory / "state.json").read_bytes(), state_after)
+            self.assertEqual((directory / "events.jsonl").read_bytes(), events_after)
+
+            same_id = self._cli_at(
+                root, "task", "event", "UI-9999", "--id", "event-1",
+                "--type", "phase.changed", "--expected-revision", "2", "--phase", "planning",
+            )
+            self.assertEqual(same_id.returncode, 5)
+            self.assertEqual((directory / "state.json").read_bytes(), state_after)
+            self.assertEqual((directory / "events.jsonl").read_bytes(), events_after)
+
+            stale = self._cli_at(
+                root, "task", "event", "UI-9999", "--id", "event-2",
+                "--type", "phase.changed", "--expected-revision", "1", "--phase", "planning",
+            )
+            self.assertEqual(stale.returncode, 5)
+            self.assertIn("revision conflict", stale.stderr)
+            self.assertEqual((directory / "state.json").read_bytes(), state_after)
+            self.assertEqual((directory / "events.jsonl").read_bytes(), events_after)
+
+            diagnosis = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(diagnosis["phase"], "execution")
+
+    def test_versioned_replay_restores_state_and_rejects_corrupt_journal(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            self._paths_fixture(root, "doc", "index.json")
+            directory, _, _ = self._record_fixture(root)
+            self._migrate_record(root)
+            migrated_state = (directory / "state.json").read_bytes()
+
+            appended = self._cli_at(
+                root, "task", "event", "UI-9999", "--id", "event-1",
+                "--type", "phase.changed", "--expected-revision", "1", "--phase", "execution",
+            )
+            self.assertEqual(appended.returncode, 0, appended.stderr)
+            current_state = (directory / "state.json").read_bytes()
+
+            (directory / "state.json").write_bytes(migrated_state)
+            stale = json.loads(
+                self._cli_at(root, "task", "diagnose", "UI-9999", "--json").stdout
+            )["data"]
+            self.assertEqual(stale["record"]["state"], "stale")
+            self.assertEqual(stale["phase"], "verification")
+
+            restored = self._cli_at(root, "task", "replay", "UI-9999")
+            self.assertEqual(restored.returncode, 0, restored.stderr)
+            replay = json.loads(restored.stdout)["data"]
+            self.assertTrue(replay["restored"])
+            self.assertEqual(replay["revision"], 2)
+            self.assertEqual(replay["phase"], "execution")
+            self.assertEqual((directory / "state.json").read_bytes(), current_state)
+
+            events = (directory / "events.jsonl").read_text(encoding="utf-8")
+            (directory / "events.jsonl").write_text(
+                events.replace('"execution"', '"planning"', 1), encoding="utf-8"
+            )
+            corrupt = self._cli_at(root, "task", "replay", "UI-9999")
+            self.assertEqual(corrupt.returncode, 1)
+            self.assertIn("digest does not match", corrupt.stderr)
+            self.assertEqual((directory / "state.json").read_bytes(), current_state)
+
+    def test_versioned_intent_is_immutable_and_close_writes_event(self):
+        with tempfile.TemporaryDirectory() as dirname:
+            root = Path(dirname)
+            self._paths_fixture(root, "doc", "index.json")
+            directory, card, _ = self._record_fixture(root)
+            self._migrate_record(root)
+            migrated_bytes = card.read_bytes()
+
+            tampered = json.loads(migrated_bytes)
+            tampered["title"] = "rewritten intent"
+            card.write_text(json.dumps(tampered), encoding="utf-8")
+            refused = self._cli_at(root, "task", "validate", "UI-9999")
+            self.assertEqual(refused.returncode, 1)
+            self.assertIn("intent fields changed", refused.stderr)
+            card.write_bytes(migrated_bytes)
+
+            closed = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(closed.returncode, 0, closed.stderr)
+            state = json.loads((directory / "state.json").read_text(encoding="utf-8"))
+            self.assertEqual(state["phase"], "completed")
+            self.assertEqual(state["revision"], 2)
+            self.assertEqual(json.loads(card.read_text(encoding="utf-8"))["phase"], "verification")
+            events = [
+                json.loads(line)
+                for line in (directory / "events.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual([event["type"] for event in events],
+                             ["record.migrated", "phase.changed"])
+
+            again = self._cli_at(root, "task", "close", "UI-9999", "--json")
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertTrue(json.loads(again.stdout)["data"]["already_closed"])
+            self.assertEqual(
+                len((directory / "events.jsonl").read_text(encoding="utf-8").splitlines()), 2
+            )
 
     def test_task_validate_rejects_bad_task_id(self):
         import tempfile, json as _json
@@ -1366,9 +2168,6 @@ raise SystemExit(run(sys.argv[1:]))
                 ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc",
                                               ".pytest_cache", "build", "dist", "*.egg-info"),
             )
-            local_config = project / "kilo.jsonc"
-            if not local_config.exists() and (project / "kilo.jsonc!!!").exists():
-                shutil.copy2(project / "kilo.jsonc!!!", local_config)
             index = project / "doc/architecture/index.json"
             original = index.read_bytes()
             data = json.loads(original)
@@ -1403,9 +2202,6 @@ raise SystemExit(run(sys.argv[1:]))
                 ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc",
                                               ".pytest_cache", "build", "dist", "*.egg-info"),
             )
-            local_config = project / "kilo.jsonc"
-            if not local_config.exists() and (project / "kilo.jsonc!!!").exists():
-                shutil.copy2(project / "kilo.jsonc!!!", local_config)
             store = project / "doc/tools/arch/store.py"
             text = store.read_text(encoding="utf-8")
             marker = '        records.sort(key=lambda x: x["id"])\n'
@@ -1429,7 +2225,7 @@ raise SystemExit(run(sys.argv[1:]))
             self.assertIn("PYTHONHASHSEED=12345", rejected.stderr)
             self.assertEqual(self._tree_digest(project), before)
 
-    def test_in_copy_gate_tolerates_missing_local_config_without_touching_checkout(self):
+    def test_in_copy_gate_leaves_checkout_unchanged(self):
         with tempfile.TemporaryDirectory() as dirname:
             project = Path(dirname) / "project"
             shutil.copytree(
@@ -1437,13 +2233,8 @@ raise SystemExit(run(sys.argv[1:]))
                 ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc",
                                               ".pytest_cache", "build", "dist", "*.egg-info"),
             )
-            local_config = project / "kilo.jsonc"
-            renamed = project / "kilo.jsonc!!!"
-            if local_config.exists():
-                if renamed.exists():
-                    renamed.unlink()
-                local_config.rename(renamed)
-            self.assertFalse(local_config.exists())
+            sentinel = project / "checkout-sentinel.txt"
+            sentinel.write_text("unchanged", encoding="utf-8")
             env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
 
             result = subprocess.run(
@@ -1451,9 +2242,7 @@ raise SystemExit(run(sys.argv[1:]))
                 text=True, capture_output=True, check=False, env=env,
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("restored kilo.jsonc", result.stderr)
-            self.assertFalse(local_config.exists())
-            self.assertTrue(renamed.is_file())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "unchanged")
 
     def test_evidence_accepts_subtask_key(self):
         temp = tempfile.TemporaryDirectory()

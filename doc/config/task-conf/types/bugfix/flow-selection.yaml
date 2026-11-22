@@ -1,0 +1,30 @@
+schema_version: flow-selection-1
+type: bugfix
+version: 1
+facts:
+  symptom_confirmed:
+    type: boolean
+    description: Исходный симптом воспроизведён или подтверждён отчётом.
+  investigation_needed:
+    type: boolean
+    description: Причина неизвестна или требуется исследование перед правкой.
+  regression_check_known:
+    type: boolean
+    description: Известна проверка, которая видит исходный дефект.
+rules:
+  - id: bugfix.fast-known-fix
+    when:
+      symptom_confirmed: true
+      investigation_needed: false
+      regression_check_known: true
+    flow: minimal-scaffold
+    reason: Локальный подтверждённый дефект с известной регрессионной проверкой.
+  - id: bugfix.investigate
+    when:
+      investigation_needed: true
+    flow: standard-implementation
+    reason: Причина неизвестна, поэтому нужен стандартный путь с воспроизведением.
+  - id: bugfix.default
+    fallback: true
+    flow: standard-implementation
+    reason: Явный fallback для остальных подтверждённых фактов.

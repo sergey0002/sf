@@ -14,13 +14,12 @@
     "history": []
   },
   "parent_task_key": "UI-0014",
-  "title": "Проверки CI и свежести индекса",
+  "title": "Проверки локального gate и свежести индекса",
   "kind": "docs",
   "intent": "Разделить структурные проверки, тесты и пересборку в отдельном дереве.",
   "scope": {
     "in": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -34,7 +33,6 @@
     ],
     "allowed_files_modules": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -52,7 +50,7 @@
   ],
   "acceptance_policy": "case-coverage-v1",
   "acceptance_criteria": [
-    "AC-1: Устаревший индекс приводит к отказу до пересборки; основной checkout проверка не меняет."
+    "AC-1: Локальный gate приводит к отказу на устаревшем индексе до пересборки; основной checkout проверка не меняет."
   ],
   "target_release": "unset",
   "project_context_refs": [
@@ -70,7 +68,6 @@
   "authority": {
     "allowed": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",

@@ -11,26 +11,27 @@ implemented: true
 
 # Arch CLI: структура пакета
 
-CLI был рефакторен из одного файла `arch.py` (~900 строк) в модульный Python-пакет под `doc/tools/arch/`. Каждый модуль имеет единственную, чётко определённую ответственность. Поверхность CLI расширена: `list`, `show`, `index`, `validate`, `task-key`, `task`, `task subtask`, `task types`, `task flows`, `task type-prompt`, `task flow-prompt`, `task decompose`, `task diagnose`, `task close`, `docs paths --check`, `session find`, `session digest`, `session events`.
+CLI был рефакторен из одного файла `arch.py` (~900 строк) в модульный Python-пакет под `doc/tools/arch/`. Каждый модуль имеет единственную, чётко определённую ответственность. Поверхность CLI расширена: `list`, `show`, `index`, `validate`, `task-key`, `task new`, `task init`, `task registry`, `task subtask`, `task types`, `task flows`, `task type-prompt`, `task flow-prompt`, `task decompose`, `task diagnose`, `task close`, `docs paths --check`, `session find`, `session digest`, `session events`.
 
 ## Карта модулей
 
 | Модуль | Ответственность | Зависит от |
 |--------|-----------------|------------|
 | `constants.py` | Регексы, имена ключей для загрузки из YAML-конфигов (task_types, phases, risk_levels, source_types, task_schema_required_fields, task-conf ключи), `TASK_KEY_RE`, `FLOW_RE`, `path_is_allowed()` | — |
-| `identity.py` | Вывод task-key (`normalize_task_identity`, `parse_task_key`, `task_dir`). Никогда не аллоцирует номера. | `constants` |
+| `identity.py` | Вывод task-key (`normalize_task_identity`, `parse_task_key`, `task_dir`). Номера не выделяет. | `constants` |
 | `schema.py` | Шаблон `task.json` (`draft-0.2`) и `scaffold_task_json()` | — |
 | `validation.py` | `validate_task_json()` — валидация конфиг-driven (все правила из YAML), `load_task_conf_types()`, `load_task_conf_flows_for_type()`, `load_task_conf_prompt()`, `load_task_conf_flow_prompt()`, `check_subtasks_closed()`, `validate_paths()`, `load_paths_config()` | `constants`, `store` (для check_subtasks_closed) |
 | `store.py` | `ArchitectureStore` — загрузка документов с frontmatter, валидация ссылок/ID, сборка/проверка `index.json` | (внутри пакета arch — нет) |
 | `subtask.py` | Пути субтасок, скффолд JSON, перечисление этапов и вложенных субтасок | `identity`, `schema` |
 | `fs_atomic.py` | Атомарная замена одиночного файла и журнал составной записи | — |
 | `task_ops.py` | Прикладные lifecycle-сценарии task/subtask: чтение, валидация, decompose, diagnose, close, восстановление | `identity`, `schema`, `subtask`, `validation`, `fs_atomic`, `cli.errors` (коды) |
+| `task_registry.py` | CLI-реестр номеров в JSON: чтение, проверка дублей, следующий UI-ключ, атомарная регистрация под блокировкой | `identity`, `fs_atomic` |
 | `acceptance.py` | Структура обязательных кейсов, покрытие критериев и SHA-256 доказательств | Стандартная библиотека |
 | `session_audit.py` | Read-only разбор локальной SQLite Kilo: поиск сессии по подстроке, метки flow/скиллов/правил/задач/CLI, статистика инструментов, фазы, аномалии и токены | Стандартная библиотека |
 | `cli/app.py` | Парсер `argparse`, `run()`, диспетчеризация зарегистрированных команд; `ArchitectureStore` создаётся лениво | `cli.commands`, `store` |
 | `cli/output.py` | JSON-envelope, human/brief/quiet/verbose режимы, scan-сводка | `cli.errors` |
 | `cli/errors.py` | `CliError`, `CliEnvelope`, семантические exit-коды, `ok_envelope`/`error_envelope` | — |
-| `cli/commands/` | `Command`-интерфейс, реестр (отвергает дубли имён) и команды: `list`, `show`, `index`, `validate`, `scan`, `docs` в `builtin.py`; `task` в `task.py`; `session` в `session.py`; `task-key` | `identity`, `validation`, `store`, `subtask`, `task_ops`, `session_audit` |
+| `cli/commands/` | `Command`-интерфейс, реестр (отвергает дубли имён) и команды: `list`, `show`, `index`, `validate`, `scan`, `docs` в `builtin.py`; `task` в `task.py`; `session` в `session.py`; `task-key` | `identity`, `validation`, `store`, `subtask`, `task_ops`, `task_registry`, `session_audit` |
 | `__init__.py` | Публичный API, версия пакета (`0.2.0`), синхронизированная с `pyproject.toml` | все (реэкспорт) |
 | `__main__.py` | Точка входа для `python -m arch` и прямого запуска файла | `cli.app` |
 
@@ -69,7 +70,7 @@ subtask.py (identity, schema)   fs_atomic.py
 
 ## Принципы проектирования
 
-- **Детерминизм:** никакого автоматического выделения ID или номеров; каждый ключ и номер выводятся из явного ввода.
+- **Детерминизм:** ключ выводится из явного ввода; UI-номер выделяется только из CLI-реестра `doc/config/task-registry.json` по правилу «максимум + 1». Скрытых эвристик и сканирования каталогов задач нет.
 - **Конфиг-driven валидация:** все enum'ы, обязательные поля, allowed_flows, complexity_levels читаются из YAML-конфигов (`doc/config/paths.yaml`, `doc/config/task-conf/types/*/config.yaml`). Нет хардкода в Python.
 - **Семантические решения принадлежат агенту/скиллам:** CLI валидирует структуру и перечисления; он никогда не угадывает релевантность и не заполняет семантические поля.
 - **`task.json` — единственный канонический вход задачи:** `task.md` отвергается, если присутствует.

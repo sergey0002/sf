@@ -17,18 +17,35 @@
   "kind": "feature",
   "intent": "На резолвере 0001 собрать ограниченный контекст документации и обратную навигацию по явным ссылкам.",
   "scope": {
-    "in": ["docs context, сравнение снимков, docs impact и CASE-5–CASE-7 родителя"],
-    "out": ["Второй runtime стадии и новый механизм верификации"],
-    "allowed_files_modules": ["doc/tools/arch/", "doc/tools/tests/", "doc/tests/", "doc/architecture/"]
+    "in": [
+      "docs context, сравнение снимков, docs impact и CASE-5–CASE-7 родителя"
+    ],
+    "out": [
+      "Второй runtime стадии и новый механизм верификации"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
   },
   "current_behavior": "Контекст и обратные связи собираются агентом вручную; CLI не показывает причину включения раздела или изменение состава пакета.",
-  "evidence": ["../../stage1/plan.md: CASE-5–CASE-7; doc/skills/architecture-read/SKILL.md"],
+  "evidence": [
+    "../../stage1/plan.md: CASE-5–CASE-7; doc/skills/architecture-read/SKILL.md"
+  ],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: В пакете только объявленные связи, причины и явные пропуски.", "AC-2: Дельта точна; конфликт, отсутствие и устаревание evidence различимы.", "AC-3: Impact показывает изменённый раздел и объявленных потребителей без обещания полного покрытия."],
+  "acceptance_criteria": [
+    "AC-1: В пакете только объявленные связи, причины и явные пропуски.",
+    "AC-2: Дельта точна; конфликт, отсутствие и устаревание evidence различимы.",
+    "AC-3: Impact показывает изменённый раздел и объявленных потребителей без обещания полного покрытия."
+  ],
   "acceptance_policy": "case-coverage-v1",
   "target_release": "unset",
   "project_context_refs": [],
-  "constraints": ["До интеграции согласовать стык с UI-0019; общий контекст стадии вне scope."],
+  "constraints": [
+    "До интеграции согласовать стык с UI-0019; общий контекст стадии вне scope."
+  ],
   "assumptions": [],
   "open_questions": [],
   "risk": "low",
@@ -43,18 +60,31 @@
   "complexity": "low",
   "subtasks": [],
   "depends_on": [],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Убрать context/impact, сохранив резолвер и прежние карточки.",
-  "implementation_plan": ["После 0001: разрешение ссылок по кейсу → дельта → обратные связи от diff"],
+  "implementation_plan": [
+    "После 0001: разрешение ссылок по кейсу → дельта → обратные связи от diff"
+  ],
   "related_docs": [],
   "related_tests": [],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/doc_ops.py",
+      "doc/tests/test_doc_contracts.py"
+    ],
+    "modified": [
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/architecture/system/addressable-contracts.md"
+    ],
     "deleted": []
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed"
+    }
+  ]
 }

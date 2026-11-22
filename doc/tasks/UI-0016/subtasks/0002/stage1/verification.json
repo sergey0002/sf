@@ -3,15 +3,25 @@
   "task_key": "UI-0016-0002",
   "task_number": "0002",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:a6ac15994286374f039bec3c0d374e1aaa902cfd10e7ea36a9e1e4ae190d33df",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_event_is_idempotent_and_rejects_revision_conflict doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_replay_restores_state_and_rejects_corrupt_journal -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
+      "id": "CASE-1",
       "covers": [
         "AC-1"
       ],
-      "expected": "AC-1: Сбой, повтор и конфликт ревизии покрыты проверками."
+      "expected": "Duplicate, revision conflict, interrupted state and corrupt journal are handled without a second event or false success."
     }
   ],
   "baseline_commands": [
@@ -19,5 +29,27 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/tasks/UI-0016/subtasks/0002/stage1/plan.md",
+      "sha256": "3f8387734f9c85992029c92a332c6212c50e58662f907406c6b483d8f32c0e8d"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "787777763667f8cf3190aa5a049a9a1446c4032ecf7e48a3e748eb9211484022"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7e665aa28125a87263cff6351b8041685255314ee75a1b61acdee9cdd0dfcb81"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "4c54a9215d9dac8378b340b2efdf10edae583c561543ecf1538bf0699b1e8c51"
+    },
+    {
+      "path": "doc/tools/arch/task_record.py",
+      "sha256": "5d98febb603f01d7a0995937faa276be267aa9ad1517961aba78c45e27b3911c"
+    }
   ]
 }

@@ -1,11 +1,37 @@
 id: docs-only
 title: Только документация
 type: docs
+schema_version: flow-1
 description: |
   Поток для задач, которые меняют только архитектурную документацию,
   скиллы, конфиги путей. Требует структурной валидации путей и frontmatter.
 subtask_policy: optional
 close_policy: all_subtasks_required
+initial_state: architecture-context
+terminal_states:
+  - close
+states:
+  - architecture-context
+  - change
+  - validate
+  - close
+transitions:
+  - id: docs.context.ready
+    from: architecture-context
+    event: context.ready
+    to: change
+  - id: docs.change.ready
+    from: change
+    event: change.ready
+    to: validate
+  - id: docs.validate.passed
+    from: validate
+    event: checks.passed
+    to: close
+  - id: docs.validate.failed
+    from: validate
+    event: checks.failed
+    to: change
 steps:
   - id: architecture-context
     name: Сбор архитектурного контекста

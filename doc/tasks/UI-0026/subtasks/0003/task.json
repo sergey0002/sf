@@ -17,14 +17,28 @@
   "kind": "feature",
   "intent": "Проверить сквозной пилот закрытия задачи, совместимость и экономию контекста.",
   "scope": {
-    "in": ["Разметка пилота, справка, регрессия, замер; CASE-8–CASE-9 родителя"],
-    "out": ["Изменение правил закрытия, массовая миграция, внешняя публикация"],
-    "allowed_files_modules": ["doc/tests/", "doc/tools/tests/", "doc/architecture/", "doc/skills/arch-cli/", "doc/skills/architecture-read/", "doc/tasks/UI-0026/"]
+    "in": [
+      "Разметка пилота, справка, регрессия, замер; CASE-8–CASE-9 родителя"
+    ],
+    "out": [
+      "Изменение правил закрытия, массовая миграция, внешняя публикация"
+    ],
+    "allowed_files_modules": [
+      "doc/tests/",
+      "doc/tools/tests/",
+      "doc/architecture/",
+      "doc/skills/arch-cli/",
+      "doc/skills/architecture-read/",
+      "doc/tasks/UI-0026/"
+    ]
   },
   "current_behavior": null,
   "evidence": [],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: Старые вызовы совместимы; новая справка и примеры соответствуют публичному CLI.", "AC-2: Пилот даёт 5 из 5 ожидаемых исходов, меньший медианный объём и не больше вызовов."],
+  "acceptance_criteria": [
+    "AC-1: Старые вызовы совместимы; новая справка и примеры соответствуют публичному CLI.",
+    "AC-2: Пилот даёт 5 из 5 ожидаемых исходов, меньший медианный объём и не больше вызовов."
+  ],
   "acceptance_policy": "case-coverage-v1",
   "target_release": "unset",
   "project_context_refs": [],
@@ -43,18 +57,33 @@
   "complexity": "low",
   "subtasks": [],
   "depends_on": [],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Убрать пилотную разметку, примеры и тесты, не меняя правила закрытия.",
-  "implementation_plan": ["После 0001 и 0002: пилотная разметка → справка → регрессия и сравнительный прогон"],
+  "implementation_plan": [
+    "После 0001 и 0002: пилотная разметка → справка → регрессия и сравнительный прогон"
+  ],
   "related_docs": [],
   "related_tests": [],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/architecture/system/addressable-contracts.md",
+      "doc/tests/test_doc_contracts.py"
+    ],
+    "modified": [
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/skills/arch-cli/SKILL.md",
+      "doc/skills/architecture-read/SKILL.md"
+    ],
     "deleted": []
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed"
+    }
+  ]
 }

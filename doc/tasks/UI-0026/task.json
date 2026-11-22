@@ -85,7 +85,14 @@
       "Расширение scope, изменение существующего публичного контракта или формата карточек, новые внешние зависимости"
     ]
   },
-  "approvals": [],
+  "approvals": [
+    {
+      "by": "owner",
+      "scope": "implementation",
+      "at": "2026-11-22",
+      "source": "chat: реализуй задачу задокументируй в архитектуре как положено"
+    }
+  ],
   "task_type": "feature",
   "flow": "standard-implementation",
   "complexity": "high",
@@ -93,39 +100,76 @@
     {
       "id": "0001",
       "title": "Адресация, поиск и проверка ссылок",
-      "status": "open",
+      "status": "completed",
       "path": "subtasks/0001/task.json"
     },
     {
       "id": "0002",
       "title": "Контекст задачи и анализ влияния",
-      "status": "open",
+      "status": "completed",
       "path": "subtasks/0002/task.json"
     },
     {
       "id": "0003",
       "title": "Пилот, совместимость и сравнение",
-      "status": "open",
+      "status": "completed",
       "path": "subtasks/0003/task.json"
     }
   ],
   "depends_on": [],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Убрать добавленные подкоманды и пилотные связи/разметку отдельным изменением; исходные команды, карточки и Markdown остаются рабочими. Если есть производный кеш поиска, он удаляем и пересобираем из исходников.",
   "related_docs": [
     "REG-cli-command-map",
     "FLOW-cli-task-lifecycle",
-    "ENT-verification-evidence"
+    "ENT-verification-evidence",
+    "CAP-addressable-contracts"
   ],
-  "implementation_plan": ["0001: адресация и поиск", "0002: контекст и влияние", "0003: пилот и сравнение"],
-  "related_tests": [{"test_id": "factory-suite", "location": "doc/tests/run.sh", "command": "bash doc/tests/run.sh --brief"}],
+  "implementation_plan": [
+    "0001: адресация и поиск",
+    "0002: контекст и влияние",
+    "0003: пилот и сравнение"
+  ],
+  "related_tests": [
+    {
+      "test_id": "factory-suite",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/sections.py",
+      "doc/tools/arch/doc_ops.py",
+      "doc/tools/tests/test_sections.py",
+      "doc/tests/test_doc_contracts.py",
+      "doc/architecture/system/addressable-contracts.md",
+      "doc/tasks/UI-0026/stage1/plan.md",
+      "doc/tasks/UI-0026/stage1/verification.json"
+    ],
+    "modified": [
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/config/paths.yaml",
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/architecture/index.json",
+      "doc/architecture/README.md",
+      "doc/skills/arch-cli/SKILL.md",
+      "doc/skills/architecture-read/SKILL.md",
+      "doc/tests/README.md",
+      "doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md",
+      "doc/architecture/domains/task-lifecycle/entities/verification-evidence.md",
+      "doc/architecture/system/task-number-registry.md"
+    ],
     "deleted": []
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed"
+    }
+  ]
 }

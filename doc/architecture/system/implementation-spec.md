@@ -39,6 +39,7 @@ doc/tools/arch/
 ├── subtask.py         — subtask_dir(), scaffold_subtask_json(), list_stages(), list_sub_subtasks()
 ├── fs_atomic.py       — атомарная запись файла и журнал составной записи
 ├── task_ops.py        — lifecycle-сценарии task/subtask без argparse и вывода
+├── task_registry.py   — CLI-реестр номеров в JSON и атомарная регистрация
 ├── acceptance.py      — покрытие запланированных кейсов и проверка SHA-256 доказательств
 ├── evidence.py        — запись результата явной проверки на выбранном снимке
 └── body_validation.py — validate_document_body(), get_supported_body_types()
@@ -399,13 +400,14 @@ arch task flow-prompt --type <type> --flow <flow>
 ### 9.7 Команда task init
 
 ```
-arch task init <task_key>
+arch task init <task_key> [--title T]
 ```
 
 - Создаёт doc/tasks/<task_key>/ с task.json и stage1/
 - Валидирует task_key через TASK_KEY_RE
-- Не аллоцирует task_number (берется из task_key)
-- Отказывает если директория уже существует
+- Не выделяет task_number: число берётся из task_key
+- Под блокировкой каталога конфигурации добавляет запись в `doc/config/task-registry.json`; повторная регистрация того же ключа идемпотентна
+- Отказывает если директория уже существует или реестр конфликтует
 
 ### 9.8 Команда task validate
 
@@ -440,11 +442,13 @@ arch task status <task_key>
 ### 9.11 Команда task decompose
 
 ```
-arch task decompose <task_key> --subtask-id NNNN --subtask-title "..." [--subtask-id NNNN --subtask-title "..." ...]
+arch task decompose <task_key> --subtask-id NNNN --subtask-title "..." [--subtask-id NNNN --subtask-title "..." ...] [--subtask-depends-on ID=DEP[,DEP] ...] [--subtask-type ID=TYPE ...] [--subtask-flow ID=FLOW ...] [--subtask-complexity ID=LEVEL ...] [--subtask-estimate ID=HOURS ...]
 ```
 
 - Читает родительский task.json; требует, чтобы `subtasks` был массивом, а `task.md` отсутствовал. Остальные поля родителя проверяет `task validate`, чтобы decompose не блокировал первый пакет из-за ещё не заполненных семантических полей
 - Проверяет весь пакет до записи: `--subtask-id` и `--subtask-title` в равном количестве, ID из четырёх цифр и уникальны внутри пакета, заголовки непустые, ID не объявлены в родителе, каталоги ещё не существуют
+- `--subtask-type`, `--subtask-flow`, `--subtask-complexity` и `--subtask-estimate` задают форму каждого ребёнка как `ID=VALUE`. Агент выбирает их по содержанию работы; CLI проверяет тип, flow и сложность по task-conf. Без явного типа ребёнок создаётся как `subtask` без flow с унаследованной сложностью родителя. Жёстко зашитый `scaffold` не используется
+- `--subtask-depends-on ID=DEP[,DEP]` добавляет зависимости между непосредственными детьми. Пакет отклоняется до записи, если зависимость ссылается на неизвестный ID или образует цикл. Родитель хранит зависимости как ID детей, ребёнок получает полные ключи в своём `depends_on`
 - При любой ошибке пакета не создаёт каталогов и не меняет родителя
 - Создаёт `subtasks/<id>/` с `task.json` и `stage1/`, затем добавляет запись в `subtasks` родителя
 - Одиночные записи заменяются атомарно; перед составной записью создаётся журнал `.arch-write-journal.json`, который удаляется последним
@@ -459,17 +463,42 @@ arch task diagnose <task_key> [--json] [--brief]
 - Проверяет карточку и объединение объявленных детей с непосредственными каталогами. `can_close` отражает машинные предусловия.
 - Разрешает `depends_on` через настроенный корень задач, включая ключи детей. `dependencies` содержит `task_key`, `required_by`, `state` и доступную фазу. Краткий режим ограничивает список тремя строками. Эти же зависимости применяет `close`.
 - При `acceptance_policy: case-coverage-v1` сверяет связанные кейсы и хеши заявленных входов. `acceptance_plan_ready` сообщает о структурной готовности текущей стадии. Формат и правила описаны в [записи доказательств](../domains/task-lifecycle/entities/verification-evidence.md).
-- Полный ответ включает сведения о детях и блокировки. `--brief` сохраняет счётчики, показывает до трёх блокировок и возвращает `refs` к карточке и существующим артефактам последней по номеру стадии.
+- Полный ответ включает сведения о детях и блокировки. Каждый ребёнок содержит `ready`, `readiness` (`ready`/`blocked`/`completed`) и `blocked_by`. `subtasks_ready`, `subtasks_blocked` и `subtasks_completed` дают сводку. `--brief` сохраняет счётчики, показывает до трёх блокировок и возвращает `refs` к карточке и существующим артефактам последней по номеру стадии.
+- `flow_state` и `available_transitions` вычисляются из версионированного flow. Для flow без `schema_version: flow-1` эти поля пусты и задача продолжает работать по прежним правилам.
 
-### 9.13 Команда task close
+### 9.12a Команда task select-flow
+
+```
+arch task select-flow --type <type> [--fact name=value ...] [--json]
+```
+
+- Читает `types/<type>/flow-selection.yaml` и применяет правила к типизированным фактам. Возвращает `selection_version`, `rule_id`, `flow`, `reason` и `matched_rules`.
+- Неизвестный факт даёт `UNKNOWN-FACT`; отсутствующий обязательный факт — `MISSING-FACT` с полем и допустимыми значениями; совпадение нескольких правил — `CONFLICT` с их ID и exit 5.
+- Fallback применяется только после проверки остальных правил и при известных фактах.
+
+### 9.12b Команда task advance
+
+```
+arch task advance <task_key> --event <event> --expected-revision N [--id ID] [--dry-run] [--json]
+```
+
+- Требует версионированную запись. Текущее состояние берётся из `state.json.flow_state`, а при его отсутствии — из `initial_state` flow.
+- Переход ищется по паре `from`/`event`. Неизвестное событие возвращает `UNKNOWN-EVENT` и доступные события; неоднозначный переход — `CONFLICT`; ни один вариант не меняет запись. Flow без `schema_version: flow-1` даёт `UNSUPPORTED-FLOW`.
+- Повтор того же `--id` с тем же событием и ревизией возвращает `duplicate: true` без второй записи. Другая ревизия даёт конфликт exit 5.
+- Успешная запись добавляет событие `flow.transitioned` в журнал, обновляет `state.json` и возвращает сводку `diagnose` с блоком `transition`.
+
+### 9.13 Команда task close {#task-close}
 
 ```
 arch task close <task_key> [--json] [--dry-run]
 ```
 
 - Использует предусловия `diagnose`. При `--dry-run` возвращает `would_close` и блокировки без записи.
+- Для `docs/docs-only` с `case-coverage-v1` после проверки остальных предусловий выполняет те же проверки, что `validate --brief` и `docs paths --check`, без пересборки индекса. Это относится также к `diagnose` и `close --dry-run`. Результат структурного гейта не берётся из evidence; `task event` не может завершить такую родительскую задачу в обход `close`.
 - Отказ по предусловиям — exit 1 и JSON envelope в stderr при `--json`. Карточка сохраняется.
 - При успешном закрытии устанавливает `phase: completed` атомарной заменой файла. Агент до вызова проверяет приёмку и применимое одобрение.
+- Закрытие синхронизирует запись: завершённые дети получают `subtasks[].status: completed`, текущая стадия — запись `stage_history` со `status: completed`. Оба поля изменяемы и не входят в immutable intent.
+- Если `verification.json` объявляет `snapshot_files`, устаревший снимок блокирует закрытие и без политики `case-coverage-v1`. Задача без evidence закрывается по остальным предусловиям.
 
 ### 9.14 Устойчивая запись и восстановление
 
@@ -488,12 +517,12 @@ arch task close <task_key> [--json] [--dry-run]
 ### 9.15 Команда task subtask
 
 ```
-arch task subtask init <parent_key> <subtask_id>
+arch task subtask init <parent_key> <subtask_id> [--task-type TYPE] [--flow FLOW] [--complexity LEVEL] [--estimate-hours N]
 arch task subtask validate <parent_key> <subtask_id>
 arch task subtask status <parent_key> <subtask_id>
 ```
 
-- init: создаёт subtask директорию с task.json
+- init: создаёт subtask директорию с task.json. `--task-type` по умолчанию `subtask`, `--complexity` наследует сложность родителя, `--flow` и `--estimate-hours` необязательны; CLI проверяет выбранную форму по task-conf
 - validate: валидирует subtask task.json через validate_task_json()
 - status: показывает phase, task_type, flow, stages
 
@@ -510,10 +539,26 @@ arch docs paths --check
 
 ```
 arch task-key --source <source> --number <number> [--prefix <prefix>]
+arch task-key --source ui --next
 ```
 
-- Вызывает normalize_task_identity()
+- Без `--next` вызывает normalize_task_identity()
+- С `--next` читает `doc/config/task-registry.json`, находит максимальный номер UI-задач и выводит следующий свободный ключ. Каталоги задач не сканируются, номер не резервируется; резервирование выполняет `task new` или `task init`.
+- `--next` поддерживается только для `source ui`; Jira и внешние источники получают номер из своего трекера.
 - Выводит JSON с task_key, task_number, source_type, source_prefix
+
+### 9.17a Команды task new и task registry
+
+```
+arch task new [--source ui] [--title T] [--json]
+arch task init <task_key> [--title T]
+arch task registry [init|add <key>] [--json]
+```
+
+- `task new` под блокировкой каталога конфигурации читает JSON-реестр, выделяет следующий UI-ключ, создаёт каталог и `task.json`, затем атомарно добавляет запись в реестр. При ошибке записи созданный каталог удаляется.
+- `task init` делает то же для известного ключа: создаёт карточку и добавляет запись в реестр; повторная регистрация того же ключа идемпотентна.
+- Реестр `doc/config/task-registry.json` содержит `schema_version` и массив `tasks` с `task_key`, `task_number`, `source`, `title`, `created_at`. Дубли ключа или номера в семействе источника останавливают команду.
+- `task registry` без подкоманды выводит реестр; `task registry init` создаёт пустой реестр, если файла нет; `task registry add <key>` регистрирует существующую карточку (например, созданную до появления реестра). Чтение не требует блокировки.
 
 ### 9.18 Команда validate (архитектура)
 
@@ -579,17 +624,18 @@ arch docs related <id> [--depth N]
 
 ```
 arch session find --match <text> [--db <path>] [--directory <dir>] [--all-projects] [--role any|user|assistant] [--limit N] [--json]
-arch session digest <session_id> [--db <path>] [--match <text>] [--max-events N] [--full-text] [--no-children]
+arch session digest (<session_id> | --match <text>) [--db <path>] [--max-events N] [--full-text] [--no-children]
 arch session events <session_id> [--db <path>] [--message <id>] [--part <id>] [--offset N] [--limit N] [--full]
 ```
 
-- Модуль `session_audit.py` открывает базу через `mode=ro` и `PRAGMA query_only=ON`; путь берётся из `--db`, затем `KILO_AUDIT_DB`, затем `~/.local/share/kilo/kilo.db`.
-- `find` ищет подстроку в `part.data.text`, исключает synthetic/ignored части и ограничивает область каталогом проекта либо `--all-projects`. Возвращает `match_count`, `matched_message_ids`, первое совпадение и сниппет.
-- `digest` возвращает `schema: kilo-session-digest-v1`: `session`, `dialog`, `stats.tools`, `stats.activities`, `tool_calls`, `markers`, `timeline`, `timeline_omitted`, `label_index`, `phases`, `anomalies`, `drill`. `tool_calls` содержит полный компактный список вызовов и не обрезается вместе с `timeline`. Метки выводятся из путей и команд детерминированно: `skill:`, `rule:`, `flow:`, `flow-step:`, `type:`, `task:`, `subtask:`, `stage:`, `arch:`, `arch-flow:`, `cli:`, `test:`, `ref:`.
-- `timeline` ограничивается `--max-events` (по умолчанию 1000), сохраняя начало и конец и вставляя событие `omitted`. `label_index` хранит до 20 ссылок на метку.
-- `events` фильтрует части по `--message`/`--part`, поддерживает `--offset`/`--limit` и по умолчанию обрезает текст и вывод до 4000 символов; `--full` отключает обрезку.
-- Исход вызова: `failure` при `state.status` в `error`/`failed` или ненулевом `metadata.exit`; `success` при `completed`; иначе `unknown`. Токены суммируются по assistant-сообщениям.
-- Команда read-only: не пишет в базу, task records и рабочее дерево. Смысловая оценка сессии остаётся у агента.
+- `session_audit.py` открывает SQLite через `mode=ro` и `PRAGMA query_only=ON`. Путь берётся из `--db`, затем `KILO_AUDIT_DB`, затем `~/.local/share/kilo/kilo.db`.
+- `find` сравнивает подстроку с `json_extract(part.data, '$.text')`, исключает synthetic/ignored части и по умолчанию ограничивает область каталогом проекта и его `project_id`. Сортировка — по времени последнего совпадения. Выборка ограничена 2000 строками; `truncated` показывает превышение.
+- `digest` всегда возвращает JSON `schema: kilo-session-digest-v1`: `session`, `dialog`, `stats`, `tool_calls`, `markers`, `timeline`, `timeline_omitted`, `label_index`, `phases`, `anomalies`, `drill`. `tool_calls` полный и не обрезается вместе с `timeline`.
+- Метки детерминированы: `skill:`, `rule:`, `type:`, `flow:`, `flow-step:`, `task:`, `subtask:`, `stage:`, `artifact:`, `arch:`, `arch-id:`, `arch-flow:`, `cli:`, `test:`, `ref:`. Точный источник каждой метки задаёт [процедура аудита](../domains/execution-verification/flows/kilo-session-audit.md#cli-снимок-сессии).
+- `--max-events` по умолчанию равен 1000 и сохраняет начало и конец `timeline`; `0` означает без ограничения. `label_index` хранит до 20 ссылок. Без `--full-text` тексты ограничены 4000 символами.
+- `events` всегда возвращает JSON, поддерживает `--message`, `--part`, `--offset`, `--limit` и `--full`. Неизвестная сессия даёт пустой успешный результат. Отсутствующая сессия у `digest` даёт exit 20.
+- Исход: `failure` при статусе `error`/`failed` или ненулевом `metadata.exit`; `unknown` при `pending`/`running`; иначе `success` только для `completed`. Токены суммируются по assistant-сообщениям.
+- Команда не пишет в базу, task records и рабочее дерево. Смысловая оценка остаётся у агента. Недоступная база или ошибка SQLite даёт exit 1.
 
 ### 9.25 Команды адресуемых контрактов
 
@@ -657,6 +703,23 @@ arch docs impact --since <git-revision> [--scope docs|all] [--json]
 | subtask_policy | строка | required/optional/forbidden |
 | close_policy | строка | all_subtasks_required |
 | steps | список | Шаги с id, name, action, output, gate |
+| schema_version | строка | `flow-1` для версионированного исполняемого flow |
+| initial_state | строка | Начальное состояние из `states`; при наличии `steps` — первый шаг |
+| terminal_states | список | Конечные состояния из `states` |
+| states | список | Уникальные ID состояний; при наличии `steps` совпадает с их ID |
+| transitions | список | Переходы `id`, `from`, `event`, `to`, опциональный `when`; happy path следует порядку `steps` |
+
+### 10.4a task-conf/types/<type>/flow-selection.yaml
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| schema_version | строка | `flow-selection-1` |
+| type | строка | Родительский тип задачи |
+| version | целое | Версия таблицы решений |
+| facts | объект | Типизированные факты: `boolean`, `enum`, `string` |
+| rules | список | Правила `id`, `when`, `flow`, `reason`; не более одного `fallback` |
+
+Таблица обязательна, если тип объявляет больше одного `allowed_flows`; иначе `scan --scope task-conf` сообщает об отсутствующем файле.
 
 ### 10.5 task-conf/types/<type>/flows/<flow>/prompt.md
 
@@ -746,6 +809,6 @@ jsonschema >= 4.0
 - YAML для конфигурации (paths.yaml, task-conf)
 - JSON для task.json, index.json, verification.json
 - Git для версионирования документов
-- Без автоматического выделения task_number ( пользователь или allocator)
+- UI-номер выделяется только из CLI-реестра `doc/config/task-registry.json` командой `task new` (или `task init` для известного ключа); реестр ведёт только CLI
 - Без task.md (task.json единственный canonical input)
 - Без семантических решений в CLI (только детерминированная валидация)

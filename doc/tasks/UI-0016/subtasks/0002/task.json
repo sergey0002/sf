@@ -49,6 +49,7 @@
   "acceptance_criteria": [
     "AC-1: Сбой, повтор и конфликт ревизии покрыты проверками."
   ],
+  "acceptance_policy": "case-coverage-v1",
   "target_release": "unset",
   "project_context_refs": [
     "nextplan.md",
@@ -89,7 +90,7 @@
     "UI-0013",
     "UI-0016-0001"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Реализовать проверку ревизии, ключ повторения и восстановление состояния."
@@ -123,7 +124,7 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "verification"
     }
   ]
 }

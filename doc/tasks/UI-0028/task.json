@@ -1,0 +1,183 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0028",
+  "task_number": "0028",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Чат 2026-11-22: аудит хранения глоссария и ресердж форматов; владелец выбрал JSON-канон, CLI-поиск, разделение официальных и поисковых синонимов, связи на стороне ссылающегося. Номер назначен через arch task init.",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Глоссарий: JSON-канон, CLI-поиск и синонимы",
+  "kind": "feature",
+  "intent": "Сделать глоссарий машиночитаемым каноном в JSON и встроить его в поиск по документации: точный lookup по TERM-*, ранжированный поиск с официальными и поисковыми синонимами, расширение arch docs search терминами, скан и lint прозы, поиск терминов в тексте и запросе задачи, обратные связи с задачами и архитектурными документами и точечное управление синонимами через CLI.",
+  "scope": {
+    "in": [
+      "JSON-канон doc/architecture/glossary.json и JSON Schema термина",
+      "Сгенерированные производные: glossary.index.json, glossary.md, vocab/accept.txt, vocab/reject.txt",
+      "CLI: validate, build, check, lookup, search, match, query, refs",
+      "CLI точечной записи: synonym add/remove, add, update, deprecate с --dry-run и атомарной записью",
+      "Разделение term, official_synonyms, search_synonyms, avoid",
+      "Связи term↔task и term↔architecture doc на стороне ссылающегося (glossary_terms в task.json, terms во frontmatter) и обратный индекс",
+      "Расширение arch docs search терминами, блок glossary в ответе и флаг --no-expand-terms",
+      "arch glossary scan и lint: классификация avoid, неофициальных синонимов, неизвестных и необъявленных терминов; --suggest без записи",
+      "Блок glossary в arch docs context для терминов задачи",
+      "ADR о смене источника глоссария и границе CLI",
+      "Миграция существующих 8 терминов и обновление paths.yaml, body_validation, карты CLI"
+    ],
+    "out": [
+      "i18n и мультиязычные каталоги",
+      "RU-морфология и стемминг (возможное расширение CLI позже)",
+      "Векторный/семантический поиск",
+      "Автоматическая замена терминов без review (scan --fix --apply вне этого среза)",
+      "Экспорт TBX/SKOS; CSV export/import не обязателен",
+      "Изменение модели narrative-документов: Markdown остаётся каноном для повествования",
+      "Автоматическое выделение номеров задач и любые внешние записи"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/architecture/",
+      "doc/skills/",
+      "doc/tasks/UI-0028/"
+    ]
+  },
+  "current_behavior": "Глоссарий — один Markdown-файл doc/architecture/glossary.md с H3-записями TERM-*. Термин не адресуем (arch list --id TERM-* пуст), уникальность ID и обязательные поля не проверяются, схема bodies/glossary.json мертва, поиск по термину — общий текстовый docs search без ранжирования и синонимов, обратных связей с задачами нет.",
+  "evidence": [],
+  "contracts_and_invariants": [
+    "JSON — принятый формат машинных записей и индекса (VIEW-data, §Политика формата); YAML не используется как формат обмена",
+    "narrative-архитектура остаётся Markdown с YAML frontmatter (ADR-0001); меняется только источник данных глоссария",
+    "CLI детерминирован и не принимает смысловых решений: не выбирает термин, не сочиняет определение, не выводит смысл из похожести",
+    "Связи term↔task/doc хранятся на стороне ссылающегося; глоссарий не дублирует обратные ссылки вручную",
+    "Официальное имя термина — единственное для отчётов и интерфейса; search_synonyms и avoid не выводятся как каноническое имя",
+    "validate/build/check обязательны как гейт; авторство через файл не запрещается, но неканоничная или невалидная форма отвергается",
+    "paths.yaml — единственный источник допустимых путей; новые файлы объявляются до записи"
+  ],
+  "acceptance_criteria": [
+    "AC-1: Канон глоссария — doc/architecture/glossary.json, валидируемый JSON Schema; glossary.md, glossary.index.json и vocab/* помечены как generated; arch glossary validate/build/check проходят на чистом дереве, а check возвращает ненулевой код при drift производных или невалидной записи.",
+    "AC-2: Модель термина различает term, official_synonyms, search_synonyms и avoid; валидатор отвергает дубли TERM-*, несоответствие формату TERM-<domain>-<slug>, пересечение official_synonyms с search_synonyms и пересечение avoid с любым допустимым именем.",
+    "AC-3: arch glossary lookup <TERM-*> возвращает ровно одну запись с официальным term; arch glossary search <query> возвращает ранжированные совпадения с полями match_type, matched_on, display_term и score, где display_term всегда официальный термин.",
+    "AC-4: arch glossary match находит термины в переданном тексте или файле по уровням exact/alias/prefix без морфологии, отдаёт позиции и не считает avoid или search_synonyms официальным вхождением термина.",
+    "AC-5: arch glossary query --task <key> и --text <query> объединяют термины, объявленные задачей/документом, и найденные по тексту, помечая вторые как inferred и не подменяя объявленные.",
+    "AC-6: arch glossary synonym add/remove, add, update и deprecate изменяют только glossary.json атомарно; --dry-run не пишет; невалидный ввод, неизвестный TERM-* или конфликт завершаются ненулевым кодом без изменения файла.",
+    "AC-7: Связи термина с задачей и архитектурным документом хранятся в task.json (glossary_terms) и во frontmatter документа (terms); arch glossary refs строит обратный индекс, а validate/check сообщают о неразрешённых TERM-* и о терминах, на которые никто не ссылается.",
+    "AC-8: ADR фиксирует смену источника глоссария на JSON и границу CLI: чтение, валидация, генерация производных, поиск и точечные мутации — через CLI; повествовательные документы и семантическое авторство остаются прямым diff.",
+    "AC-9: arch docs search использует glossary.index.json для расширения запроса, возвращает блок glossary с определениями и поле matched_terms в хите; объявленный в документе термин получает уровень term_declared выше title, поисковый синоним не выводится как официальное имя, avoid не расширяет запрос; --no-expand-terms восстанавливает прежнее поведение.",
+    "AC-10: arch glossary scan классифицирует вхождения avoid как error, неофициальный синоним как warning, неизвестный и необъявленный термин как info; --suggest возвращает кандидатов terms_add без записи; скан не изменяет ни один файл.",
+    "AC-11: arch glossary lint --file проверяет план или отчёт и возвращает машинный отчёт с позициями; arch docs context --task включает определения объявленных терминов; неофициальный синоним в плане даёт warning, avoid — error."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [
+    "doc/architecture/system/data.md",
+    "doc/architecture/decisions/ADR-0001-architecture-docs-store.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/architecture/system/manifest.md",
+    "doc/architecture/glossary.md",
+    "doc/architecture/system/cli-command-map.md",
+    "doc/config/paths.yaml",
+    "doc/tools/arch/body_validation.py"
+  ],
+  "constraints": [
+    "Изменение контракта §8.2 architecture-contract и manifest.md:456 требует ADR до реализации",
+    "Миграция 8 существующих терминов должна сохранить их смысл и связи; переименование ID в TERM-<domain>-<slug> фиксируется таблицей маппинга",
+    "Не редактировать data/ как проектный материал",
+    "Не вводить внешние зависимости без необходимости; snowballstemmer не добавляется в этом срезе",
+    "Расширение docs search не должно менять поведение по умолчанию для запросов без терминов"
+  ],
+  "assumptions": [
+    "Достаточно exact/prefix/fuzzy без морфологии; стемминг добавляется позже на уровне CLI",
+    "CSV export/import допустим как последующий шаг и не входит в обязательную приёмку",
+    "Обратный индекс пересобирается build и не хранится вручную",
+    "Скан ограничен Markdown-прозой; код-блоки, frontmatter и ссылки исключаются"
+  ],
+  "open_questions": [
+    "Переименовывать ли legacy TERM-task-json и TERM-task-key в TERM-system-* или закрепить как исключение: рекомендуется переименовать с маппингом, требуется подтверждение владельца при реализации"
+  ],
+  "risk": "high",
+  "authority": {
+    "allowed": [
+      "После отдельного поручения: изменения в scope, запуск тестов, правка архитектурной документации и paths.yaml"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "запись во внешние трекеры",
+      "правка data/ как проектного файла"
+    ],
+    "approval_required": [
+      "Запуск реализации",
+      "Изменение ADR-0001 или §8.2 architecture-contract",
+      "Переименование legacy TERM-* ID"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "high",
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "JSON-канон, схема и миграция терминов",
+      "status": "open",
+      "path": "subtasks/0001/task.json"
+    },
+    {
+      "id": "0002",
+      "title": "Поиск, интеграция в docs search и обратные ссылки",
+      "status": "open",
+      "path": "subtasks/0002/task.json",
+      "depends_on": [
+        "0001"
+      ]
+    },
+    {
+      "id": "0003",
+      "title": "CLI-запись, скан и lint",
+      "status": "open",
+      "path": "subtasks/0003/task.json",
+      "depends_on": [
+        "0001"
+      ]
+    }
+  ],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Вернуть glossary.md как единственный источник, отключить glossary.json и CLI-команды глоссария, убрать generated-производные и поля glossary_terms/terms из проверок. Уже изменённые термины не терять: сохранить JSON как архив и восстановить Markdown из него до отключения.",
+  "related_docs": [
+    "GLO-system",
+    "VIEW-data",
+    "ADR-0001",
+    "REG-cli-command-map",
+    "ENT-task-input"
+  ],
+  "implementation_plan": [
+    "0001: ADR, JSON Schema, glossary.json с миграцией 8 терминов, validate/build/check, paths.yaml и generated-производные",
+    "0002: lookup/search/match/query/refs, индекс, обратные связи, расширение docs search, glossary-блок в docs context, glossary lint",
+    "0003: synonym add/remove, add/update/deprecate, атомарная запись, --dry-run и коды выхода; glossary scan и --suggest"
+  ],
+  "related_tests": [
+    {
+      "test_id": "glossary-canon-acceptance",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

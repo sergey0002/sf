@@ -1,4 +1,4 @@
-"""task-key command: derive a task key from a four-digit number and source."""
+"""task-key command: derive a task key from a number or the registry."""
 
 from __future__ import annotations
 
@@ -12,11 +12,12 @@ from arch.cli.commands.registry import register
 from arch.cli.errors import error_envelope
 from arch.cli.output import print_envelope
 from arch.identity import normalize_task_identity
+from arch.task_registry import RegistryError, load_registry, next_task_key
 
 
 @register
 class TaskKeyCommand(Command):
-    """Derive a task key from a four-digit number and source."""
+    """Derive a task key from a number or the canonical registry."""
 
     name = "task-key"
 
@@ -26,7 +27,11 @@ class TaskKeyCommand(Command):
             help="jira, ui (user input), or another source name",
         )
         subparser.add_argument(
-            "--number", required=True, help="exactly four decimal digits",
+            "--number", help="exactly four decimal digits",
+        )
+        subparser.add_argument(
+            "--next", action="store_true",
+            help="derive the next free number for the source from the registry",
         )
         subparser.add_argument(
             "--prefix", help="required for non-Jira, non-UI sources",
@@ -36,18 +41,33 @@ class TaskKeyCommand(Command):
         )
 
     def execute(
-        self, args: argparse.Namespace, root: Path, store: Any
+        self, args: argparse.Namespace, project_config: Any, store: Any
     ) -> int:
-        try:
-            result = normalize_task_identity(
-                args.source, args.number, args.prefix
+        if bool(args.next) == bool(args.number):
+            envelope = error_envelope(
+                code="ARGS",
+                message="provide exactly one of --number or --next",
+                field="task_key",
+                suggestion="use --number NNNN for an assigned number or --next for the registry",
+                exit_code=2,
             )
-        except ValueError as exc:
+            print_envelope(envelope, json_mode=getattr(args, "json", False), stream=sys.stderr)
+            return 2
+        try:
+            if args.next:
+                result = next_task_key(
+                    load_registry(project_config), args.source, args.prefix
+                )
+            else:
+                result = normalize_task_identity(
+                    args.source, args.number, args.prefix
+                )
+        except (ValueError, RegistryError) as exc:
             envelope = error_envelope(
                 code="ARGS",
                 message=str(exc),
                 field="task_key",
-                suggestion="use format: 1234 (Jira), UI-1234 (UI), or PREFIX-1234 (other)",
+                suggestion="use --number NNNN from the tracker or --next for source ui",
                 exit_code=2,
             )
             print_envelope(envelope, json_mode=getattr(args, "json", False), stream=sys.stderr)

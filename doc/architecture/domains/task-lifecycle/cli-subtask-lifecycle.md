@@ -30,13 +30,14 @@ doc/tasks/<parent_task_key>/
         ...
 ```
 
-## `arch task subtask init <parent_task_key> <subtask_id>`
+## `arch task subtask init <parent_task_key> <subtask_id> [--task-type TYPE] [--flow FLOW] [--complexity LEVEL] [--estimate-hours N]`
 
 - Требует наличия `doc/tasks/<parent_task_key>/`.
 - `subtask_id` должен быть ровно четырьмя десятичными цифрами.
 - Отклоняет, если `doc/tasks/<parent_task_key>/subtasks/<subtask_id>/` уже существует (коллизия).
 - Создаёт `subtasks/<subtask_id>/` и `subtasks/<subtask_id>/stage1/`.
 - Записывает скффолд `task.json` через `scaffold_subtask_json()` — `task_key` равно `<parent_task_key>-<subtask_id>`, `task_number` равно `<subtask_id>`, `source.type` равно `ui`.
+- `--task-type` по умолчанию `subtask` (лист работы, дальнейшая декомпозиция запрещена). `--complexity` наследует сложность родителя. `--flow` и `--estimate-hours` необязательны. CLI проверяет тип, flow и сложность по task-conf.
 - Выводит JSON-результат с `ok`, `parent_task_key`, `subtask_id`, `subtask_key`, путями.
 - Примечание в выводе: "subtasks are always manual; no external source binding".
 - Код выхода 1 при коллизии, неверном ID или отсутствующем родителе.
@@ -64,4 +65,5 @@ doc/tasks/<parent_task_key>/
 | Уникальность внутри родителя | `subtask_id` должен быть уникален только среди兄弟-субтасок одного родителя. |
 | Рекурсия разрешена | Директория субтаски может содержать свою директорию `subtasks/`. |
 | `parent_task_key` | Скффолд `task.json` использует `<parent_task_key>-<subtask_id>` как свой `task_key`. |
+| Форма выбирается агентом | `task_type`, `flow`, `complexity` и `estimate_hours` ребёнка выбирает агент по содержанию работы и передаёт в `init` или `decompose`. Жёстко зашитый `scaffold` не используется. |
 | Нет `task.md` | `task.json` — единственный канонический вход; `task.md` вызывает ошибку валидации. |

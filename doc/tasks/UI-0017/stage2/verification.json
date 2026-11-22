@@ -1,0 +1,23 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0017",
+  "task_number": "0017",
+  "stage_id": "stage2",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "AC-1: возврат verify → fix и короткий docs-путь."
+    },
+    {
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "AC-2: явные причины отказа, неизменное состояние и согласованная запись при закрытии."
+    }
+  ]
+}

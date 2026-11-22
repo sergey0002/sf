@@ -1,0 +1,65 @@
+{
+  "task_key": "UI-0028-0003",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "id": "CASE-17",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "--dry-run не изменяет байты glossary.json"
+    },
+    {
+      "id": "CASE-18",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Синоним записан, check проходит, повтор — exit 5"
+    },
+    {
+      "id": "CASE-19",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Пересечение синонимов — exit 1 без изменения файла"
+    },
+    {
+      "id": "CASE-20",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "deprecate пишет статус и superseded_by"
+    },
+    {
+      "id": "CASE-21",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Неизвестный термин или пустое определение — exit 1 без записи"
+    },
+    {
+      "id": "CASE-26",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "scan: avoid — error, файлы не изменены"
+    },
+    {
+      "id": "CASE-27",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "scan: warning и info; --suggest без записи"
+    },
+    {
+      "id": "CASE-28",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "Код-блоки, frontmatter и ссылки исключены"
+    }
+  ]
+}

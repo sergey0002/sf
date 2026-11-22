@@ -17,14 +17,29 @@
   "kind": "feature",
   "intent": "Добавить docs read/search/check-links и общий резолвер разделов по контракту родительского плана.",
   "scope": {
-    "in": ["Резолвер, ограниченное чтение, поиск, линтер и CASE-1–CASE-4 родителя"],
-    "out": ["Контекст стадии, impact, изменение data/"],
-    "allowed_files_modules": ["doc/tools/arch/", "doc/tools/tests/", "doc/tests/", "doc/architecture/"]
+    "in": [
+      "Резолвер, ограниченное чтение, поиск, линтер и CASE-1–CASE-4 родителя"
+    ],
+    "out": [
+      "Контекст стадии, impact, изменение data/"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
   },
   "current_behavior": "Навигация доступна по документу, но для поиска и точного чтения раздела нужен обход CLI.",
-  "evidence": ["../../stage1/plan.md: CASE-1–CASE-4 и исходные наблюдения"],
+  "evidence": [
+    "../../stage1/plan.md: CASE-1–CASE-4 и исходные наблюдения"
+  ],
   "contracts_and_invariants": [],
-  "acceptance_criteria": ["AC-1: Чтение переживает перенос и диагностирует недопустимые ссылки и превышение бюджета.", "AC-2: Поиск ограничен, детерминирован и отличает справочник.", "AC-3: Линтер диагностирует битый якорь с указанием источника."],
+  "acceptance_criteria": [
+    "AC-1: Чтение переживает перенос и диагностирует недопустимые ссылки и превышение бюджета.",
+    "AC-2: Поиск ограничен, детерминирован и отличает справочник.",
+    "AC-3: Линтер диагностирует битый якорь с указанием источника."
+  ],
   "acceptance_policy": "case-coverage-v1",
   "target_release": "unset",
   "project_context_refs": [],
@@ -43,18 +58,33 @@
   "complexity": "low",
   "subtasks": [],
   "depends_on": [],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Удалить новые операции и пилотные якоря, сохранив старые команды.",
-  "implementation_plan": ["Резолвер → чтение → поиск → проверка ссылок; оракулы в плане родителя"],
+  "implementation_plan": [
+    "Резолвер → чтение → поиск → проверка ссылок; оракулы в плане родителя"
+  ],
   "related_docs": [],
   "related_tests": [],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/sections.py",
+      "doc/tools/arch/doc_ops.py",
+      "doc/tools/tests/test_sections.py",
+      "doc/tests/test_doc_contracts.py"
+    ],
+    "modified": [
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/config/paths.yaml"
+    ],
     "deleted": []
   },
   "owner": "unset",
   "priority": "unset",
-  "stage_history": []
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "completed"
+    }
+  ]
 }

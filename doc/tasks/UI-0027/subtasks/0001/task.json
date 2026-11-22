@@ -1,0 +1,59 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0027-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Git-конфиг и подготовка рабочей ветки",
+  "kind": "feature",
+  "intent": "Реализовать разрешение Git-политики и безопасное разворачивание ветки через CLI по CASE-1–CASE-4 родительского плана.",
+  "scope": {
+    "in": ["Git-политика типов, проектные настройки, read-only workspace, подготовка ветки и go-to-task"],
+    "out": ["Коммит, push и мердж"],
+    "allowed_files_modules": ["doc/config/", "doc/tools/arch/", "doc/skills/go-to-task/", "doc/tests/", "doc/architecture/"]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": ["AC-1: CLI разрешает шаблоны и цели из конфига и блокирует ошибочные входы до записи.", "AC-2: Подготовка ветки сохраняет чужие изменения и явно сообщает выбранную базу и рабочую копию."],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

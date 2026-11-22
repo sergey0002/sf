@@ -3,9 +3,22 @@
   "task_key": "UI-0017-0002",
   "task_number": "0002",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:6812262ff99c1ae28cde39de1aa0314fafe3a5f7c5370ca3806b10f689416e03",
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py -k flow -q",
+      "exit_code": 0,
+      "cases": [],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py -k subtask_dependencies -q",
+      "exit_code": 0,
+      "cases": [],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
       "covers": [
@@ -19,5 +32,39 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "sha256": "3fbb6015406b0577b2c0d70f827b7e0ba927d55cd41c0e1817f14aaeb298dd81"
+    },
+    {
+      "path": "doc/config/task-conf/types/docs/flows/docs-only/config.yaml",
+      "sha256": "6774cbf70a5dc184bef178f8830f9d4d51999c6df8325092cb84445f5cf32d3e"
+    },
+    {
+      "path": "doc/tasks/UI-0017/subtasks/0002/stage1/plan.md",
+      "sha256": "452a38564ff73642ece7fbeabf2f39b90b1f8d42e000d4d08306069fa66ebc69"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "1fbbcb1a53874cf86eca87f55f9c3dd70fc99c771851f6e1059d7ee64e58cb48"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7e665aa28125a87263cff6351b8041685255314ee75a1b61acdee9cdd0dfcb81"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "45dcbd592f2701597998cc243b9fd62af4b5c5f7d8728d167c81d11c6356a1f6"
+    },
+    {
+      "path": "doc/tools/arch/task_record.py",
+      "sha256": "5d98febb603f01d7a0995937faa276be267aa9ad1517961aba78c45e27b3911c"
+    },
+    {
+      "path": "doc/tools/arch/validation.py",
+      "sha256": "7d374168ff7829cca4a38ae9e13bfeee6a7ccfe3aa3ad2e431f1b0ca8bc6a237"
+    }
   ]
 }

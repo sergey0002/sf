@@ -35,14 +35,6 @@ copy_project() {
         -cf - . | tar -C "$destination" -xf -
 }
 
-restore_missing_local_config() {
-    local copy="$1"
-    if [[ ! -e "$copy/kilo.jsonc" && -f "$copy/kilo.jsonc!!!" ]]; then
-        cp -p "$copy/kilo.jsonc!!!" "$copy/kilo.jsonc"
-        printf 'note: restored kilo.jsonc from the identical kilo.jsonc!!! inside the temporary copy; the checkout was not modified\n' >&2
-    fi
-}
-
 build_index_in() {
     local copy="$1" seed="$2" tmpdir="$3" output
     if ! output=$(cd "$copy" && TMPDIR="$tmpdir" PYTHONHASHSEED="$seed" \
@@ -63,8 +55,6 @@ check_index_reproducible() {
         rm -rf "$first" "$second" "$scratch"
         return 1
     fi
-    restore_missing_local_config "$first"
-    restore_missing_local_config "$second"
     if ! build_index_in "$first" 0 "$scratch/a" || ! build_index_in "$second" 12345 "$scratch/b"; then
         rm -rf "$first" "$second" "$scratch"
         return 1
@@ -87,7 +77,7 @@ check_index_reproducible() {
     rm -rf "$first" "$second" "$scratch"
 }
 
-run_ci() {
+run_gate() {
     check_read_only
     run_check "reproducible index" check_index_reproducible
     run_check "unit tests" python3 -m unittest discover -s doc/tools/tests -q
@@ -110,8 +100,8 @@ case "${1:-}" in
         printf 'OK: index freshness and reproducibility\n'
         exit 0
         ;;
-    --ci)
-        run_ci
+    --gate)
+        run_gate
         printf 'OK: index freshness, reproducibility, paths, unit tests, acceptance tests, UI-0001\n'
         exit 0
         ;;
@@ -120,8 +110,7 @@ case "${1:-}" in
         copy=$(mktemp -d)
         status=0
         if copy_project "$copy"; then
-            restore_missing_local_config "$copy"
-            (cd "$copy" && bash doc/tests/run.sh "${@:---ci}") || status=$?
+            (cd "$copy" && bash doc/tests/run.sh "${@:---gate}") || status=$?
         else
             printf 'ERROR in-copy: cannot copy project\n' >&2
             status=1
@@ -131,7 +120,7 @@ case "${1:-}" in
         ;;
     "") ;;
     *)
-        printf 'Usage: bash doc/tests/run.sh [--brief|--index-only|--ci|--in-copy [mode]]\n' >&2
+        printf 'Usage: bash doc/tests/run.sh [--brief|--index-only|--gate|--in-copy [mode]]\n' >&2
         exit 2
         ;;
 esac

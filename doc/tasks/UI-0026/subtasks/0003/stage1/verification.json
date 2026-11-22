@@ -3,11 +3,78 @@
   "task_key": "UI-0026-0003",
   "task_number": "0003",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:3c45c18d42fabc8bee791223d5376166be93037f5e6966c9c4cfd9d37707e377",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_contracts.CompatibilityTests -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-8"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -c 'import json,subprocess,sys\ndef run(*a):\n    p=subprocess.run([sys.executable,\"doc/tools/arch/__main__.py\",*a],capture_output=True,text=True)\n    assert p.returncode==0,(a,p.stderr)\n    return json.loads(p.stdout)[\"data\"]\nassert run(\"docs\",\"search\",\"коды выхода\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert \"Код\" in run(\"docs\",\"read\",\"REG-cli-command-map#exit-codes\",\"--json\")[\"content\"]\nassert \"Не сообщайте\" in run(\"docs\",\"read\",\"ENT-verification-evidence#invariants\",\"--json\")[\"content\"]\nassert run(\"docs\",\"search\",\"task close\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert \"close\" in run(\"docs\",\"read\",\"SPEC-cli-implementation#task-close\",\"--json\")[\"content\"]\nassert run(\"docs\",\"search\",\"закрытие задачи\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert run(\"docs\",\"context\",\"--task\",\"UI-0026\",\"--case\",\"CASE-1\",\"--json\")[\"complete\"] is True\nassert run(\"docs\",\"search\",\"SLA model routing\",\"--limit\",\"3\",\"--json\")[\"hits\"]==[]\nprint(\"pilot route OK\")'",
+      "exit_code": 0,
+      "cases": [
+        "CASE-9"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
-    {"id": "CASE-8", "covers": ["AC-1"], "expected": "Совместимость сохранена, справка и примеры согласованы, тесты проходят."},
-    {"id": "CASE-9", "covers": ["AC-2"], "expected": "Пять правильных исходов, медиана байтов ниже, число вызовов не выше."}
+    {
+      "id": "CASE-8",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Совместимость сохранена, справка и примеры согласованы, тесты проходят."
+    },
+    {
+      "id": "CASE-9",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Пять правильных исходов, медиана байтов ниже, число вызовов не выше."
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/system/addressable-contracts.md",
+      "sha256": "ff8fc9a362c106f4a6919a4ac14d34b225b110d336fa87c19c6324e7462f080f"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "b0aa80cd8ecaa432a58b3f4f5841cd45137e87502e1cd262a0dbc3af362b97dc"
+    },
+    {
+      "path": "doc/architecture/system/implementation-spec.md",
+      "sha256": "4b0d6788052bd7d3fddcd268a3eea8a182569a44b5dd850fd6f38876e56208c2"
+    },
+    {
+      "path": "doc/skills/arch-cli/SKILL.md",
+      "sha256": "81f8b84f1c30111216a59ea5ad544f9736463efd5107710ca0eed14308411742"
+    },
+    {
+      "path": "doc/tasks/UI-0026/subtasks/0003/stage1/plan.md",
+      "sha256": "1557b53f83ebf5ba8b763bb14a9786019eb13c60699187aef2200fd830b5c305"
+    },
+    {
+      "path": "doc/tests/test_doc_contracts.py",
+      "sha256": "7d1916241230fe15284974307541f3d0dd323521aa165c9bbadef758e80edf16"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "5f666f263558ee15ae1fd8a4b40d8e2e690441ba9fbaa79a8884e2e0857e1fa5"
+    },
+    {
+      "path": "doc/tools/arch/doc_ops.py",
+      "sha256": "f7398df9fe4f7417015ec896cd01e5fb0eb3b184975e7c814dbac9ac9b436a3a"
+    },
+    {
+      "path": "doc/tools/arch/sections.py",
+      "sha256": "24f9b2b1005881c3ed75e6218389b1192eca1bb39be2e3b1dcbce046eb5109b1"
+    }
   ]
 }

@@ -53,7 +53,7 @@ source_refs:
 1. Дать человеку и агенту краткий путь от системы/домена к нужной сущности, сценарию, правилу, решению или contract.
 2. Фиксировать то, что нельзя надёжно восстановить только из кода: границы, назначение, допущения, владельцев concerns, инварианты, намерения, компромиссы, межсистемные сценарии, release-specific поведение.
 3. Ссылаться на проверяемые implementation/contracts/tests вместо копирования их содержимого.
-4. Изменяться обычным docs-as-code workflow: diff, review, history, branch/merge, CI.
+4. Изменяться обычным docs-as-code workflow: diff, review, history, branch/merge и локальные проверки. CI/CD и Git-hosted workflow запрещены (см. `MAN-software-factory`, «Запреты в рамках workflow»).
 5. Быть пригодной для точечного retrieval. Агент начинает с короткой карты и загружает только документы, связанные с задачей и найденными зависимостями.
 6. Разделять подтверждённое текущее состояние, одобренное решение, предложение и нерешённый вопрос.
 
@@ -554,7 +554,7 @@ Only architecturally relevant constraints/risks belong here. If there is a forma
 ## Observability: key signals, SLO/alert references
 ## Operational ownership and runbooks
 ## Deployment/migration/rollback constraints
-## Sources: IaC, config, CI/CD, dashboards, runbooks, tests
+## Sources: IaC, config, локальные проверки, dashboards, runbooks, tests
 ```
 
 Do not copy live values/secrets from configuration. Treat `deployment.md` as a view over the IaC/config source; keep step-by-step human action in a runbook/how-to.
@@ -565,7 +565,7 @@ Do not copy live values/secrets from configuration. Treat `deployment.md` as a v
 | Contract/requirement/path ID | Expected observable behavior | Test ID or suite | Location/command | Evidence location | Status/waiver owner |
 ```
 
-This is an index of assurance links, not a replacement for executable tests or generated CI reports. `not run`/unknown is not pass. Add the map only when links cannot be discovered reliably from the test harness and stable IDs.
+This is an index of assurance links, not a replacement for executable tests or recorded local verification artifacts. `not run`/unknown is not pass. Add the map only when links cannot be discovered reliably from the test harness and stable IDs.
 
 #### J. Task/stage architecture delta
 
@@ -757,7 +757,7 @@ Stable JSON shape is in `schemas/index.schema.json` (or combined with doc schema
 Правила:
 
 - Пересобирать детерминированно; сортировка и сериализация стабильны, timestamps/build machine-specific paths в output не включать.
-- Хранить в docs-repo или генерировать/обновлять по оговорённой CI policy так, чтобы доступный агенту index не отставал от source docs. Рекомендация для Git-workflow — generated файл коммитится, а CI запускает `index check` и падает при drift.
+- Хранить в docs-repo или генерировать/обновлять так, чтобы доступный агенту index не отставал от source docs. Generated файл коммитится, а свежесть проверяется локально: `arch index check` и `bash doc/tests/run.sh --gate` падают при drift. CI/CD и Git-hosted workflow запрещены решением владельца; проверка всегда локальная и read-only относительно проверяемого checkout.
 - Человекочитаемый root `README.md` — короткая карта; он не обязан повторять весь JSON index. Domain README создавать, только если нужен curated entrypoint.
 - Индекс строить только из явных полей; не делать LLM-based categorization/indexing в CLI. Agent semantic selection выполняется после чтения небольшого индекса.
 
@@ -808,13 +808,13 @@ arch validate [--changed | --all]
 1. **`list`** выдаёт компактные явные metadata records для фильтров по точным полям; не применяет semantic similarity.
 2. **`show <id>`** разрешает ровно ID и возвращает path/metadata/content или явную ошибку `not found`/duplicate ID. По умолчанию не загружает всю базу.
 3. **`index build/check`** строит generated `index.json` детерминированно / проверяет отсутствие drift.
-4. **`validate`** проверяет YAML/frontmatter и JSON Schema; уникальные IDs и filename refs; относительные links/anchors; разрешённые `related` IDs; ссылки на task/stage/release/contract по зарегистрированной грамматике; синтаксис Mermaid/Markdown, если это поддерживается tooling. `--changed` — быстрая локальная проверка, полный check — CI gate.
+4. **`validate`** проверяет YAML/frontmatter и JSON Schema; уникальные IDs и filename refs; относительные links/anchors; разрешённые `related` IDs; ссылки на task/stage/release/contract по зарегистрированной грамматике; синтаксис Mermaid/Markdown, если это поддерживается tooling. `--changed` — быстрая локальная проверка, полный check — локальный gate (`bash doc/tests/run.sh --gate`).
 
 Можно объединить `list/show` с уже имеющимся grep/search CLI. Это не повод создавать полноценный search service. Machine report — стабильный JSON с `code`, file/path/JSON Pointer, message и exit code; ошибки actionable и не требуют чтения лога модели.
 
 ### 8.2 Write operations: принятое решение
 
-**Базовый способ:** агент вносит обычный минимальный filesystem diff в docs-repo worktree/ветке; человек может сделать то же. Документ — обычный Markdown, frontmatter проверяется CLI/CI. Commit/PR обеспечивает review, Git history и merge-conflict detection.
+**Базовый способ:** агент вносит обычный минимальный filesystem diff в docs-repo worktree/ветке; человек может сделать то же. Документ — обычный Markdown, frontmatter проверяется CLI. Commit/PR обеспечивает review, Git history и merge-conflict detection; обязательных проверок на стороне Git-хоста нет.
 
 **Не делать обязательными** команды `glossary add term`, `entity edit`, `flow update`, `adr close` в первой версии. Они дублируют редактируемость Markdown и навязывают структурированный payload, хотя семантический выбор/текст всё равно производит агент. Сам вызов CLI не снижает token consumption. Он может помочь только если сокращает подаваемый контекст/output или устраняет измеримые ошибки.
 
@@ -942,7 +942,7 @@ CLI не fuzzy-матчит архитектурные документы и н�
 - Важна ли decision для ADR, получено ли согласие и статус не перепутан ли.
 - Соответствуют ли новые docs изменениям code/tests и не устарели ли соседние docs.
 
-Автоматический parser/LLM self-report не даёт доказательства семантической актуальности. Не маркировать `verified` от факта, что линтер/CI прошёл.
+Автоматический parser/LLM self-report не даёт доказательства семантической актуальности. Не маркировать `verified` от факта, что линтер или локальная проверка прошла.
 
 ---
 
@@ -992,7 +992,7 @@ CLI не fuzzy-матчит архитектурные документы и н�
 - точные approval/code-owner policy для архитектурных decisions и docs merge;
 - schema evolution policy для frontmatter и generated index.
 
-Если это всё ещё не определено, использовать placeholder как unresolved и не выдумывать участников/версии/release list. Tabletop walkthrough после specification — completeness check, не agent run/empirical pilot. Любой будущий pilot по-прежнему требует репозитория, acceptance oracle, надёжного CI, изолированного sandbox, ownership/approval, baseline/eval set и stop/rollback пути.
+Если это всё ещё не определено, использовать placeholder как unresolved и не выдумывать участников/версии/release list. Tabletop walkthrough после specification — completeness check, не agent run/empirical pilot. Любой будущий pilot по-прежнему требует репозитория, acceptance oracle, надёжного локального gate, изолированного sandbox, ownership/approval, baseline/eval set и stop/rollback пути.
 
 ---
 
@@ -1090,6 +1090,7 @@ The scanner may generate evidence-backed **candidate findings или document de
 | `bugfix` | Исправление дефекта | `standard-implementation`, `minimal-scaffold` | optional | все подзадачи должны быть закрыты |
 | `docs` | Документация | `docs-only` | optional | все подзадачи должны быть закрыты |
 | `refactor` | Рефакторинг | `standard-implementation`, `minimal-scaffold` | optional | все подзадачи должны быть закрыты |
+| `subtask` | Лист работы внутри родительской задачи | нет | forbidden | все подзадачи должны быть закрыты |
 | `scaffold` | Создание заготовки | `minimal-scaffold` | forbidden | все подзадачи должны быть закрыты |
 
 ### Поля task.json, добавляемые структурой task-conf
@@ -1099,7 +1100,8 @@ The scanner may generate evidence-backed **candidate findings или document de
 - **`task_type`** — один из зарегистрированных типов (см. `arch task types`).
 - **`flow`** — идентификатор flujo, закреплённый за задачей; должен быть в `allowed_flows` для выбранного `task_type`. CLI валидирует совместимость при `arch task validate`.
 - **`complexity`** — `low` / `medium` / `high` / `critical`; стартовое значение берётся из `complexity_default` типа.
-- **`subtasks`** — массив `{id, title, status, path}`; задаётся при декомпозиции через `arch task decompose`.
+- **`estimate_hours`** — положительное число часов работы агента; ставит агент по перечню работ. Необязательное поле.
+- **`subtasks`** — массив `{id, title, status, path}`; задаётся при декомпозиции через `arch task decompose`. Запись может содержать выбранные агентом `task_type`, `flow`, `complexity` и `estimate_hours` ребёнка.
 - **`implementation_plan`** — требуется для типов, где указано в `required_fields`.
 - **`research_docs`** — массив研究-документов задачи, см. раздел 17.
 

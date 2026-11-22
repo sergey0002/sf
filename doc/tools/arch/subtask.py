@@ -19,25 +19,36 @@ def subtask_dir(root, parent_task_key: str, subtask_id: str) -> Path:
 
 
 def scaffold_subtask_json(
-    parent_task_key: str, subtask_id: str, subtask_title: str | None = None
+    parent_task_key: str,
+    subtask_id: str,
+    subtask_title: str | None = None,
+    *,
+    task_type: str | None = None,
+    flow: str | None = None,
+    complexity: str | None = None,
+    estimate_hours: float | None = None,
 ) -> str:
-    """Build a minimal scaffold task.json for a subtask under the given parent."""
+    """Build a subtask task.json from the shape chosen by the agent.
+
+    The agent decides the work shape. Callers pass the parent's values as a
+    default and may override them per child; nothing is hardcoded to a
+    scaffold-only record.
+    """
     subtask_key = f"{parent_task_key}-{subtask_id}"
-    data = json.loads(json.dumps(TASK_DIR_TEMPLATE)) if False else None
-    # Use scaffold_task_json template then override title
-    from .schema import TASK_DIR_TEMPLATE
     import json as _json
+
+    from .schema import TASK_DIR_TEMPLATE
+
     data = _json.loads(_json.dumps(TASK_DIR_TEMPLATE))
     data["task_key"] = subtask_key
     data["task_number"] = subtask_id
     data["source"]["type"] = "ui"
-    # Subtasks are leaf work items. Use scaffold type (required_fields: [],
-    # subtask_policy: forbidden, allowed_flows: [minimal-scaffold]) so empty
-    # subtasks list is valid and no extra type-specific fields are required.
-    data["task_type"] = "scaffold"
-    data["flow"] = "minimal-scaffold"
+    data["task_type"] = task_type or "subtask"
+    data["flow"] = flow
+    data["complexity"] = complexity or "low"
+    if estimate_hours is not None:
+        data["estimate_hours"] = estimate_hours
     data["research_docs"] = []
-    data["complexity"] = "low"
     if subtask_title:
         data["title"] = subtask_title
     return _json.dumps(data, ensure_ascii=False, indent=2) + "\n"

@@ -19,7 +19,7 @@ FENCE = re.compile(r"^\s*(```+|~~~+)")
 
 # --- Task identity contract ----------------------------------------------------
 
-# Four-digit task number (e.g. 0427, 0001). Never allocated automatically.
+# Four-digit task number (e.g. 0427, 0001). UI next number is read from the registry.
 TASK_NUMBER_RE = re.compile(r"^[0-9]{4}$")
 
 # Source prefix: 1-8 uppercase letters/digits, starting with a letter.

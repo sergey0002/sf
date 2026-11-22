@@ -3,7 +3,8 @@
 Split into modules so the codebase stays maintainable and extensible:
 
 - constants.py  — regexes, enums, task.json schema template
-- identity.py   — task-key derivation (never allocates numbers)
+- identity.py   — task-key derivation from source, number and prefix
+- task_registry.py — CLI-owned JSON task-number registry and allocation
 - schema.py     — task.json scaffold
 - validation.py — task.json structure validation
 - store.py      — ArchitectureStore (documents, index, links, refs)

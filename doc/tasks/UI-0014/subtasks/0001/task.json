@@ -20,7 +20,6 @@
   "scope": {
     "in": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -34,7 +33,6 @@
     ],
     "allowed_files_modules": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -70,7 +68,6 @@
   "authority": {
     "allowed": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",

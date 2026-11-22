@@ -11,15 +11,19 @@
     "captured_at": "2026-11-22",
     "attachments": [],
     "comments": [],
-    "history": []
+    "history": [
+      {
+        "at": "2026-11-22",
+        "change": "Владелец запретил CI/CD и Git-hosted workflow; AC-2 переформулирован на локальный gate, .github/workflows удалён из scope."
+      }
+    ]
   },
-  "title": "Воспроизводимая установка и CI",
+  "title": "Воспроизводимая установка и локальный gate",
   "kind": "feature",
   "intent": "Собрать релизный артефакт и проверить установку вне исходного checkout. Отделить read-only проверку индекса от пробной пересборки.",
   "scope": {
     "in": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -32,7 +36,6 @@
     ],
     "allowed_files_modules": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -51,7 +54,7 @@
   "acceptance_policy": "case-coverage-v1",
   "acceptance_criteria": [
     "AC-1: Из установленного пакета доступны CLI и runtime-ресурсы; версия совпадает с метаданными пакета.",
-    "AC-2: CI ловит устаревший индекс до пересборки и проверяет воспроизводимость в отдельном дереве."
+    "AC-2: Локальный gate ловит устаревший индекс до пересборки и проверяет воспроизводимость в отдельном дереве; CI/CD и Git-hosted workflow запрещены."
   ],
   "target_release": "unset",
   "project_context_refs": [
@@ -69,7 +72,6 @@
   "authority": {
     "allowed": [
       "pyproject.toml",
-      ".github/workflows/",
       "doc/tools/",
       "doc/tests/",
       "doc/architecture/",
@@ -98,7 +100,7 @@
     },
     {
       "id": "0002",
-      "title": "Проверки CI и свежести индекса",
+      "title": "Проверки локального gate и свежести индекса",
       "status": "completed",
       "path": "subtasks/0002/task.json"
     }
@@ -133,8 +135,7 @@
   "research_docs": [],
   "changed_files": {
     "added": [
-      "pyproject.toml",
-      ".github/workflows/ci.yml"
+      "pyproject.toml"
     ],
     "modified": [
       "README.md",

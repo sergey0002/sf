@@ -57,16 +57,19 @@ UniqueKeyLoader.add_constructor(
 )
 
 
-DEFAULT_ROOTS = {
-    ROOT_ARCHITECTURE_KEY: "doc/architecture",
-    ROOT_TASKS_KEY: "doc/tasks",
-    ROOT_SCHEMAS_KEY: "doc/architecture/schemas",
-    ROOT_TASK_CONF_KEY: "doc/config/task-conf",
-    ROOT_SKILLS_KEY: "doc/skills",
-    ROOT_REFERENCE_KEY: "data",
-    ROOT_INDEX_KEY: "index.json",
-    ROOT_CONFIG_KEY: "doc/config",
+DEFAULT_ROOT_SUFFIXES = {
+    ROOT_ARCHITECTURE_KEY: "architecture",
+    ROOT_TASKS_KEY: "tasks",
+    ROOT_SCHEMAS_KEY: "architecture/schemas",
+    ROOT_TASK_CONF_KEY: "config/task-conf",
+    ROOT_SKILLS_KEY: "skills",
+    ROOT_CONFIG_KEY: "config",
 }
+DEFAULT_ROOTS = {
+    key: f"doc/{suffix}" for key, suffix in DEFAULT_ROOT_SUFFIXES.items()
+}
+DEFAULT_ROOTS[ROOT_REFERENCE_KEY] = "data"
+DEFAULT_ROOTS[ROOT_INDEX_KEY] = "index.json"
 
 
 class ProjectConfig:
@@ -122,6 +125,7 @@ class ProjectConfig:
 
     def expand_pattern(self, pattern: str) -> str:
         """Expand configured roots, leaving record-level placeholders intact."""
+        pattern = pattern.replace("{doc_root}", self.doc_root.relative_to(self.root).as_posix())
         pattern = pattern.replace("{architecture}/{index}", "{index}")
         for key, path in self.roots.items():
             placeholder = "{" + key + "}"
@@ -218,11 +222,15 @@ def load_project_config(
             if key not in DEFAULT_ROOTS:
                 raise ValueError(f"unknown roots key: {key!r}")
 
-        _resolve_location(root, raw.get("doc_root", "doc"), "doc_root")
+        doc_root_value = raw.get("doc_root", "doc")
+        doc_root = _resolve_location(root, doc_root_value, "doc_root")
+        doc_prefix = Path(doc_root_value).as_posix().strip("/")
         roots = {}
         for key, default in DEFAULT_ROOTS.items():
             if key == ROOT_INDEX_KEY:
                 continue
+            if key in DEFAULT_ROOT_SUFFIXES:
+                default = f"{doc_prefix}/{DEFAULT_ROOT_SUFFIXES[key]}"
             path = _resolve_location(root, raw_roots.get(key, default), f"roots.{key}",
                                      contained=key != ROOT_REFERENCE_KEY)
             if key != ROOT_REFERENCE_KEY and not path.is_dir():

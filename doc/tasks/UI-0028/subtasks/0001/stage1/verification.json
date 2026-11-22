@@ -1,0 +1,15 @@
+{
+  "task_key": "UI-0028-0001",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-1", "covers": ["AC-1"], "expected": "validate/check exit 0; build создаёт 4 производных и идемпотентен"},
+    {"id": "CASE-2", "covers": ["AC-1"], "expected": "check exit 1 при drift, glossary.json не изменён"},
+    {"id": "CASE-3", "covers": ["AC-2"], "expected": "Дубль TERM-* отвергнут"},
+    {"id": "CASE-4", "covers": ["AC-2"], "expected": "Пересечение official/search и avoid/term отвергнуто"},
+    {"id": "CASE-5", "covers": ["AC-2"], "expected": "ID вне TERM-<domain>-<slug> отвергнут"},
+    {"id": "CASE-22", "covers": ["AC-8"], "expected": "ADR фиксирует JSON-источник и границу CLI"}
+  ]
+}

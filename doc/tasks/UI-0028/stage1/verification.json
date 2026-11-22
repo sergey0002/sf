@@ -1,0 +1,219 @@
+{
+  "task_key": "UI-0028",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "validate/check exit 0; build создаёт 4 производных и идемпотентен"
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "check exit 1 при drift производных, glossary.json не изменён"
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Дубль TERM-* отвергнут с указанием ID"
+    },
+    {
+      "id": "CASE-4",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Пересечение official/search и avoid/term отвергнуто"
+    },
+    {
+      "id": "CASE-5",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "ID вне TERM-<domain>-<slug> отвергнут"
+    },
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "lookup возвращает одну запись с официальным term"
+    },
+    {
+      "id": "CASE-7",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Неизвестный TERM-* — exit 1 без данных"
+    },
+    {
+      "id": "CASE-8",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "search по search_synonym даёт match_type и официальный display_term"
+    },
+    {
+      "id": "CASE-9",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Точное совпадение выше префиксного, порядок детерминирован"
+    },
+    {
+      "id": "CASE-10",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "match отдаёт позиции термина и синонима, avoid не считается вхождением"
+    },
+    {
+      "id": "CASE-11",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "Longest match побеждает, вложенный термин не дублируется"
+    },
+    {
+      "id": "CASE-12",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "declared и inferred раздельны, inferred помечен"
+    },
+    {
+      "id": "CASE-13",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "Объявленный термин не подменяется inferred"
+    },
+    {
+      "id": "CASE-14",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "referenced_by содержит задачу и документ с путями"
+    },
+    {
+      "id": "CASE-15",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "Неразрешённый TERM-* — exit 1 с файлом и полем"
+    },
+    {
+      "id": "CASE-16",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "Термин без ссылок перечислен как неиспользуемый, не ошибка"
+    },
+    {
+      "id": "CASE-17",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "--dry-run не изменяет байты glossary.json"
+    },
+    {
+      "id": "CASE-18",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Синоним записан, check проходит, повтор — exit 5"
+    },
+    {
+      "id": "CASE-19",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Пересечение синонимов — exit 1, файл не изменён"
+    },
+    {
+      "id": "CASE-20",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "deprecate пишет статус и superseded_by, проверки проходят"
+    },
+    {
+      "id": "CASE-21",
+      "covers": [
+        "AC-6"
+      ],
+      "expected": "Неизвестный термин или пустое определение — exit 1 без записи"
+    },
+    {
+      "id": "CASE-22",
+      "covers": [
+        "AC-8"
+      ],
+      "expected": "ADR фиксирует JSON-источник и границу CLI; validate и index check проходят"
+    },
+    {
+      "id": "CASE-23",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "docs search находит документ по синониму с term_declared 900 и заполненным glossary"
+    },
+    {
+      "id": "CASE-24",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "--no-expand-terms возвращает прежнее поведение без терминов"
+    },
+    {
+      "id": "CASE-25",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "avoid не расширяет запрос и не даёт glossary-хит"
+    },
+    {
+      "id": "CASE-26",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "scan классифицирует avoid как error и не меняет файлы"
+    },
+    {
+      "id": "CASE-27",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "scan даёт warning и info; --suggest не пишет"
+    },
+    {
+      "id": "CASE-28",
+      "covers": [
+        "AC-10"
+      ],
+      "expected": "Код-блоки, frontmatter и ссылки исключены из скана"
+    },
+    {
+      "id": "CASE-29",
+      "covers": [
+        "AC-11"
+      ],
+      "expected": "lint даёт warning для синонима и error для avoid с позициями"
+    },
+    {
+      "id": "CASE-30",
+      "covers": [
+        "AC-11"
+      ],
+      "expected": "docs context включает определения объявленных терминов"
+    }
+  ]
+}

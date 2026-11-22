@@ -1,0 +1,61 @@
+version: "1.0"
+
+# Client-neutral execution policy translated from the former Kilo profile.
+# CLI reads this file from roots.config; clients must not store project policy.
+
+operator:
+  id: factory-operator
+  description: >-
+    Inspect tasks, preview closure, and check architecture through the public CLI.
+  prompt: >-
+    Follow AGENTS.md and use the documented CLI with exact help. Return the result
+    or blocker. Do not diagnose CLI source unless the task changes the CLI.
+
+skills:
+  - arch-cli
+  - architecture-read
+
+default: deny
+
+allow:
+  read:
+    - "*"
+  skills:
+    - arch-cli
+    - architecture-read
+  commands:
+    - "git status"
+    - "arch --help"
+    - "arch list"
+    - "arch show"
+    - "arch validate"
+    - "arch scan"
+    - "arch index --help"
+    - "arch index check"
+    - "arch docs --help"
+    - "arch docs paths --help"
+    - "arch docs paths --check"
+    - "arch docs paths --resolved"
+    - "arch docs related"
+    - "arch docs tree"
+    - "arch task --help"
+    - "arch task validate"
+    - "arch task diagnose"
+    - "arch task status"
+    - "arch task workspace"
+    - "arch task subtask --help"
+    - "arch task subtask validate"
+    - "arch task subtask status"
+    - "arch task types"
+    - "arch task flows"
+    - "arch task type-prompt"
+    - "arch task flow-prompt"
+    - "arch task flow-steps"
+    - "arch task close --help"
+    - "arch task close --dry-run --json"
+
+deny:
+  read:
+    - "{tools}/arch/*"
+  commands:
+    - "git push"

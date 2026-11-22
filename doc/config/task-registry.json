@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_key": "UI-0001",
+      "task_number": "0001",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0002",
+      "task_number": "0002",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0003",
+      "task_number": "0003",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0004",
+      "task_number": "0004",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0005",
+      "task_number": "0005",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0006",
+      "task_number": "0006",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0007",
+      "task_number": "0007",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0008",
+      "task_number": "0008",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0009",
+      "task_number": "0009",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0010",
+      "task_number": "0010",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0011",
+      "task_number": "0011",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0012",
+      "task_number": "0012",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0013",
+      "task_number": "0013",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0014",
+      "task_number": "0014",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0015",
+      "task_number": "0015",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0016",
+      "task_number": "0016",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0017",
+      "task_number": "0017",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0018",
+      "task_number": "0018",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0019",
+      "task_number": "0019",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0020",
+      "task_number": "0020",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0021",
+      "task_number": "0021",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0022",
+      "task_number": "0022",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0023",
+      "task_number": "0023",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0024",
+      "task_number": "0024",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0025",
+      "task_number": "0025",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0026",
+      "task_number": "0026",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0027",
+      "task_number": "0027",
+      "source": "ui",
+      "title": null,
+      "created_at": null
+    },
+    {
+      "task_key": "UI-0028",
+      "task_number": "0028",
+      "source": "ui",
+      "title": "Глоссарий: JSON-канон, CLI-поиск и синонимы",
+      "created_at": "2026-11-22T16:53:44Z"
+    }
+  ]
+}

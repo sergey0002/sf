@@ -221,8 +221,9 @@ Deliverables:
 - inventory `implemented / partial / specified / absent`;
 - ADR: task record, workflow state, approvals, allocator, execution boundary;
 - `pyproject.toml`, console entry point, pinned dependencies и version output;
-- versioned CI с unit, acceptance, architecture validation, index freshness и path checks;
-- versioned pre-commit configuration как локальное ускорение, но не замена CI;
+- локальный versioned gate `bash doc/tests/run.sh --gate` с unit, acceptance, architecture validation, index freshness и path checks;
+- локальная проверка перед коммитом как ускорение, но не замена gate;
+- **CI/CD и Git-hosted workflow запрещены** решением владельца 2026-11-22: никаких `.github/workflows/`, GitLab CI, Jenkinsfile и аналогов;
 - schema version policy и fixtures предыдущей версии;
 - benchmark corpus и baseline текущего kernel;
 - threat-model baseline и список protected paths.
@@ -236,7 +237,7 @@ Deliverables:
 **Exit gate**
 
 - установка и CLI воспроизводятся из clean checkout;
-- CI запускает существующие 5+35 тестов;
+- локальный gate запускает существующие unit и acceptance тесты;
 - dependency versions зафиксированы;
 - benchmark tasks, oracle и scoring versioned;
 - конкурентное утверждение содержит source, date, scenario и result.
@@ -808,7 +809,7 @@ Flow в YAML задаёт начальное состояние, состоян�
 | **P01. Готовность закрытия**, v0.1 | `bugfix / standard-implementation` | — | Общая проверка для `diagnose` и `close`, стабильный JSON и предпросмотр. Один и тот же ID отсутствующего обязательного ребёнка в обоих ответах, отказ оставляет файлы неизменными, валидная совместимая задача закрывается. §15, §17, §21–22. |
 | **P02. Проектный YAML и корни**, v0.1 | `feature / standard-implementation` | — | Дети: загрузчик и контракт конфигурации, перевод потребителей с интеграционными проверками. Стандартное, перенесённое и игнорируемое Git размещение проходит `list/show/index/validate/paths` и диагностику задач. Неверный конфиг даёт точную ошибку до записи. §23. |
 | **P03. Устойчивые записи и модульность CLI**, v0.1 | `refactor / standard-implementation` | P01, P02 | Отделить сценарии lifecycle от CLI, проверить пакет декомпозиции целиком, обработать прерванную запись. Коллизии и некорректные связи не оставляют частично созданную задачу. Старые команды и выходные форматы сохраняют совместимость, согласованные изменения покрыты тестами. §15, §17, §21. |
-| **P04. Установка и CI**, v0.1 | `feature / standard-implementation` | P02 | Дети: упаковка и установка из артефакта, раздельные проверки в CI. Чистая установка запускает CLI, CI выявляет устаревший индекс до сборки и проверяет воспроизводимость во временном дереве. Проверки запускаются через существующие интерфейсы. §7, §19. |
+| **P04. Установка и локальный gate**, v0.1 | `feature / standard-implementation` | P02 | Дети: упаковка и установка из артефакта, раздельные локальные проверки. Чистая установка запускает CLI, локальный gate выявляет устаревший индекс до сборки и проверяет воспроизводимость во временном дереве. CI/CD и Git-hosted workflow запрещены. Проверки запускаются через существующие интерфейсы. §7, §19. |
 | **P05. Каталог навыков и базовый прогон**, v0.1 | `docs / docs-only` | P01 | Описать четыре текущих скилла, собрать учебный пример и критерии сравнения. Из чистой сессии можно найти нужную команду, пройти учебную задачу и воспроизвести baseline. §8, §18, §20. |
 | **P06. Версионированный task record**, v0.2 | `feature / standard-implementation` | P03 | Дети: схемы и совместимое чтение, запись переходов и восстановление. Задача хранит версию flow, изменяемое состояние и ссылку на intent. Старые fixtures читаются, миграция повторяема, конфликт ревизии и повтор события не портят данные. §6–7, §21. |
 | **P07. Два flow и зависимости**, v0.2 | `feature / standard-implementation` | P06 | Дети: формат и статические проверки, переходы и готовность детей. Прогнать `bugfix` с возвратом после проверки и короткий `docs-only`. Неизвестный вход, пересекающиеся правила, недействительные ссылки и циклы дают объяснимую диагностику. §21. |

@@ -5,3 +5,6 @@ __pycache__/
 
 # Windows alternate-data-stream export artifacts
 *:Zone.Identifier
+
+# Codebase memory index
+.codebase-memory/

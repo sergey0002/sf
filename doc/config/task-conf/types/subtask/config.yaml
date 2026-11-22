@@ -1,0 +1,20 @@
+id: subtask
+title: Подзадача
+description: |
+  Самостоятельный проверяемый результат внутри родительской задачи. Семантические
+  поля обязательны, дальнейшая декомпозиция запрещена: лист работы, а не контейнер.
+complexity_default: low
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows: []
+default_flow: null
+subtask_policy: forbidden
+close_policy: all_subtasks_required
+required_fields:
+  - acceptance_criteria
+  - implementation_plan
+forbidden_in_scope:
+  - "дальнейшая декомпозиция: для этого выберите concrete type или создайте отдельную задачу"

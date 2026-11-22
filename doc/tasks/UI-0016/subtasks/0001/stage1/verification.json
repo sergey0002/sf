@@ -3,15 +3,25 @@
   "task_key": "UI-0016-0001",
   "task_number": "0001",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:9c6b00274cdebc9c32503c53297b6c2c935c48334636c1a802bdd547958b564f",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_record_migration_preserves_intent_and_is_repeatable -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
+      "id": "CASE-1",
       "covers": [
         "AC-1"
       ],
-      "expected": "AC-1: Предпросмотр миграции сохраняет все обязательные данные и повторяем."
+      "expected": "Dry-run writes nothing; migration preserves intent and a repeated migration adds no event."
     }
   ],
   "baseline_commands": [
@@ -19,5 +29,27 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/tasks/UI-0016/subtasks/0001/stage1/plan.md",
+      "sha256": "37d495beab2775f53ba6343508fdf2c9f899cb086f54a2ab26f6cd0a3fff5d27"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "787777763667f8cf3190aa5a049a9a1446c4032ecf7e48a3e748eb9211484022"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7e665aa28125a87263cff6351b8041685255314ee75a1b61acdee9cdd0dfcb81"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "4c54a9215d9dac8378b340b2efdf10edae583c561543ecf1538bf0699b1e8c51"
+    },
+    {
+      "path": "doc/tools/arch/task_record.py",
+      "sha256": "5d98febb603f01d7a0995937faa276be267aa9ad1517961aba78c45e27b3911c"
+    }
   ]
 }

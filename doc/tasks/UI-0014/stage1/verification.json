@@ -61,7 +61,7 @@
       "result": "Command exited with status 0."
     },
     {
-      "command": "bash doc/tests/run.sh --in-copy --ci",
+      "command": "bash doc/tests/run.sh --in-copy --gate",
       "exit_code": 0,
       "cases": [
         "CASE-2"
@@ -82,49 +82,61 @@
       "covers": [
         "AC-2"
       ],
-      "expected": "AC-2: A stale index fails before any rebuild, the checkout stays unchanged, and two rebuilds with different hash seeds are byte-identical."
+      "expected": "AC-2: The local gate rejects a stale index before any rebuild, leaves the checkout unchanged, and two rebuilds with different hash seeds are byte-identical. No CI/CD or Git-hosted workflow exists."
     }
   ],
   "snapshot_files": [
     {
-      "path": ".github/workflows/ci.yml",
-      "sha256": "4213b673442d2e456582fda996b555b1953daf918ead12dedb11c2fa37c5e6a6"
-    },
-    {
       "path": "README.md",
-      "sha256": "5bc7c12ec43dd9d489b4fd73e7fca2fb0d0cbea4d7351c62843473c14a0e8d3c"
+      "sha256": "a1cd25afbcedda890ad07f0c2f50de1767dc6d2a29f32e5f97f5526b1d858797"
     },
     {
       "path": "doc/architecture/index.json",
-      "sha256": "e6d61a8e8589922223c199da06d505dfc7c600048e9b99f3b500eec2833d7882"
+      "sha256": "5c951db429d00a7255da7f2ace5a09180843f8e95a1ac93f96d77003438082f3"
+    },
+    {
+      "path": "doc/architecture/system/architecture-contract.md",
+      "sha256": "15f58a9ad7054c6c3fed9cfdc48808adc80f4c5917e6b73342c462f1a1b526f1"
     },
     {
       "path": "doc/architecture/system/cli-command-map.md",
-      "sha256": "e7fea97ca55502c4c64876180c98d8a5c65529249ca4bc3f3e3e0ba34780b865"
+      "sha256": "b0aa80cd8ecaa432a58b3f4f5841cd45137e87502e1cd262a0dbc3af362b97dc"
     },
     {
       "path": "doc/architecture/system/cli-package.md",
-      "sha256": "15c666fa5aefc4e76eb5806db422be3a9caa5e9c16f17df1aae54947a11b1070"
+      "sha256": "a18dbeee90a5569ba7cc2a658ac351f070ff8f2110214b17a57940724fc4d1da"
+    },
+    {
+      "path": "doc/architecture/system/constraints-risks.md",
+      "sha256": "f92d0333faf80325230bd5a4209c74a942d1a160d608747b75c01bd47a65a40f"
     },
     {
       "path": "doc/architecture/system/implementation-spec.md",
-      "sha256": "f34b38f68a646845cf59a4e093f3958ecd17fff02f5f8573fcba07e9222cf337"
+      "sha256": "4b0d6788052bd7d3fddcd268a3eea8a182569a44b5dd850fd6f38876e56208c2"
+    },
+    {
+      "path": "doc/architecture/system/manifest.md",
+      "sha256": "91c7218e3b130df7618329712eb3d9c55ac9a3b7e478c420e75996c18d0c2cdf"
+    },
+    {
+      "path": "doc/architecture/system/task-number-registry.md",
+      "sha256": "0e29db671518c7da36dce2a57771b174bad0e2ee3d08292c776632d03d5fb189"
     },
     {
       "path": "doc/architecture/system/testing.md",
-      "sha256": "4cf29e45ee6604414da23449560bd3f522fb0530376f3d5a04822722720cbeb7"
+      "sha256": "77af6cfd6de8c36deea085b42edfd5f05b550b827640b7fb7d3e8689680b4a5f"
     },
     {
       "path": "doc/tasks/UI-0014/stage1/plan.md",
-      "sha256": "db64f8decefda92904db5af1621a1828786698604b8f98c9aea2a6e4d9e8e6da"
+      "sha256": "eadd983c9852131e2f253f247be76632cdc6acc1d7d7a3e5942a348f6f0a389f"
     },
     {
       "path": "doc/tests/README.md",
-      "sha256": "751df11774eab021b926cab36f710a820bbe7c1c35e6a1aaf8a07cea0f18a85e"
+      "sha256": "ef6502ac6960e103f8c09a1d0efdf65188dd510690614bc68d0707d5e60ef72a"
     },
     {
       "path": "doc/tests/run.sh",
-      "sha256": "2f6c16169825e177f9296f48a6410756907a16ddbbe13b2a805acc4b9fcd725e"
+      "sha256": "678553182edfb3c80e20518263b83cda91b54dcf325c347723b2a40ef94574d0"
     },
     {
       "path": "doc/tests/test_task_identity.py",
@@ -159,5 +171,5 @@
       "sha256": "20e408dbd8cb4e6b6a05398c34c17b21848843a51288885effa140c5e61da9eb"
     }
   ],
-  "checked_revision": "sha256:552eb3e5bb7344ca99885152325ac35ca909f21decd7533d157392b7206ac576"
+  "checked_revision": "sha256:9d4784e35c10e88c1af91471ac60049ded7c00ada85cb8d8f1b7ddd9d9938f89"
 }

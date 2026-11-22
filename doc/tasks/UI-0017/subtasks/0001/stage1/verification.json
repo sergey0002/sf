@@ -3,9 +3,16 @@
   "task_key": "UI-0017-0001",
   "task_number": "0001",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:c2a17ac32a7932389a93e70a35db94d970ce6758a4f06c855de04778e8c8fe47",
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s doc/tests -p test_task_identity.py -k flow -q",
+      "exit_code": 0,
+      "cases": [],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
       "covers": [
@@ -19,5 +26,51 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/schemas/flow-selection.schema.json",
+      "sha256": "3bdd3ac06dc4fa98f6bd3c14d223afb425d611346dbd49c86a39ea27656b6465"
+    },
+    {
+      "path": "doc/architecture/schemas/flow.schema.json",
+      "sha256": "91f175ec94c45c3c5c474b2b72b1a4dfb26c962a42ff8c92320624f458085314"
+    },
+    {
+      "path": "doc/config/task-conf/types/bugfix/flow-selection.yaml",
+      "sha256": "145a832b19bcfbc8a042c26ba57199b861f3ec285a122e71c7911fc4df6f5519"
+    },
+    {
+      "path": "doc/config/task-conf/types/bugfix/flows/standard-implementation/config.yaml",
+      "sha256": "3fbb6015406b0577b2c0d70f827b7e0ba927d55cd41c0e1817f14aaeb298dd81"
+    },
+    {
+      "path": "doc/config/task-conf/types/docs/flow-selection.yaml",
+      "sha256": "27091c6c44bd2989de3839c18a72c63c462d522339711b11775170616edceeaa"
+    },
+    {
+      "path": "doc/config/task-conf/types/docs/flows/docs-only/config.yaml",
+      "sha256": "6774cbf70a5dc184bef178f8830f9d4d51999c6df8325092cb84445f5cf32d3e"
+    },
+    {
+      "path": "doc/tasks/UI-0017/subtasks/0001/stage1/plan.md",
+      "sha256": "0e05fe86cdfe4117851addd6ea60f7925e26c5f05a504cef55c71166dc0a5afc"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "1fbbcb1a53874cf86eca87f55f9c3dd70fc99c771851f6e1059d7ee64e58cb48"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "2e42891587ac7b5e0db9c1e0e712ed0b175f2e29047b165f026bde38328ddf1d"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7e665aa28125a87263cff6351b8041685255314ee75a1b61acdee9cdd0dfcb81"
+    },
+    {
+      "path": "doc/tools/arch/flows.py",
+      "sha256": "473d9bff78256adc231bfb06215cd16c7f16ea5c454521a59122899904867820"
+    }
   ]
 }

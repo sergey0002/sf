@@ -37,10 +37,11 @@
       "doc/architecture/"
     ]
   },
-  "current_behavior": "Исходные сведения и ограничения: nextplan.md §21. Уточнить baseline в начале выполнения.",
+  "current_behavior": "До изменения не было вычисления переходов, flow_state и готовности детей; зависимости подзадач не проверялись.",
   "evidence": [
     "nextplan.md §21",
-    "nextplan.md §24, P07"
+    "nextplan.md §24, P07",
+    "python3 -m unittest discover -s doc/tests -p test_task_identity.py -q"
   ],
   "contracts_and_invariants": [
     "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
@@ -89,7 +90,7 @@
     "UI-0016",
     "UI-0017-0001"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Связать события и конструктор графа подзадач с CLI."
@@ -115,7 +116,13 @@
   "research_docs": [],
   "changed_files": {
     "added": [],
-    "modified": [],
+    "modified": [
+      "doc/tools/arch/task_record.py",
+      "doc/tools/arch/task_ops.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/cli/commands/task.py",
+      "doc/tests/test_task_identity.py"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -123,7 +130,8 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed",
+      "result": "Добавлены flow.transitioned, task advance, зависимости детей, ready/blocked и fixtures отказов без записи."
     }
   ]
 }

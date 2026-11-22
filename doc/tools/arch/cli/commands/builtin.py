@@ -33,6 +33,7 @@ from arch.validation import (
     load_task_conf_types,
 )
 from arch.body_validation import validate_document_body
+from arch.flows import load_selection, validate_flow_definition
 from arch.doc_ops import (
     DEFAULT_CONTEXT_BYTES,
     DEFAULT_READ_BYTES,
@@ -46,6 +47,7 @@ from arch.doc_ops import (
 )
 from arch.project_config import ProjectConfig
 from arch.task_ops import pending_write
+from arch.task_record import record_errors
 
 
 # ============================================================================
@@ -470,6 +472,7 @@ def _scan_all_tasks(project_config: ProjectConfig) -> list[dict[str, str]]:
             })
             continue
         errors = validate_task_json(data, task_key, project_config)
+        errors.extend(record_errors(project_config, task_dir_path, data, task_key))
         task_md = task_dir_path / "task.md"
         if task_md.exists():
             errors.append(
@@ -514,6 +517,9 @@ def _scan_all_tasks(project_config: ProjectConfig) -> list[dict[str, str]]:
                     })
                     continue
                 st_errors = validate_task_json(st_data, f"{task_key}-{st_dir.name}", project_config)
+                st_errors.extend(record_errors(
+                    project_config, st_dir, st_data, f"{task_key}-{st_dir.name}"
+                ))
                 st_md = st_dir / "task.md"
                 if st_md.exists():
                     st_errors.append(
@@ -550,6 +556,9 @@ def _scan_task_conf(project_config: ProjectConfig) -> list[str]:
                 f"task-conf type {type_id}: missing prompt.md at {prompt_path.relative_to(project_config.root)}"
             )
         for fid, flow in flows.items():
+            errors.extend(validate_flow_definition(
+                flow, config=project_config, type_id=type_id, flow_id=fid,
+            ))
             flow_prompt = (
                 project_config.task_conf_root / "types" / type_id / "flows" / fid / "prompt.md"
             )
@@ -567,6 +576,15 @@ def _scan_task_conf(project_config: ProjectConfig) -> list[str]:
                     errors.extend(prompt_errors)
             except (ValueError, OSError, RuntimeError) as exc:
                 errors.append(f"task-conf {type_id}/{fid}: {exc}")
+        selection_file = project_config.task_conf_root / "types" / type_id / "flow-selection.yaml"
+        if selection_file.exists():
+            _, selection_errors = load_selection(project_config, type_id)
+            errors.extend(selection_errors)
+        elif len(allowed) > 1:
+            errors.append(
+                f"task-conf type {type_id}: {len(allowed)} allowed flows require "
+                f"types/{type_id}/flow-selection.yaml"
+            )
     return errors
 
 

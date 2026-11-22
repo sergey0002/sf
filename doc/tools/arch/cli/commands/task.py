@@ -7,6 +7,8 @@ existing command names, flags, exit codes and output formats.
 from __future__ import annotations
 
 import argparse
+import json
+import shutil
 import sys
 from typing import Any
 
@@ -23,7 +25,8 @@ from arch.cli.output import print_envelope
 from arch.evidence import task_evidence
 from arch.identity import parse_task_key
 from arch.project_config import ProjectConfig
-from arch import task_ops
+from arch import task_ops, task_record, task_registry
+from arch.task_ops import SUBTASK_KEY_RE
 from arch.validation import (
     flow_prompt_steps,
     flow_step_path,
@@ -45,6 +48,33 @@ class TaskCommand(Command):
 
         p = sub.add_parser("init", help="create task directory and scaffold task.json")
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
+        p.add_argument("--title", help="task title stored in the scaffold")
+
+        p = sub.add_parser("new", help="allocate the next UI key, create and register the task")
+        p.add_argument("--source", default="ui", help="source for allocation (only ui is automatic)")
+        p.add_argument("--title", help="task title stored in the scaffold")
+        p.add_argument("--json", action="store_true", default=True, help="JSON envelope output")
+        p.set_defaults(json=True)
+
+        p = sub.add_parser("registry", help="inspect or initialize the CLI-owned task registry")
+        p.add_argument("--json", action="store_true", default=True, help="JSON envelope output")
+        reg = p.add_subparsers(dest="registry_action")
+        reg_init = reg.add_parser("init", help="create an empty registry when it is missing")
+        reg_init.add_argument("--json", action="store_true", default=True, help="JSON envelope output")
+        reg_init.set_defaults(json=True)
+        reg_add = reg.add_parser("add", help="register an existing task card by key")
+        reg_add.add_argument("task_key", help="existing task key")
+        reg_add.add_argument("--title", help="title override; defaults to task.json")
+        reg_add.add_argument("--json", action="store_true", default=True, help="JSON envelope output")
+        reg_add.set_defaults(json=True)
+        reg_check = reg.add_parser("check", help="compare the registry with task directories")
+        reg_check.add_argument("--json", action="store_true", help="JSON envelope output")
+        reg_sync = reg.add_parser("sync", help="reconcile the registry with task directories")
+        reg_sync.add_argument("--prune", action="store_true",
+                              help="also remove entries whose task directory is gone")
+        reg_sync.add_argument("--json", action="store_true", default=True, help="JSON envelope output")
+        reg_sync.set_defaults(json=True)
+        p.set_defaults(json=True)
 
         p = sub.add_parser("validate", help="validate task.json structure and consistency")
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
@@ -77,10 +107,34 @@ class TaskCommand(Command):
         p.add_argument("--flow", required=True, help="flow id")
         p.set_defaults(json=True)
 
+        p = sub.add_parser("select-flow", help="select a flow from the typed decision table")
+        p.add_argument("--type", required=True, help="task type")
+        p.add_argument("--fact", action="append", default=[], help="typed fact name=value, repeatable")
+        p.set_defaults(json=True)
+
         p = sub.add_parser("decompose", help="create subtasks for a task")
         p.add_argument("task_key", help="task key")
         p.add_argument("--subtask-id", action="append", help="subtask ID (4 digits), repeatable")
         p.add_argument("--subtask-title", action="append", help="subtask title, repeatable")
+        p.add_argument("--subtask-depends-on", action="append", default=[],
+                       help="sibling dependency ID=DEP[,DEP], repeatable")
+        p.add_argument("--subtask-type", action="append", default=[],
+                       help="subtask task_type ID=TYPE, repeatable")
+        p.add_argument("--subtask-flow", action="append", default=[],
+                       help="subtask flow ID=FLOW, repeatable")
+        p.add_argument("--subtask-complexity", action="append", default=[],
+                       help="subtask complexity ID=LEVEL, repeatable")
+        p.add_argument("--subtask-estimate", action="append", default=[],
+                       help="subtask estimate in hours ID=HOURS, repeatable")
+
+        p = sub.add_parser("advance", help="apply one flow event with revision and idempotency checks")
+        p.add_argument("task_key", help="task key")
+        p.add_argument("--event", required=True, help="flow event id")
+        p.add_argument("--expected-revision", required=True, type=int,
+                       help="revision the event applies to")
+        p.add_argument("--id", dest="event_id", help="idempotency key (default: flow:<task>:<revision>:<event>)")
+        p.add_argument("--dry-run", action="store_true", help="preview without writing")
+        p.set_defaults(json=True)
 
         p = sub.add_parser("diagnose", help="show task, subtask and closure diagnostics")
         p.add_argument("task_key", help="task key")
@@ -102,12 +156,38 @@ class TaskCommand(Command):
         p.add_argument("--json", action="store_true", help="JSON output")
         p.add_argument("--dry-run", action="store_true", help="show what would happen without closing")
 
+        p = sub.add_parser("migrate", help="add versioned record fields, state.json and events.jsonl")
+        p.add_argument("task_key", help="task or subtask key")
+        p.add_argument("--dry-run", action="store_true", help="preview changes without writing")
+        p.set_defaults(json=True)
+
+        p = sub.add_parser("event", help="append a lifecycle event with revision and idempotency checks")
+        p.add_argument("task_key", help="task or subtask key")
+        p.add_argument("--id", required=True, dest="event_id", help="idempotency key")
+        p.add_argument("--type", required=True, dest="event_type",
+                       choices=("phase.changed", "result.recorded"), help="event type")
+        p.add_argument("--expected-revision", required=True, type=int,
+                       help="revision the event applies to")
+        p.add_argument("--phase", help="target phase for phase.changed")
+        p.add_argument("--summary", help="result text for result.recorded")
+        p.add_argument("--dry-run", action="store_true", help="preview without writing")
+        p.set_defaults(json=True)
+
+        p = sub.add_parser("replay", help="rebuild state.json from the event journal")
+        p.add_argument("task_key", help="task or subtask key")
+        p.add_argument("--dry-run", action="store_true", help="compare without writing")
+        p.set_defaults(json=True)
+
         st = sub.add_parser("subtask", help="subtask lifecycle operations")
         st_sub = st.add_subparsers(dest="subtask_action", required=True)
 
         st_init = st_sub.add_parser("init", help="create subtask directory and scaffold task.json")
         st_init.add_argument("parent_task_key", help="parent task key")
         st_init.add_argument("subtask_id", help="subtask ID")
+        st_init.add_argument("--task-type", help="subtask task_type (default: subtask)")
+        st_init.add_argument("--flow", help="subtask flow")
+        st_init.add_argument("--complexity", help="subtask complexity (default: parent)")
+        st_init.add_argument("--estimate-hours", type=float, help="subtask estimate in hours")
 
         st_validate = st_sub.add_parser("validate", help="validate subtask task.json")
         st_validate.add_argument("parent_task_key", help="parent task key")
@@ -122,6 +202,10 @@ class TaskCommand(Command):
     ) -> int:
         if args.task_action == "subtask":
             return self._subtask(args, project_config)
+        if args.task_action == "new":
+            return self._new_task(args, project_config)
+        if args.task_action == "registry":
+            return self._registry(args, project_config)
         if args.task_action == "types":
             return self._types(args, project_config)
         if args.task_action == "flows":
@@ -132,6 +216,12 @@ class TaskCommand(Command):
             return self._flow_prompt(args, project_config)
         if args.task_action == "evidence":
             return self._evidence(args, project_config)
+        if args.task_action == "select-flow":
+            return self._select_flow(args, project_config)
+        if args.task_action in ("migrate", "event", "replay"):
+            return self._record(args, project_config)
+        if args.task_action == "close" and SUBTASK_KEY_RE.fullmatch(args.task_key):
+            return self._close_record(args, project_config)
 
         try:
             parsed = parse_task_key(args.task_key)
@@ -145,7 +235,7 @@ class TaskCommand(Command):
         try:
             return self._run_lifecycle(args, project_config, parsed)
         except task_ops.TaskOpsError as exc:
-            json_errors = args.task_action in ("validate", "diagnose", "close", "evidence")
+            json_errors = args.task_action in ("validate", "diagnose", "close", "evidence", "advance")
             return self._fail(
                 exc.code,
                 exc.message,
@@ -154,6 +244,138 @@ class TaskCommand(Command):
                 exit_code=exc.exit_code,
                 args=args if json_errors else None,
             )
+
+    def _new_task(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            with task_registry.registry_lock(project_config):
+                registry = task_registry.load_registry(project_config, create=True)
+                identity = task_registry.next_task_key(registry, args.source)
+                payload = task_ops.init_task(
+                    project_config,
+                    identity["task_key"],
+                    identity["task_number"],
+                    identity["source_type"],
+                    identity["source_prefix"],
+                    title=args.title,
+                )
+                try:
+                    task_registry.register_entry(registry, identity, title=args.title)
+                    task_registry.save_registry(project_config, registry)
+                except (OSError, task_registry.RegistryError):
+                    shutil.rmtree(project_config.root / payload["directory"], ignore_errors=True)
+                    raise
+        except task_registry.RegistryError as exc:
+            return self._fail("REGISTRY", str(exc), field="task-registry.json",
+                              exit_code=EXIT_ARGS, args=args)
+        except task_ops.TaskOpsError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field,
+                              suggestion=exc.suggestion, exit_code=exc.exit_code, args=args)
+        except OSError as exc:
+            return self._fail("WRITE", str(exc), field="task-registry.json",
+                              exit_code=1, args=args)
+        self._json(ok_envelope(data=payload), args)
+        return 0
+
+    def _registry(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        path = task_registry.registry_path(project_config)
+        try:
+            if args.registry_action == "add":
+                return self._registry_add(args, project_config)
+            if args.registry_action == "check":
+                return self._registry_check(args, project_config)
+            if args.registry_action == "sync":
+                return self._registry_sync(args, project_config)
+            if args.registry_action == "init":
+                with task_registry.registry_lock(project_config):
+                    if not path.exists():
+                        task_registry.save_registry(project_config, task_registry.empty_registry())
+                    registry = task_registry.load_registry(project_config)
+            else:
+                registry = task_registry.load_registry(project_config)
+        except (OSError, task_registry.RegistryError) as exc:
+            return self._fail("REGISTRY", str(exc), field="task-registry.json",
+                              exit_code=1, args=args)
+        payload = {
+            "path": path.relative_to(project_config.root).as_posix(),
+            "schema_version": registry["schema_version"],
+            "count": len(registry["tasks"]),
+            "tasks": registry["tasks"],
+        }
+        self._json(ok_envelope(data=payload), args)
+        return 0
+
+    def _registry_add(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            parsed = parse_task_key(args.task_key)
+        except ValueError as exc:
+            raise task_registry.RegistryError(str(exc)) from exc
+        _, tjson = task_ops.task_paths(project_config, args.task_key)
+        if not tjson.is_file():
+            raise task_registry.RegistryError(
+                f"task card not found: {tjson.relative_to(project_config.root).as_posix()}"
+            )
+        title = args.title
+        if title is None:
+            try:
+                title = json.loads(tjson.read_text(encoding="utf-8")).get("title")
+            except (OSError, ValueError):
+                title = None
+        with task_registry.registry_lock(project_config):
+            registry = task_registry.load_registry(project_config, create=True)
+            entry = task_registry.register_entry(
+                registry, {"task_key": args.task_key, **parsed}, title=title
+            )
+            task_registry.save_registry(project_config, registry)
+        self._json(ok_envelope(data={"ok": True, "entry": entry}), args)
+        return 0
+
+    def _registry_check(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            registry = task_registry.load_registry(project_config, create=True)
+            drift = task_registry.registry_drift(project_config, registry)
+        except (OSError, task_registry.RegistryError) as exc:
+            return self._fail("REGISTRY", str(exc), field="task-registry.json",
+                              exit_code=1, args=args)
+        if getattr(args, "json", False):
+            self._json(ok_envelope(data=drift), args)
+            return 0 if drift["ok"] else 1
+        if drift["ok"]:
+            print(f"task registry matches {drift['cards']} task directories")
+            return 0
+        for key in drift["missing_in_registry"]:
+            print(f"missing in registry: {key}", file=sys.stderr)
+        for key in drift["missing_on_disk"]:
+            print(f"missing on disk: {key}", file=sys.stderr)
+        for row in drift["number_mismatch"]:
+            print(
+                f"number mismatch: {row['task_key']} registry={row['registry_number']} "
+                f"task.json={row['task_json_number']}",
+                file=sys.stderr,
+            )
+        print("run: arch task registry sync", file=sys.stderr)
+        return 1
+
+    def _registry_sync(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            with task_registry.registry_lock(project_config):
+                registry = task_registry.load_registry(project_config, create=True)
+                before = task_registry.registry_drift(project_config, registry)
+                if before["number_mismatch"]:
+                    raise task_registry.RegistryError(
+                        "number mismatch between task.json and registry; fix task.json first"
+                    )
+                result = task_registry.sync_registry(
+                    project_config, registry, prune=args.prune
+                )
+                if result["added"] or result["removed"]:
+                    task_registry.save_registry(project_config, registry)
+                after = task_registry.registry_drift(project_config, registry)
+        except (OSError, task_registry.RegistryError) as exc:
+            return self._fail("REGISTRY", str(exc), field="task-registry.json",
+                              exit_code=1, args=args)
+        payload = {**result, "ok": after["ok"], "drift": after}
+        self._json(ok_envelope(data=payload), args)
+        return 0 if after["ok"] else 1
 
     def _evidence(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
         try:
@@ -169,6 +391,48 @@ class TaskCommand(Command):
         self._json(ok_envelope(data=payload), args)
         return code
 
+    def _close_record(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            payload, blockers = task_ops.close(project_config, args.task_key, args.dry_run)
+        except task_ops.TaskOpsError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field, suggestion=exc.suggestion,
+                              exit_code=exc.exit_code, args=args)
+        if args.dry_run:
+            return self._json(ok_envelope(data=payload), args)
+        if blockers:
+            errors = [CliError(code="BLOCKER", message=message, field="task.json",
+                               suggestion="run task diagnose for blockers") for message in blockers]
+            return self._json(multi_error_envelope(errors), args, stream=sys.stderr)
+        return self._json(ok_envelope(data=payload), args)
+
+    def _select_flow(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            payload = task_ops.select_flow(project_config, args.type, args.fact)
+        except task_ops.TaskOpsError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field,
+                              suggestion=exc.suggestion, exit_code=exc.exit_code, args=args)
+        return self._json(ok_envelope(data=payload), args)
+
+    def _record(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        try:
+            if args.task_action == "migrate":
+                payload = task_ops.migrate_record(project_config, args.task_key, args.dry_run)
+            elif args.task_action == "event":
+                payload = task_ops.append_record_event(
+                    project_config, args.task_key, event_id=args.event_id,
+                    event_type=args.event_type, expected_revision=args.expected_revision,
+                    phase=args.phase, summary=args.summary, dry_run=args.dry_run,
+                )
+            else:
+                payload = task_ops.replay_record(project_config, args.task_key, args.dry_run)
+        except task_ops.TaskOpsError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field,
+                              suggestion=exc.suggestion, exit_code=exc.exit_code, args=args)
+        except task_record.RecordError as exc:
+            return self._fail(exc.code, exc.message, field=exc.field,
+                              suggestion=exc.suggestion, exit_code=exc.exit_code, args=args)
+        return self._json(ok_envelope(data=payload), args)
+
     def _run_lifecycle(
         self, args: argparse.Namespace, project_config: ProjectConfig, parsed: dict[str, Any]
     ) -> int:
@@ -178,9 +442,30 @@ class TaskCommand(Command):
         source_prefix = parsed["source_prefix"]
 
         if args.task_action == "init":
-            payload = task_ops.init_task(
-                project_config, task_key, task_number, source_type, source_prefix
-            )
+            tdir = task_ops.task_paths(project_config, task_key)[0]
+            try:
+                with task_registry.registry_lock(project_config):
+                    registry = task_registry.load_registry(project_config, create=True)
+                    payload = task_ops.init_task(
+                        project_config, task_key, task_number, source_type, source_prefix,
+                        title=getattr(args, "title", None),
+                    )
+                    try:
+                        task_registry.register_entry(
+                            registry,
+                            {"task_key": task_key, **parsed},
+                            title=getattr(args, "title", None),
+                        )
+                        task_registry.save_registry(project_config, registry)
+                    except (OSError, task_registry.RegistryError):
+                        shutil.rmtree(tdir, ignore_errors=True)
+                        raise
+            except task_registry.RegistryError as exc:
+                return self._fail("REGISTRY", str(exc), field="task-registry.json",
+                                  exit_code=EXIT_ARGS, args=args)
+            except OSError as exc:
+                return self._fail("WRITE", str(exc), field="task-registry.json",
+                                  exit_code=1, args=args)
             print_envelope(ok_envelope(data=payload), json_mode=False)
             return 0
 
@@ -245,10 +530,19 @@ class TaskCommand(Command):
 
         if args.task_action == "decompose":
             payload = task_ops.decompose(
-                project_config, task_key, args.subtask_id or [], args.subtask_title or []
+                project_config, task_key, args.subtask_id or [], args.subtask_title or [],
+                args.subtask_depends_on, args.subtask_type, args.subtask_flow,
+                args.subtask_complexity, args.subtask_estimate,
             )
             print_envelope(ok_envelope(data=payload), json_mode=False)
             return 0
+
+        if args.task_action == "advance":
+            payload = task_ops.advance(
+                project_config, task_key, args.event, args.expected_revision,
+                dry_run=args.dry_run, event_id=args.event_id,
+            )
+            return self._json(ok_envelope(data=payload), args)
 
         if args.task_action == "diagnose":
             payload = task_ops.diagnose(
@@ -320,7 +614,13 @@ class TaskCommand(Command):
         subtask_id = args.subtask_id
         try:
             if args.subtask_action == "init":
-                payload = task_ops.subtask_init(project_config, parent_task_key, subtask_id)
+                payload = task_ops.subtask_init(
+                    project_config, parent_task_key, subtask_id,
+                    task_type=args.task_type,
+                    flow=args.flow,
+                    complexity=args.complexity,
+                    estimate_hours=args.estimate_hours,
+                )
                 print_envelope(ok_envelope(data=payload), json_mode=False)
                 return 0
             if args.subtask_action == "validate":

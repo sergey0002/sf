@@ -1,0 +1,17 @@
+schema_version: flow-selection-1
+type: feature
+version: 1
+facts:
+  needs_research:
+    type: boolean
+    description: Сначала нужно исследование или прототип до основной реализации.
+rules:
+  - id: feature.research-first
+    when:
+      needs_research: true
+    flow: research-first
+    reason: Неизвестны подход или границы, поэтому сначала исследование.
+  - id: feature.default
+    fallback: true
+    flow: standard-implementation
+    reason: Явный fallback на стандартную реализацию.

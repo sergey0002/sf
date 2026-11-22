@@ -2,7 +2,7 @@
 
 Этот репозиторий — заготовка локальной software factory, в которой агент работает не только с кодом, но и с явными контрактами задачи, архитектуры, полномочий и верификации.
 
-Сейчас реализовано исполняемое ядро управления архитектурной документацией и задачами: CLI, `task.json`, конфигурация типов и потоков, схемы, индекс и тесты. Полный runtime фабрики — интеграции с трекерами, изолированное выполнение продуктовых задач, model routing и CI/release gates — ещё проектируется. Не выдавайте описанный будущий контур за реализованное поведение.
+Сейчас реализовано исполняемое ядро управления архитектурной документацией и задачами: CLI, `task.json`, конфигурация типов и потоков, схемы, индекс и тесты. Полный runtime фабрики — интеграции с трекерами, изолированное выполнение продуктовых задач и model routing — ещё проектируется. CI/CD и Git-hosted workflow в проекте запрещены: обязательный gate локальный. Не выдавайте описанный будущий контур за реализованное поведение.
 
 ## Цели проекта
 
@@ -21,6 +21,7 @@
 |---|---|---|
 | `README.md` | Стартовый контекст и правила | Обновлять при изменении общего workflow |
 | `pyproject.toml` | Метаданные устанавливаемого пакета, зависимости и console script `arch` | Менять вместе с версией пакета и проверками установки |
+| `doc/tests/run.sh` | Локальный gate: проверки, воспроизводимость и тесты | Запускать `--gate`; не добавлять CI/CD |
 | `doc/architecture/` | Каноническая архитектура, контракты, схемы и generated index | Читать index-first; менять вместе с поведением |
 | `doc/config/` | Машинные политики путей, типов задач и flows | Менять только с проверкой CLI и тестов |
 | `doc/skills/` | Инструкции для смысловых операций агента | Не переносить смысловые решения в CLI |
@@ -79,6 +80,8 @@ python3 doc/tools/arch/__main__.py docs paths --check
 python3 doc/tools/arch/__main__.py docs paths --resolved
 python3 doc/tools/arch/__main__.py task types
 python3 doc/tools/arch/__main__.py task flows --type feature
+python3 doc/tools/arch/__main__.py task-key --source ui --next
+python3 doc/tools/arch/__main__.py task registry --json
 ```
 
 Перед новой командой изучите `--help`. Успешный exit code подтверждает только CLI-контракт, а не семантическую правильность решения.
@@ -154,7 +157,7 @@ data/README.md
 - Jira: bare number (`1234`).
 - Пользовательский/UI-ввод: `UI-0002`.
 - Другой источник: зарегистрированный префикс, например `GH-0001`.
-- CLI проверяет номер, но не выделяет его. Используйте `doc/architecture/system/task-number-registry.md` или запросите владельца.
+- Для задачи из чата `arch task new --title "<title>"` сам выделяет следующий UI-номер из CLI-реестра и создаёт карточку. Для известного ключа используйте `arch task init <key>`. Реестр хранится в `doc/config/task-registry.json` и ведётся только CLI; вручную его не правят.
 
 ```text
 запрос → task.json → task_type + flow
@@ -187,7 +190,7 @@ python3 doc/tools/arch/__main__.py task flow-prompt --type <type> --flow <flow>
 
 Рекомендуемый порядок развития:
 
-1. переносимость путей, упаковка CLI и CI;
+1. переносимость путей, упаковка CLI и локальный gate;
 2. неизменяемый task intent и отдельные state/events/evidence;
 3. single-task executor в изолированном worktree;
 4. исполняемая command/path/network policy;
@@ -210,8 +213,8 @@ bash doc/tests/run.sh --index-only
 # То же в изолированной копии, если основной checkout нельзя использовать напрямую
 bash doc/tests/run.sh --in-copy --index-only
 
-# CI-эквивалент: read-only проверки, воспроизводимость и тесты
-bash doc/tests/run.sh --ci
+# Локальный gate: read-only проверки, воспроизводимость и тесты
+bash doc/tests/run.sh --gate
 
 python3 doc/tools/arch/__main__.py validate
 python3 doc/tools/arch/__main__.py index check

@@ -1,0 +1,17 @@
+schema_version: flow-selection-1
+type: planning
+version: 1
+facts:
+  implementation_required:
+    type: boolean
+    description: План сразу переходит в реализацию, а не остаётся исследованием.
+rules:
+  - id: planning.standard
+    when:
+      implementation_required: true
+    flow: standard-implementation
+    reason: После планирования требуется реализация в этой же задаче.
+  - id: planning.default
+    fallback: true
+    flow: research-first
+    reason: Явный fallback на исследовательский поток.

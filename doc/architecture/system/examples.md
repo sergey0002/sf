@@ -5,7 +5,7 @@ title: Примеры использования CLI и task.json
 summary: "Полные примеры task.json, сценарии команд CLI, обработка ошибок, E2E потоки для всех типов задач."
 status: draft
 domain: system
-related: [SPEC-cli-implementation, REG-cli-validation-rules, REG-cli-command-map]
+related: [SPEC-cli-implementation, REG-cli-validation-rules, REG-cli-command-map, REG-task-number-registry]
 implemented: false
 ---
 
@@ -50,7 +50,7 @@ implemented: false
   "implementation_plan": "Создать task-conf иерархию, конфиг путей, CLI валидатор путей",
   "target_release": "unset",
   "project_context_refs": [],
-  "constraints": ["Никакого автоматического выделения task_number", "Никакого task.md"],
+  "constraints": ["task_number выделяется только CLI-реестром", "Никакого task.md"],
   "assumptions": [],
   "open_questions": [],
   "risk": "medium",
@@ -132,7 +132,7 @@ implemented: false
   "implementation_plan": "Добавить валидацию длины пароля, покрыть тестами",
   "target_release": "v2.1",
   "project_context_refs": [],
-  "constraints": ["Без автоматического выделения task_number"],
+  "constraints": ["task_number выделяется только CLI-реестром"],
   "assumptions": [],
   "open_questions": [],
   "risk": "high",
@@ -387,7 +387,61 @@ $ arch task-key --source other --number 2045 --prefix GH
     "source_prefix": "GH"
   }
 }
+
+$ arch task-key --source ui --next
+{
+  "ok": true,
+  "code": 0,
+  "data": {
+    "task_key": "UI-0029",
+    "task_number": "0029",
+    "source_type": "ui",
+    "source_prefix": "UI"
+  }
+}
 ```
+
+### 2.14 task new
+
+Следующий UI-номер CLI берёт из `doc/config/task-registry.json`; каталоги задач не сканируются.
+
+```
+$ arch task new --title "Глоссарий: JSON-канон"
+{
+  "ok": true,
+  "code": 0,
+  "data": {
+    "ok": true,
+    "task_key": "UI-0029",
+    "task_number": "0029",
+    "source_type": "ui",
+    "source_prefix": "UI",
+    "directory": "doc/tasks/UI-0029",
+    "task_json": "doc/tasks/UI-0029/task.json",
+    "stage_dir": "doc/tasks/UI-0029/stage1"
+  }
+}
+```
+
+### 2.15 task registry
+
+```
+$ arch task registry --json
+{
+  "ok": true,
+  "code": 0,
+  "data": {
+    "path": "doc/config/task-registry.json",
+    "schema_version": 1,
+    "count": 28,
+    "tasks": [
+      {"task_key": "UI-0001", "task_number": "0001", "source": "ui", "title": null, "created_at": null}
+    ]
+  }
+}
+```
+
+`task registry init` создаёт пустой реестр, `task registry add <key>` регистрирует существующую карточку.
 
 ## 3. Сценарии обработки ошибок
 
@@ -475,10 +529,16 @@ python doc/tools/arch/__main__.py task validate UI-0100
 python doc/tools/arch/__main__.py docs paths --check
 # → "All doc/ paths are declared and valid"
 
-# 5. Декомпозировать на subtasks (если subtask_policy: required)
+# 5. Декомпозировать на subtasks только при независимых результатах
+#    Число детей выводится из результатов, а не из шаблона.
 python doc/tools/arch/__main__.py task decompose UI-0100 \
-  --subtask-id 0001 --subtask-title "Исследовать существующий код" \
-  --subtask-id 0002 --subtask-title "Реализовать изменение"
+  --subtask-id 0001 --subtask-title "JSON-канон и валидация" \
+  --subtask-id 0002 --subtask-title "Поиск и обратные ссылки" \
+  --subtask-type 0001=feature --subtask-flow 0001=standard-implementation \
+  --subtask-complexity 0001=high --subtask-estimate 0001=12 \
+  --subtask-type 0002=feature --subtask-flow 0002=standard-implementation \
+  --subtask-complexity 0002=medium --subtask-estimate 0002=8 \
+  --subtask-depends-on 0002=0001
 
 # 6. Проверить диагноз
 python doc/tools/arch/__main__.py task diagnose UI-0100
@@ -503,12 +563,17 @@ python doc/tools/arch/__main__.py task close UI-0100
 python doc/tools/arch/__main__.py task init 2045
 
 # task_type: jira-incoming, flow: jira-process (единственный доступный)
-# subtask_policy: required — должны быть созданы subtasks
+# subtask_policy: required — должен быть хотя бы один независимый результат.
+# Число и форма детей зависят от задачи, а не от шаблона «три подзадачи».
 
 python doc/tools/arch/__main__.py task decompose 2045 \
-  --subtask-id 0001 --subtask-title "Приём и валидация" \
-  --subtask-id 0002 --subtask-title "Реализация" \
-  --subtask-id 0003 --subtask-title "Верификация"
+  --subtask-id 0001 --subtask-title "Нормализация и валидация входа" \
+  --subtask-id 0002 --subtask-title "Реализация изменения" \
+  --subtask-type 0001=bugfix --subtask-flow 0001=standard-implementation \
+  --subtask-complexity 0001=medium --subtask-estimate 0001=4 \
+  --subtask-type 0002=bugfix --subtask-flow 0002=standard-implementation \
+  --subtask-complexity 0002=high --subtask-estimate 0002=12 \
+  --subtask-depends-on 0002=0001
 
 python doc/tools/arch/__main__.py task validate 2045
 python doc/tools/arch/__main__.py task diagnose 2045

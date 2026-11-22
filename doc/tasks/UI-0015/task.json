@@ -86,7 +86,7 @@
   "depends_on": [
     "UI-0011"
   ],
-  "phase": "intake",
+  "phase": "verification",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Сверить каталог с четырьмя действующими SKILL.md и командами CLI.",
@@ -112,8 +112,16 @@
   ],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tasks/UI-0015/baseline-0.2.0-2026-11-22.json",
+      "doc/tasks/UI-0015/research/kilo-session-audit.md"
+    ],
+    "modified": [
+      "doc/skills/README.md",
+      "doc/config/paths.yaml",
+      "doc/tasks/UI-0015/stage1/plan.md",
+      "doc/tasks/UI-0015/stage1/verification.json"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -121,7 +129,13 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed",
+      "result": "AC-1 подтверждён: четыре скилла в doc/skills/README.md с условием выбора и ссылкой. AC-2 подтверждён на рабочем дереве: восемь команд сценария совпадают с baseline, все exit 0, байты измерены. Снимок HEAD 9e36a171; закрытие заблокировано незавершённой UI-0011.",
+      "evidence_refs": [
+        "doc/skills/README.md",
+        "doc/tasks/UI-0015/baseline-0.2.0-2026-11-22.json",
+        "doc/tasks/UI-0015/stage1/verification.json"
+      ]
     }
   ]
 }

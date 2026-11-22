@@ -86,6 +86,16 @@ def _validate_subtasks(value: Any, errors: list[str]) -> None:
                 errors.append(
                     f"task.json: subtasks[{i}] missing required field {required!r}"
                 )
+        depends_on = item.get("depends_on")
+        if depends_on is not None:
+            if not isinstance(depends_on, list):
+                errors.append(f"task.json: subtasks[{i}].depends_on must be an array")
+            else:
+                for j, dep in enumerate(depends_on):
+                    if not isinstance(dep, str) or not TASK_NUMBER_RE.fullmatch(dep):
+                        errors.append(
+                            f"task.json: subtasks[{i}].depends_on[{j}] must be a four-digit subtask id"
+                        )
 
 
 def _validate_related_docs(value: Any, errors: list[str]) -> None:
@@ -335,6 +345,16 @@ def validate_task_json(data: dict[str, Any], task_key: str, project_config: Proj
                 f"task.json: complexity must be one of {'/'.join(complexity_allowed)}, got {complexity!r}"
             )
 
+    # --- estimate_hours ------------------------------------------------------
+    estimate_hours = data.get("estimate_hours")
+    if estimate_hours is not None:
+        if (isinstance(estimate_hours, bool)
+                or not isinstance(estimate_hours, (int, float))
+                or estimate_hours <= 0):
+            errors.append(
+                f"task.json: estimate_hours must be a positive number of hours, got {estimate_hours!r}"
+            )
+
     # --- subtask_policy ------------------------------------------------------
     subtask_policy = type_conf.get(TASK_CONF_SUBTASK_POLICY_KEY)
     subtasks = data.get("subtasks")
@@ -578,7 +598,11 @@ def load_task_conf_step_prompt(
 def inspect_subtasks(
     tdir: Path, task: dict[str, Any], *, project_root: Path | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
-    """Return the same immediate-child facts for diagnosis and closure."""
+    """Return the same immediate-child facts for diagnosis and closure.
+
+    The result includes each child's declared dependencies, readiness and the
+    blocking reasons. Only immediate children are inspected.
+    """
     records = task.get("subtasks", [])
     blockers: list[str] = []
     declared: dict[str, dict[str, Any]] = {}
@@ -597,16 +621,27 @@ def inspect_subtasks(
     subdir = tdir / "subtasks"
     disk = {p.name: p for p in subdir.iterdir() if p.is_dir()} if subdir.is_dir() else {}
     rows: list[dict[str, Any]] = []
+    by_id: dict[str, dict[str, Any]] = {}
     for sub_id in sorted(declared.keys() | disk.keys()):
         record = declared.get(sub_id)
         folder = disk.get(sub_id)
         row: dict[str, Any] = {
-            "id": sub_id, "title": "", "phase": "missing",
+            "id": sub_id, "subtask_id": sub_id, "title": "", "phase": "missing",
             "declared": record is not None, "on_disk": folder is not None,
+            "depends_on": [], "ready": False, "readiness": "blocked",
         }
         if record is not None:
             row.update(title=record.get("title", ""), declared_title=record.get("title", ""),
                        declared_status=record.get("status", ""))
+            depends_on = record.get("depends_on", [])
+            if not isinstance(depends_on, list) or any(
+                not isinstance(dep, str) or not TASK_NUMBER_RE.fullmatch(dep)
+                for dep in depends_on
+            ):
+                row["dependency_error"] = "depends_on must contain four-digit subtask ids"
+                blockers.append(f"Declared subtask {sub_id}: {row['dependency_error']}")
+            else:
+                row["depends_on"] = list(dict.fromkeys(depends_on))
         if folder is None:
             row["error"] = "directory missing on disk"
             blockers.append(f"Declared subtask {sub_id}: {row['error']}")
@@ -621,8 +656,9 @@ def inspect_subtasks(
                 row.update(phase="invalid", error=f"cannot read task.json: {exc}")
             else:
                 phase = data.get("phase", "unset")
-                row.update(id=data.get("task_key", sub_id), title=data.get("title", row["title"]),
-                           phase=phase, task_type=data.get("task_type", "unset"),
+                row.update(id=data.get("task_key", sub_id), task_key=data.get("task_key", sub_id),
+                           title=data.get("title", row["title"]), phase=phase,
+                           task_type=data.get("task_type", "unset"),
                            flow=data.get("flow", "unset"))
                 if phase != "completed":
                     blockers.append(f"Subtask {sub_id}: phase is {phase!r}, not completed")
@@ -637,6 +673,64 @@ def inspect_subtasks(
             if "error" in row:
                 blockers.append(f"Subtask {sub_id}: {row['error']}")
         rows.append(row)
+        by_id[sub_id] = row
+
+    for sub_id, row in by_id.items():
+        for dep in row.get("depends_on", []):
+            if dep not in by_id:
+                row["dependency_error"] = f"depends on unknown subtask {dep}"
+                blockers.append(f"Subtask {sub_id}: {row['dependency_error']}")
+            elif dep == sub_id:
+                row["dependency_error"] = f"depends on itself ({dep})"
+                blockers.append(f"Subtask dependency cycle: {sub_id} -> {sub_id}")
+
+    visiting: list[str] = []
+    visited: set[str] = set()
+    reported: set[tuple[str, ...]] = set()
+
+    def visit(node: str) -> None:
+        if node in visited:
+            return
+        if node in visiting:
+            cycle = tuple(visiting[visiting.index(node):] + [node])
+            if cycle not in reported:
+                reported.add(cycle)
+                blockers.append(f"Subtask dependency cycle: {' -> '.join(cycle)}")
+                for member in cycle[:-1]:
+                    by_id[member]["dependency_error"] = "dependency cycle"
+                    by_id[member]["readiness"] = "blocked"
+            return
+        visiting.append(node)
+        for dep in by_id[node].get("depends_on", []):
+            if dep in by_id and dep != node:
+                visit(dep)
+        visiting.pop()
+        visited.add(node)
+
+    for sub_id in by_id:
+        visit(sub_id)
+
+    for sub_id, row in by_id.items():
+        if row["phase"] == "completed":
+            row["ready"] = True
+            row["readiness"] = "completed"
+            continue
+        if row.get("error") or row.get("dependency_error") or row["phase"] == "invalid":
+            row["ready"] = False
+            row["readiness"] = "blocked"
+            continue
+        pending = [
+            dep for dep in row.get("depends_on", [])
+            if by_id.get(dep, {}).get("phase") != "completed"
+        ]
+        if pending:
+            row["ready"] = False
+            row["readiness"] = "blocked"
+            row["blocked_by"] = pending
+            blockers.append(f"Subtask {sub_id}: blocked by {', '.join(pending)}")
+        else:
+            row["ready"] = True
+            row["readiness"] = "ready"
     return rows, blockers
 
 

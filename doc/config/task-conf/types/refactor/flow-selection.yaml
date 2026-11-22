@@ -1,0 +1,17 @@
+schema_version: flow-selection-1
+type: refactor
+version: 1
+facts:
+  trivial_internal_change:
+    type: boolean
+    description: Изменение локальное и не требует полного плана реализации.
+rules:
+  - id: refactor.minimal
+    when:
+      trivial_internal_change: true
+    flow: minimal-scaffold
+    reason: Локальное внутреннее изменение без изменения наблюдаемого поведения.
+  - id: refactor.default
+    fallback: true
+    flow: standard-implementation
+    reason: Явный fallback на стандартную реализацию.

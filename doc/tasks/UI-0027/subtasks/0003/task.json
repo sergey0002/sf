@@ -1,0 +1,61 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0027-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Интеграция и контракт дочерних веток",
+  "kind": "feature",
+  "intent": "Добавить опциональную интеграцию верхнеуровневой задачи и зафиксировать границы будущих дочерних веток по CASE-9–CASE-10 родителя.",
+  "scope": {
+    "in": ["Предпросмотр цели интеграции, проверка результата, наследование ветки родителя и контракт отдельного режима"],
+    "out": ["Реализация отдельных дочерних веток, force-push, внешние CI"],
+    "allowed_files_modules": ["doc/config/", "doc/tools/arch/", "doc/skills/", "doc/tests/", "doc/architecture/"]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": ["AC-1: Интеграция меняет только согласованную цель и только после проверки результата.", "AC-2: По умолчанию дети используют ветку родителя без публикации; будущий отдельный режим ограничен веткой родителя."],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [
+    "UI-0027-0002"
+  ],
+  "phase": "intake",
+  "rollback_plan": null,
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

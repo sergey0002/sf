@@ -41,19 +41,19 @@
   "snapshot_files": [
     {
       "path": "README.md",
-      "sha256": "5bc7c12ec43dd9d489b4fd73e7fca2fb0d0cbea4d7351c62843473c14a0e8d3c"
+      "sha256": "a1cd25afbcedda890ad07f0c2f50de1767dc6d2a29f32e5f97f5526b1d858797"
     },
     {
       "path": "doc/architecture/system/cli-package.md",
-      "sha256": "15c666fa5aefc4e76eb5806db422be3a9caa5e9c16f17df1aae54947a11b1070"
+      "sha256": "a18dbeee90a5569ba7cc2a658ac351f070ff8f2110214b17a57940724fc4d1da"
     },
     {
       "path": "doc/architecture/system/implementation-spec.md",
-      "sha256": "f34b38f68a646845cf59a4e093f3958ecd17fff02f5f8573fcba07e9222cf337"
+      "sha256": "4b0d6788052bd7d3fddcd268a3eea8a182569a44b5dd850fd6f38876e56208c2"
     },
     {
       "path": "doc/tasks/UI-0014/subtasks/0001/stage1/plan.md",
-      "sha256": "d1e042893e723e17085cbeae932773ae54896d949dc80d378d1d7365770c0c26"
+      "sha256": "03ecc6dbfd129482dcf2a0ccc22b7b20d4ae47184acc11d1b9ef464402a30848"
     },
     {
       "path": "doc/tests/test_task_identity.py",
@@ -76,5 +76,5 @@
       "sha256": "20e408dbd8cb4e6b6a05398c34c17b21848843a51288885effa140c5e61da9eb"
     }
   ],
-  "checked_revision": "sha256:422c35a1b44fc2593557267d51a693a3469c032f5c975524e0013c2d7627f1bd"
+  "checked_revision": "sha256:40022a087ac379f5dd86e9c971fcf0be05c7be3e7be755a3faa839906f5c03bf"
 }

@@ -1,0 +1,13 @@
+{
+  "task_key": "UI-0027-0002",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-5", "covers": ["AC-1"], "expected": "Политика применяется без побочных эффектов"},
+    {"id": "CASE-6", "covers": ["AC-1"], "expected": "Публикуется только согласованный коммит"},
+    {"id": "CASE-7", "covers": ["AC-2"], "expected": "Устаревшее согласование отклоняется"},
+    {"id": "CASE-8", "covers": ["AC-2"], "expected": "На повторе остаётся один коммит"}
+  ]
+}

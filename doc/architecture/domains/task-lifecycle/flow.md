@@ -5,7 +5,7 @@ title: Возобновление жизненного цикла задачи �
 summary: "Валидация исходной задачи и состояния рабочего пространства перед планированием или продолжением этапа."
 status: draft
 domain: task-lifecycle
-related: [DOM-task-lifecycle, ENT-task-input, ENT-stage-artifact, ENT-verification-evidence]
+related: [DOM-task-lifecycle, ENT-task-input, ENT-task-record, ENT-stage-artifact, ENT-verification-evidence]
 implemented: false
 ---
 
@@ -60,3 +60,29 @@ implemented: false
 CLI проверяет структуру записи, часть правил типа и совместимость текущего flow. Он загружает YAML и выдаёт prompts. Поля `steps`, `action`, `output` и `gate` описывают работу агента. `diagnose` и `close` используют общую проверку родительской карточки и объединения объявленных детей с непосредственными каталогами. У задач с `case-coverage-v1` эти команды также проверяют обязательные кейсы и хеши доказательств. Исполнитель сверяет смысл оракула, а владелец одобряет результат. [Запись доказательств](entities/verification-evidence.md)
 
 `task diagnose <key> --json --brief` возвращает счётчики и существующие пути карточки, плана и проверки в последней по номеру стадии. Показывает до трёх блокировок и признак обрезки. Полный список доступен без `--brief`. `task close <key> --dry-run --json` возвращает `would_close` и причины; успешное вычисление предпросмотра имеет exit 0. Фактический отказ по предусловиям возвращает exit 1, структурированный JSON в stderr и сохраняет карточку. [Спецификация команд](../../system/implementation-spec.md#912-команда-task-diagnose)
+
+Для версионированной записи действующая фаза берётся из `state.json`, а переходы
+пишутся в `events.jsonl` с проверкой ожидаемой ревизии. `task migrate` отделяет
+неизменяемый intent от изменяемого состояния, `task replay` восстанавливает
+`state.json` из журнала. [Запись задачи](entities/task-record.md)
+
+## Версионированные flow и готовность детей
+
+Flow с `schema_version: flow-1` задаёт `initial_state`, `terminal_states`,
+`states` и `transitions`. `task diagnose` возвращает текущий `flow_state` и
+доступные переходы. `task advance` принимает одно событие, проверяет
+`expected_revision` и идемпотентность, пишет `flow.transitioned` и возвращает
+обновлённую сводку. `bugfix/standard-implementation` содержит возврат
+`verify --checks.failed--> fix`, а `docs/docs-only` — короткий путь
+`architecture-context → change → validate → close` без обязательной
+декомпозиции. [Формат flow](entities/flow-definition.md)
+
+Таблица `types/<type>/flow-selection.yaml` применяет типизированные факты к
+правилам с версией и стабильными ID. `task select-flow` сообщает выбранный flow,
+основание, недостающий факт или ID совпавших правил. Конфликт и неизвестный вход
+не меняют задачу.
+
+`subtasks[].depends_on` связывает непосредственных детей. `diagnose` и `close`
+проверяют ссылки и циклы и вычисляют `ready`, `blocked` с `blocked_by` или
+`completed`. `task decompose --subtask-depends-on` проверяет весь пакет до записи;
+неизвестная зависимость или цикл не создают каталогов. [Запись flow и выбора](entities/flow-definition.md)

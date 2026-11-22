@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "flow.schema.json",
+  "title": "Versioned task flow definition",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "type",
+    "initial_state",
+    "terminal_states",
+    "states",
+    "transitions"
+  ],
+  "properties": {
+    "schema_version": {"const": "flow-1"},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "type": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "title": {"type": "string"},
+    "description": {"type": "string"},
+    "initial_state": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "terminal_states": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}
+    },
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "from", "event", "to"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]*$"},
+          "from": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+          "event": {"type": "string", "pattern": "^[a-z][a-z0-9._-]*$"},
+          "to": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+          "when": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          },
+          "requires": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "steps": {"type": "array"}
+  },
+  "additionalProperties": true
+}

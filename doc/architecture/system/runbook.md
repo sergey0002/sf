@@ -153,6 +153,16 @@ python doc/tools/arch/__main__.py task validate <task_key>
 3. Добавьте flujo в `allowed_flows` в `config.yaml` типа.
 4. Повторно валидируйте.
 
+### 2.8 Реестр номеров повреждён или конфликтует
+
+**Симптомы:** `task new` или `task init` → `[REGISTRY] ...`; `task-key --next` не выдаёт номер.
+
+**Восстановление:**
+1. Прочитайте реестр: `python doc/tools/arch/__main__.py task registry --json`.
+2. Исправьте конфликт только через CLI: `task registry add <key>` для пропущенной карточки. Не редактируйте `doc/config/task-registry.json` вручную.
+3. Если файл повреждён и восстанавливается из Git, верните предыдущую версию и повторите `task registry add` для карточек, созданных после неё.
+4. Проверьте, что `task-key --source ui --next` возвращает следующий номер, затем повторите создание.
+
 ## 3. Откат изменений
 
 ### 3.1 Откат task.json
@@ -312,7 +322,16 @@ for key in $(ls doc/tasks/); do
 done
 ```
 
-### 5.5 Проверить все subtasks
+### 5.5 Проверить реестр номеров
+
+```bash
+python doc/tools/arch/__main__.py task registry --json
+python doc/tools/arch/__main__.py task-key --source ui --next
+```
+
+**Ожидаемый результат:** реестр читается, `count` совпадает с числом созданных UI-карточек, `--next` выдаёт свободный ключ. Расхождение исправляется `task registry add <key>`, а не ручной правкой JSON.
+
+### 5.6 Проверить все subtasks
 
 ```bash
 for task_dir in doc/tasks/*/subtasks/*/; do
@@ -340,4 +359,4 @@ done
 
 1. Создайте задачу типа `audit` или `planning` с описанием проблемы.
 2. Обратитесь к владельцу домена для принятия решения.
-3. Не вводите обходных решений, которые нарушают инварианты манифеста (task.json единственный canonical input, task.md не создаётся, task_number не аллоцируется автоматически).
+3. Не вводите обходных решений, которые нарушают инварианты манифеста (task.json единственный canonical input, task.md не создаётся, task_number выделяется только CLI-реестром).

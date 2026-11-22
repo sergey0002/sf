@@ -1,0 +1,123 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0028-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "arch task subtask init UI-0028 0002; вход — AC-3, AC-4, AC-5 и AC-7 родителя",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Поиск, интеграция в docs search и обратные ссылки",
+  "kind": "feature",
+  "intent": "Дать агенту детерминированный доступ к терминам и встроить глоссарий в поиск по документации: точный lookup, ранжированный поиск с официальными и поисковыми синонимами, поиск терминов в тексте и запросе задачи, обратный индекс связей, расширение docs search и блок определений в docs context.",
+  "scope": {
+    "in": [
+      "arch glossary lookup/search/match/query/refs",
+      "Нормализация запроса: NFC, lower, ё→е, пунктуация, пробелы",
+      "Уровни ранжирования и поля match_type, matched_on, display_term, score",
+      "glossary_terms в task.json и terms во frontmatter",
+      "Обратный индекс referenced_by и проверка неразрешённых TERM-*",
+      "Расширение arch docs search терминами, блок glossary, matched_terms и --no-expand-terms",
+      "Блок glossary в arch docs context для терминов задачи",
+      "arch glossary lint --file"
+    ],
+    "out": [
+      "Морфология и стемминг",
+      "Семантический поиск",
+      "Write-команды и scan --suggest (0003)"
+    ],
+    "allowed_files_modules": [
+      "doc/architecture/",
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/tasks/UI-0028/"
+    ]
+  },
+  "current_behavior": "Термин не адресуем: arch list --id TERM-* возвращает пусто; docs search не ранжирует термины и не знает синонимов; обратных связей с задачами нет.",
+  "evidence": [],
+  "contracts_and_invariants": [
+    "display_term всегда официальный term; search_synonyms и avoid не выводятся как каноническое имя",
+    "avoid не входит в положительный поиск",
+    "query различает declared и inferred и не подменяет объявленные термины",
+    "Связи хранятся на стороне ссылающегося; обратный индекс только генерируется",
+    "Расширение docs search не меняет результат для запросов без терминов"
+  ],
+  "acceptance_criteria": [
+    "AC-3: lookup возвращает ровно одну запись; search возвращает ранжированные совпадения с match_type, matched_on, display_term, score.",
+    "AC-4: match находит термины в тексте или файле по exact/alias/prefix без морфологии, отдаёт позиции и не считает avoid официальным вхождением.",
+    "AC-5: query --task и --text объединяют declared и inferred, помечая вторые.",
+    "AC-7: refs строит обратный индекс; validate/check сообщают о неразрешённых TERM-* и терминах без ссылок.",
+    "AC-9: docs search расширяет запрос терминами, возвращает glossary-блок и matched_terms; term_declared выше title; avoid не расширяет; --no-expand-terms восстанавливает прежнее поведение.",
+    "AC-11: glossary lint --file возвращает машинный отчёт с позициями; docs context --task включает определения объявленных терминов; неофициальный синоним — warning, avoid — error."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [
+    "doc/architecture/system/data.md",
+    "doc/architecture/system/cli-command-map.md",
+    "doc/architecture/system/cli-validation-rules.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Поиск детерминирован и не требует сети",
+    "Новые поля task.json и frontmatter валидируются до записи"
+  ],
+  "assumptions": [
+    "Достаточно exact/alias/prefix/fuzzy без морфологии"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "Изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "правка data/"
+    ],
+    "approval_required": [
+      "Изменение схемы task.json"
+    ]
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [
+    "0001"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Убрать команды поиска и обратный индекс, оставив glossary.json и validate/build/check; поля glossary_terms/terms сохранить как необязательные.",
+  "related_docs": [
+    "GLO-system",
+    "REG-cli-command-map",
+    "ENT-task-input"
+  ],
+  "related_tests": [
+    {
+      "test_id": "glossary-search-acceptance",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

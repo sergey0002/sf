@@ -1,0 +1,117 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0028-0001",
+  "task_number": "0001",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "arch task subtask init UI-0028 0001; вход — AC-1, AC-2 и AC-8 родителя",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "JSON-канон, схема и миграция терминов",
+  "kind": "feature",
+  "intent": "Заменить Markdown-канон глоссария на doc/architecture/glossary.json, добавить JSON Schema термина и сгенерированные производные, зафиксировать смену источника в ADR и перенести существующие 8 терминов без потери смысла.",
+  "scope": {
+    "in": [
+      "ADR о JSON-источнике глоссария и границе CLI",
+      "doc/architecture/schemas/glossary.schema.json",
+      "doc/architecture/glossary.json с миграцией 8 терминов и маппингом legacy ID",
+      "arch glossary validate/build/check",
+      "Генерация glossary.md, glossary.index.json, vocab/accept.txt, vocab/reject.txt",
+      "paths.yaml, body_validation.py и карта CLI"
+    ],
+    "out": [
+      "Поисковые команды и обратные ссылки (0002)",
+      "Write-команды (0003)",
+      "Морфология, i18n, TBX/SKOS"
+    ],
+    "allowed_files_modules": [
+      "doc/architecture/",
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/tasks/UI-0028/"
+    ]
+  },
+  "current_behavior": "Канон — glossary.md с H3-записями; bodies/glossary.json содержит только has_terms и мёртвый term_format; уникальность TERM-* и обязательные поля не проверяются.",
+  "evidence": [],
+  "contracts_and_invariants": [
+    "JSON — принятый формат машинных записей (VIEW-data); YAML не используется как формат обмена",
+    "narrative-документы остаются Markdown (ADR-0001)",
+    "Сгенерированные файлы не редактируются вручную и проверяются check"
+  ],
+  "acceptance_criteria": [
+    "AC-1: glossary.json валидируется схемой; validate/build/check проходят на чистом дереве; check возвращает ненулевой код при drift или невалидной записи.",
+    "AC-2: Валидатор отвергает дубли TERM-*, несоответствие TERM-<domain>-<slug>, пересечение official_synonyms с search_synonyms и avoid с допустимыми именами.",
+    "AC-8: ADR фиксирует JSON-источник и границу CLI."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [
+    "doc/architecture/system/data.md",
+    "doc/architecture/decisions/ADR-0001-architecture-docs-store.md",
+    "doc/architecture/glossary.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Не терять смысл существующих 8 терминов",
+    "Legacy ID переименовываются только после подтверждения владельца; иначе фиксируются исключением"
+  ],
+  "assumptions": [
+    "jsonschema уже доступен в doc/tools/requirements.txt"
+  ],
+  "open_questions": [
+    "Переименование legacy TERM-task-json и TERM-task-key в TERM-system-*"
+  ],
+  "risk": "high",
+  "authority": {
+    "allowed": [
+      "Изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "правка data/"
+    ],
+    "approval_required": [
+      "Изменение ADR-0001",
+      "Переименование legacy TERM-*"
+    ]
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Восстановить glossary.md как канон из сохранённого JSON, отключить validate/build/check глоссария и убрать generated-производные из paths.yaml.",
+  "related_docs": [
+    "GLO-system",
+    "VIEW-data",
+    "ADR-0001"
+  ],
+  "related_tests": [
+    {
+      "test_id": "glossary-canon-acceptance",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

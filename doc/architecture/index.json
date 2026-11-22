@@ -63,6 +63,24 @@
       "implemented": false
     },
     {
+      "id": "CAP-addressable-contracts",
+      "type": "capability-spec",
+      "title": "Адресуемые контракты документации и контекст задачи",
+      "summary": "Стабильные якоря разделов, ограниченное чтение, поиск, проверка ссылок, контекст задачи и анализ влияния изменений; CLI сообщает механику, агент оценивает смысл.",
+      "status": "draft",
+      "path": "system/addressable-contracts.md",
+      "domain": "system",
+      "related": [
+        "REG-cli-command-map",
+        "SPEC-cli-implementation",
+        "FLOW-cli-task-lifecycle",
+        "ENT-verification-evidence",
+        "CAP-knowledge-retrieval",
+        "VIEW-cli-package"
+      ],
+      "implemented": true
+    },
+    {
       "id": "CAP-configurable-model-cli",
       "type": "capability",
       "title": "Настраиваемая CLI модели",
@@ -212,10 +230,27 @@
       "domain": "task-lifecycle",
       "related": [
         "ENT-task-input",
+        "ENT-task-record",
         "ENT-stage-artifact",
         "ENT-verification-evidence"
       ],
       "implemented": false
+    },
+    {
+      "id": "ENT-flow-definition",
+      "type": "entity",
+      "title": "Версионированный flow и таблица выбора",
+      "summary": "YAML-описание состояний, переходов и правил выбора flow, которое CLI проверяет и применяет к задаче.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/entities/flow-definition.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-task-record",
+        "FLOW-task-lifecycle",
+        "REG-cli-command-map",
+        "REG-cli-validation-rules"
+      ],
+      "implemented": true
     },
     {
       "id": "ENT-stage-artifact",
@@ -247,6 +282,23 @@
       "implemented": false
     },
     {
+      "id": "ENT-task-record",
+      "type": "entity",
+      "title": "Версионированная запись задачи",
+      "summary": "Неизменяемый intent в task.json, изменяемое состояние в state.json и append-only журнал переходов events.jsonl с ревизиями и ключами идемпотентности.",
+      "status": "draft",
+      "path": "domains/task-lifecycle/entities/task-record.md",
+      "domain": "task-lifecycle",
+      "related": [
+        "ENT-task-input",
+        "ENT-stage-artifact",
+        "ENT-verification-evidence",
+        "FLOW-task-lifecycle",
+        "REG-cli-command-map"
+      ],
+      "implemented": true
+    },
+    {
       "id": "ENT-verification-evidence",
       "type": "entity",
       "title": "Запись доказательств верификации",
@@ -271,7 +323,8 @@
       "related": [
         "SPEC-cli-implementation",
         "REG-cli-validation-rules",
-        "REG-cli-command-map"
+        "REG-cli-command-map",
+        "REG-task-number-registry"
       ],
       "implemented": false
     },
@@ -356,16 +409,17 @@
       "id": "FLOW-kilo-session-audit",
       "type": "flow",
       "title": "Аудит локальных сессий Kilo Code",
-      "summary": "Поиск сессии, проверка выполнения задачи, анализ инструментов и расхода контекста по локальной SQLite.",
+      "summary": "Read-only поиск сессии Kilo, компактный JSON-снимок и оценка результата, процесса и достаточности архитектуры.",
       "status": "draft",
       "path": "domains/execution-verification/flows/kilo-session-audit.md",
       "domain": "execution-verification",
       "related": [
         "DOM-execution-verification",
         "FLOW-verify-task",
-        "FLOW-document-session"
+        "FLOW-document-session",
+        "REG-cli-command-map"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "FLOW-task-lifecycle",
@@ -378,6 +432,7 @@
       "related": [
         "DOM-task-lifecycle",
         "ENT-task-input",
+        "ENT-task-record",
         "ENT-stage-artifact",
         "ENT-verification-evidence"
       ],
@@ -444,7 +499,8 @@
       "domain": "system",
       "related": [
         "VIEW-cli-package",
-        "DOM-task-lifecycle"
+        "DOM-task-lifecycle",
+        "CAP-addressable-contracts"
       ],
       "implemented": true
     },
@@ -467,7 +523,7 @@
       "id": "REG-task-number-registry",
       "type": "rule-set",
       "title": "Политика выделения и реестра номеров задач",
-      "summary": "Четырёхзначный task_number, ключ, производный от источника, без автоматического выделения; дубли останавливают.",
+      "summary": "Четырёхзначный task_number, ключ, производный от источника; реестр хранится в JSON и ведётся только CLI.",
       "status": "draft",
       "path": "system/task-number-registry.md",
       "domain": "system",
@@ -477,7 +533,7 @@
         "FLOW-create-task",
         "GLO-system"
       ],
-      "implemented": false
+      "implemented": true
     },
     {
       "id": "RUNBOOK-arch-operations",
@@ -507,7 +563,8 @@
         "REG-cli-command-map",
         "VIEW-cli-package",
         "REG-cli-validation-rules",
-        "SPEC-cli-implementation"
+        "SPEC-cli-implementation",
+        "CAP-addressable-contracts"
       ],
       "implemented": false
     },
@@ -554,7 +611,8 @@
       "related": [
         "REG-cli-command-map",
         "SYS-simple-factory",
-        "DOM-task-lifecycle"
+        "DOM-task-lifecycle",
+        "FLOW-kilo-session-audit"
       ],
       "implemented": true
     },

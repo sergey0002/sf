@@ -5,7 +5,7 @@ title: Жизненный цикл задачи
 summary: "Идентичность и historia задачи/этапа, записи доказательств; загружать при изменении жизненного состояния или происхождения."
 status: draft
 domain: task-lifecycle
-related: [ENT-task-input, ENT-stage-artifact, ENT-verification-evidence]
+related: [ENT-task-input, ENT-task-record, ENT-stage-artifact, ENT-verification-evidence]
 implemented: false
 ---
 
@@ -31,6 +31,7 @@ implemented: false
 ## Ключевые записи
 
 - [Ввод задачи](entities/task-input.md)
+- [Версионированная запись задачи](entities/task-record.md)
 - [Артефакт этапа](entities/stage-artifact.md)
 - [Доказательство верификации](entities/verification-evidence.md)
 - [Поток жизненного цикла задачи](flow.md)

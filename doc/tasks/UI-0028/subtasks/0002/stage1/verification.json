@@ -1,0 +1,121 @@
+{
+  "task_key": "UI-0028-0002",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "lookup возвращает одну запись с официальным term"
+    },
+    {
+      "id": "CASE-7",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Неизвестный TERM-* — exit 1 без данных"
+    },
+    {
+      "id": "CASE-8",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "search по search_synonym даёт match_type и официальный display_term"
+    },
+    {
+      "id": "CASE-9",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Точное совпадение выше префиксного"
+    },
+    {
+      "id": "CASE-10",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "Позиции термина и синонима, avoid не вхождение"
+    },
+    {
+      "id": "CASE-11",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "Longest match побеждает"
+    },
+    {
+      "id": "CASE-12",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "declared и inferred раздельны"
+    },
+    {
+      "id": "CASE-13",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "Объявленный термин не подменяется inferred"
+    },
+    {
+      "id": "CASE-14",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "referenced_by содержит задачу и документ"
+    },
+    {
+      "id": "CASE-15",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "Неразрешённый TERM-* — exit 1"
+    },
+    {
+      "id": "CASE-16",
+      "covers": [
+        "AC-7"
+      ],
+      "expected": "Термин без ссылок перечислен, не ошибка"
+    },
+    {
+      "id": "CASE-23",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "term_declared 900 и заполненный glossary"
+    },
+    {
+      "id": "CASE-24",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "--no-expand-terms сохраняет прежнее поведение"
+    },
+    {
+      "id": "CASE-25",
+      "covers": [
+        "AC-9"
+      ],
+      "expected": "avoid не расширяет запрос"
+    },
+    {
+      "id": "CASE-29",
+      "covers": [
+        "AC-11"
+      ],
+      "expected": "lint: warning для синонима, error для avoid"
+    },
+    {
+      "id": "CASE-30",
+      "covers": [
+        "AC-11"
+      ],
+      "expected": "docs context содержит определения терминов"
+    }
+  ]
+}

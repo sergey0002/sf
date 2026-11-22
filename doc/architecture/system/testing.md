@@ -107,7 +107,21 @@ implemented: false
 | digest_session stats | Успешный и неуспешный bash | `stats.tools` и `anomalies.failed_tool` |
 | digest_session phases | Чтение, правка, тест | Отрезки `explore`, `edit`, `verify` |
 | session_events | Фильтр по `message_id` | Только части выбранного сообщения с `part_id` |
-| CLI | `session find` и `session digest --db` | JSON-envelope и exit 0 |
+| CLI | `session find --json` и `session digest --db` | JSON-envelope и exit 0; неизвестный `digest` даёт exit 20 |
+| Контракт базы | Временный файл без живой SQLite | Тест не открывает реальный `kilo.db` и не пишет в него |
+
+### 3.8 task_registry.py
+
+| Тест | Вход | Ожидаемый результат |
+|------|------|--------------------|
+| next_task_key | Реестр с UI-0007 и UI-0009 | `UI-0010`; каталоги задач не читаются |
+| next_task_key non-ui | source="jira" | RegistryError: автоматическое выделение только для `ui` |
+| next_task_key duplicate number | Две записи с одним номером | RegistryError, запись не меняется |
+| register_entry idempotent | Тот же ключ и номер | Существующая запись возвращается без дубля |
+| register_entry conflicting number | Существующий ключ, другой номер | RegistryError |
+| task new | Пустой реестр | Каталог, `task.json` и запись реестра созданы одним вызовом |
+| task new write failure | Ошибка записи реестра | Созданный каталог задачи удалён, реестр не изменён |
+| registry add | Существующая карточка вне реестра | Запись добавлена, title берётся из `task.json` |
 
 ## 4. Integration-тесты
 
@@ -124,6 +138,9 @@ implemented: false
 | CLI task close success | `arch task close UI-0009` (все subtasks закрыты) | "Task UI-0009 closed", exit 0 |
 | CLI task decompose | `arch task decompose <key> --subtask-id 0001 --subtask-title "Test"` | Создаёт subtask, добавляет в task.json, exit 0 |
 | CLI task subtask validate | `arch task subtask validate <parent> <id>` | "subtask ... is valid", exit 0 |
+| CLI task new | `arch task new --title "Test" --json` | JSON с новым `UI-NNNN`, карточка и запись реестра созданы, exit 0 |
+| CLI task registry | `arch task registry --json` | `path`, `schema_version`, `count`, `tasks`, exit 0 |
+| CLI task registry add | `arch task registry add <key> --json` | Запись существующей карточки добавлена, exit 0 |
 
 ## 5. E2E-тесты
 
@@ -234,6 +251,15 @@ EOF
 | cli.py | 85% |
 | body_validation.py | 80% |
 
-## 10. Запуск в CI (удалено)
+## 10. Локальный gate и запрет CI/CD
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) был удалён по решению владельца. Локальные проверки выполняются через `bash doc/tests/run.sh --ci` (read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными `PYTHONHASHSEED`, unit/acceptance тесты и fixture). `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую.
+> [!warning] Запрет
+> CI/CD-конвейеры и Git-hosted workflow в проекте запрещены решением владельца (2026-11-22). Не создавайте `.github/workflows/`, GitLab CI, Jenkinsfile, CircleCI, Azure Pipelines, Bitbucket Pipelines или аналогичные конфигурации и не делайте внешний pipeline частью контракта задачи. Правило зафиксировано в [манифесте](manifest.md#запреты-в-рамках-workflow).
+
+Обязательный gate локальный:
+
+```bash
+bash doc/tests/run.sh --gate
+```
+
+Он выполняет read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными `PYTHONHASHSEED` в отдельных временных деревьях, unit/acceptance тесты и fixture. `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую. GitHub Actions workflow удалён; `--ci` больше не поддерживается.

@@ -68,7 +68,11 @@ class DocOpsError(Exception):
 
 
 def _relative(path: Path, config: ProjectConfig) -> str:
-    return path.resolve().relative_to(config.root).as_posix()
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(config.root).as_posix()
+    except ValueError:
+        return resolved.as_posix()
 
 
 def _load_documents(store: ArchitectureStore) -> list[Document]:
@@ -799,7 +803,16 @@ def _case_item(
             if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
                 continue
             target = (config.root / entry["path"]).resolve()
-            if not target.is_file() or sha256_file(target) != entry.get("sha256"):
+            try:
+                target.relative_to(config.root.resolve())
+            except ValueError:
+                stale.append(entry["path"])
+                continue
+            try:
+                current = sha256_file(target) if target.is_file() else None
+            except OSError:
+                current = None
+            if current != entry.get("sha256"):
                 stale.append(entry["path"])
         evidence["snapshot_state"] = "stale" if stale else "current"
         if stale:

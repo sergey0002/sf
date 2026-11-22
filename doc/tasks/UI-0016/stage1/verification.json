@@ -3,21 +3,56 @@
   "task_key": "UI-0016",
   "task_number": "0016",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:46f528896fe1ffdf00f7d834085fc97fcbeb344aea0b944cbf2e67361d2a2ac5",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_record_migration_preserves_intent_and_is_repeatable -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_event_is_idempotent_and_rejects_revision_conflict doc.tests.test_task_identity.TaskIdentityContractTests.test_versioned_replay_restores_state_and_rejects_corrupt_journal -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --brief",
+      "exit_code": 0,
+      "cases": [
+        "CASE-3"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
+      "id": "CASE-1",
       "covers": [
         "AC-1"
       ],
-      "expected": "AC-1: Старые записи читаются, миграция повторяема, исходный intent сохраняется."
+      "expected": "Legacy record reads unchanged; migration is repeatable; intent fields and intent_digest are preserved; dry-run writes nothing."
     },
     {
+      "id": "CASE-2",
       "covers": [
         "AC-2"
       ],
-      "expected": "AC-2: Повтор события не создаёт вторую запись, конфликт ревизии отклоняется, replay восстанавливает состояние."
+      "expected": "Duplicate event is not written twice; a stale expected_revision and the same event_id with different content are rejected without writing; replay restores state and a corrupt journal is rejected."
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "expected": "The full local gate passes on the verified snapshot."
     }
   ],
   "baseline_commands": [
@@ -25,5 +60,47 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/domains/task-lifecycle/entities/task-record.md",
+      "sha256": "99bde5e11a5863365c3e7bb8cd8488a73af35f40c1baa967a0c2624a5195a77c"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "0f98e567e3af6331632576bbbb2fd3e6be65eac3d119de70a8c59d2423ad8db9"
+    },
+    {
+      "path": "doc/architecture/system/cli-validation-rules.md",
+      "sha256": "2f5e76b71503c9e39c2cf21260965ff892535ecfd73e9840d42d0928843cbeaa"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "0469ee63e8e79e5494937bc2084211c0edffd3aec09ddc3abce60e80660b2519"
+    },
+    {
+      "path": "doc/tasks/UI-0016/stage1/plan.md",
+      "sha256": "e092940b5febb57a61aeaafa38edcf0163b35fb7f1307e9a53112cba955ce5d4"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "787777763667f8cf3190aa5a049a9a1446c4032ecf7e48a3e748eb9211484022"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "2e42891587ac7b5e0db9c1e0e712ed0b175f2e29047b165f026bde38328ddf1d"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7e665aa28125a87263cff6351b8041685255314ee75a1b61acdee9cdd0dfcb81"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "4c54a9215d9dac8378b340b2efdf10edae583c561543ecf1538bf0699b1e8c51"
+    },
+    {
+      "path": "doc/tools/arch/task_record.py",
+      "sha256": "5d98febb603f01d7a0995937faa276be267aa9ad1517961aba78c45e27b3911c"
+    }
   ]
 }

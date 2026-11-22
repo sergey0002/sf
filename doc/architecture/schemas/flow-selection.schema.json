@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "flow-selection.schema.json",
+  "title": "Versioned flow selection table",
+  "type": "object",
+  "required": ["schema_version", "type", "version", "rules"],
+  "properties": {
+    "schema_version": {"const": "flow-selection-1"},
+    "type": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "version": {"type": "integer", "minimum": 1},
+    "facts": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_-]*$"},
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {"enum": ["boolean", "enum", "string"]},
+          "description": {"type": "string"},
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "flow"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]*$"},
+          "flow": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+          "reason": {"type": "string"},
+          "fallback": {"type": "boolean"},
+          "when": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

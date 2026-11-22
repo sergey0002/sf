@@ -3,18 +3,165 @@
   "task_key": "UI-0026",
   "task_number": "0026",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:f8e06aebe4643ca09f1554dfd755a7a629fff8c2be171c53a101a96540a1e9c9",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_contracts.AddressableSectionTests doc.tests.test_doc_contracts.CheckLinksTests doc.tests.test_doc_contracts.SearchTests -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1",
+        "CASE-2",
+        "CASE-3",
+        "CASE-4"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_doc_contracts.ContextTests doc.tests.test_doc_contracts.ImpactTests -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-5",
+        "CASE-6",
+        "CASE-7"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --in-copy --brief",
+      "exit_code": 0,
+      "cases": [
+        "CASE-8"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -c 'import json,subprocess,sys\ndef run(*a):\n    p=subprocess.run([sys.executable,\"doc/tools/arch/__main__.py\",*a],capture_output=True,text=True)\n    assert p.returncode==0,(a,p.stderr)\n    return json.loads(p.stdout)[\"data\"]\nassert run(\"docs\",\"search\",\"коды выхода\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert \"Код\" in run(\"docs\",\"read\",\"REG-cli-command-map#exit-codes\",\"--json\")[\"content\"]\nassert \"Не сообщайте\" in run(\"docs\",\"read\",\"ENT-verification-evidence#invariants\",\"--json\")[\"content\"]\nassert run(\"docs\",\"search\",\"task close\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert \"close\" in run(\"docs\",\"read\",\"SPEC-cli-implementation#task-close\",\"--json\")[\"content\"]\nassert run(\"docs\",\"search\",\"закрытие задачи\",\"--limit\",\"3\",\"--json\")[\"hits\"]\nassert run(\"docs\",\"context\",\"--task\",\"UI-0026\",\"--case\",\"CASE-1\",\"--json\")[\"complete\"] is True\nassert run(\"docs\",\"search\",\"SLA model routing\",\"--limit\",\"3\",\"--json\")[\"hits\"]==[]\nprint(\"pilot route OK\")'",
+      "exit_code": 0,
+      "cases": [
+        "CASE-9"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
-    {"id": "CASE-1", "covers": ["AC-1"], "expected": "Точная секция доступна после переноса и переименования; путь, диапазон и хеш актуальны."},
-    {"id": "CASE-2", "covers": ["AC-1", "AC-4"], "expected": "Диагностика неоднозначности, отсутствия, лимита и выхода из корня без записи."},
-    {"id": "CASE-3", "covers": ["AC-2"], "expected": "Стабильный порядок, лимит и явная граница справочника; корректная пустая выдача."},
-    {"id": "CASE-4", "covers": ["AC-4"], "expected": "Проверка ссылок отвергает удалённый якорь и показывает точный источник."},
-    {"id": "CASE-5", "covers": ["AC-3"], "expected": "Минимальный контекст по явным связям, с причинами и контролируемым бюджетом."},
-    {"id": "CASE-6", "covers": ["AC-3"], "expected": "Точная дельта снимков, явные конфликты и различие неполного и устаревшего evidence."},
-    {"id": "CASE-7", "covers": ["AC-4"], "expected": "Обратные объявленные связи к изменённому разделу; кандидаты не считаются доказанным влиянием."},
-    {"id": "CASE-8", "covers": ["AC-5"], "expected": "Совместимость старых команд, актуальные справка и примеры, успешный полный прогон."},
-    {"id": "CASE-9", "covers": ["AC-5"], "expected": "5 из 5 верных ответов или диагностик, меньшая медиана байтов, не больше вызовов, отчёт о сравнении."}
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Точная секция доступна после переноса и переименования; путь, диапазон и хеш актуальны."
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-1",
+        "AC-4"
+      ],
+      "expected": "Диагностика неоднозначности, отсутствия, лимита и выхода из корня без записи."
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Стабильный порядок, лимит и явная граница справочника; корректная пустая выдача."
+    },
+    {
+      "id": "CASE-4",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "Проверка ссылок отвергает удалённый якорь и показывает точный источник."
+    },
+    {
+      "id": "CASE-5",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Минимальный контекст по явным связям, с причинами и контролируемым бюджетом."
+    },
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-3"
+      ],
+      "expected": "Точная дельта снимков, явные конфликты и различие неполного и устаревшего evidence."
+    },
+    {
+      "id": "CASE-7",
+      "covers": [
+        "AC-4"
+      ],
+      "expected": "Обратные объявленные связи к изменённому разделу; кандидаты не считаются доказанным влиянием."
+    },
+    {
+      "id": "CASE-8",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "Совместимость старых команд, актуальные справка и примеры, успешный полный прогон."
+    },
+    {
+      "id": "CASE-9",
+      "covers": [
+        "AC-5"
+      ],
+      "expected": "5 из 5 верных ответов или диагностик, меньшая медиана байтов, не больше вызовов, отчёт о сравнении."
+    }
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/index.json",
+      "sha256": "5c951db429d00a7255da7f2ace5a09180843f8e95a1ac93f96d77003438082f3"
+    },
+    {
+      "path": "doc/architecture/system/addressable-contracts.md",
+      "sha256": "ff8fc9a362c106f4a6919a4ac14d34b225b110d336fa87c19c6324e7462f080f"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "b0aa80cd8ecaa432a58b3f4f5841cd45137e87502e1cd262a0dbc3af362b97dc"
+    },
+    {
+      "path": "doc/architecture/system/implementation-spec.md",
+      "sha256": "4b0d6788052bd7d3fddcd268a3eea8a182569a44b5dd850fd6f38876e56208c2"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "d5595a2f03f7ba464acd4e856c41a0ace0fdc0fa8e23fc7c24cebb746efa6bfa"
+    },
+    {
+      "path": "doc/skills/arch-cli/SKILL.md",
+      "sha256": "81f8b84f1c30111216a59ea5ad544f9736463efd5107710ca0eed14308411742"
+    },
+    {
+      "path": "doc/skills/architecture-read/SKILL.md",
+      "sha256": "25c1f9606b2b9d18bb3a789a0ea164c80dc78826071468929241b2c3c80d828a"
+    },
+    {
+      "path": "doc/tasks/UI-0026/stage1/plan.md",
+      "sha256": "f7c895cd1f7e4004c66055ae0a92582561182104cb052c953de69bcd36a5e6e2"
+    },
+    {
+      "path": "doc/tests/test_doc_contracts.py",
+      "sha256": "7d1916241230fe15284974307541f3d0dd323521aa165c9bbadef758e80edf16"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "5f666f263558ee15ae1fd8a4b40d8e2e690441ba9fbaa79a8884e2e0857e1fa5"
+    },
+    {
+      "path": "doc/tools/arch/doc_ops.py",
+      "sha256": "f7398df9fe4f7417015ec896cd01e5fb0eb3b184975e7c814dbac9ac9b436a3a"
+    },
+    {
+      "path": "doc/tools/arch/sections.py",
+      "sha256": "24f9b2b1005881c3ed75e6218389b1192eca1bb39be2e3b1dcbce046eb5109b1"
+    },
+    {
+      "path": "doc/tools/tests/test_sections.py",
+      "sha256": "ddcf0ffc20108aca3a8dd08f17ac52bd43acf4bc9dac702660a45ae56bb2bd35"
+    }
   ]
 }

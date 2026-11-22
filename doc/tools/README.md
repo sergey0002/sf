@@ -46,6 +46,7 @@ Index build and task mutations are explicit writes. Inspection, validation and c
 - Safe YAML parsing, duplicate key rejection, JSON Schema Draft 2020-12 validation, unique IDs, local Markdown path existence and `related` ID resolution.
 - Index generated in stable ID order and atomically replaced.
 - Task records are replaced atomically. `task decompose` validates the whole package before writing and records a journal so an interrupted composite write can be resumed; a pending journal blocks closure until recovery.
+- A versioned task record keeps immutable intent in `task.json`, mutable state in `state.json` and an append-only `events.jsonl` journal. `task migrate` is repeatable, `task event` rejects a stale `expected_revision` and repeats an identical `--id` without a second write, and `task replay` rebuilds `state.json` only from a verified journal chain.
 - `show` and `list` require exact metadata/ID; they do not search semantically. `task-key` validates exactly four decimal digits and derives Jira/UI/other-source keys; it does not allocate or reserve numbers.
 - External links are not fetched. Markdown syntax and semantic completeness are not fully validated. Anchors in local links are not checked. Markdown parsing is deliberately lightweight; review tool limits before treating it as a security boundary.
 - Schema and CLI are illustrative contracts, not approved production schemas.

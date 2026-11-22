@@ -1,0 +1,87 @@
+{
+  "arch_version": "0.2.0",
+  "git_rev": "9e36a171e9508050c1def87ca82db507a13de5ef",
+  "date": "2026-11-22",
+  "scenario": "training-run-diagnose-to-contract",
+  "entrypoint": "python3 doc/tools/arch/__main__.py",
+  "steps": [
+    {
+      "step": 1,
+      "command": "python3 doc/tools/arch/__main__.py --version",
+      "duration_ms": 317,
+      "exit_code": 0,
+      "stdout_bytes": 11,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 2,
+      "command": "python3 doc/tools/arch/__main__.py task diagnose UI-0011 --json --brief",
+      "duration_ms": 379,
+      "exit_code": 0,
+      "stdout_bytes": 663,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 3,
+      "command": "python3 doc/tools/arch/__main__.py docs context --task UI-0011 --case CASE-1 --json",
+      "duration_ms": 399,
+      "exit_code": 0,
+      "stdout_bytes": 7162,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 4,
+      "command": "python3 doc/tools/arch/__main__.py docs search \"task lifecycle\" --limit 3 --json",
+      "duration_ms": 459,
+      "exit_code": 0,
+      "stdout_bytes": 1781,
+      "stderr_bytes": 0,
+      "oracle": "3/3 hits have task-lifecycle in path"
+    },
+    {
+      "step": 5,
+      "command": "python3 doc/tools/arch/__main__.py docs read DOM-task-lifecycle#инварианты --max-bytes 4000 --json",
+      "duration_ms": 391,
+      "exit_code": 0,
+      "stdout_bytes": 1150,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 6,
+      "command": "python3 doc/tools/arch/__main__.py validate --brief",
+      "duration_ms": 444,
+      "exit_code": 0,
+      "stdout_bytes": 26,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 7,
+      "command": "python3 doc/tools/arch/__main__.py index check",
+      "duration_ms": 449,
+      "exit_code": 0,
+      "stdout_bytes": 17,
+      "stderr_bytes": 0
+    },
+    {
+      "step": 8,
+      "command": "python3 doc/tools/arch/__main__.py docs paths --check",
+      "duration_ms": 684,
+      "exit_code": 0,
+      "stdout_bytes": 38,
+      "stderr_bytes": 0
+    }
+  ],
+  "summary": {
+    "steps_passed": 8,
+    "steps_failed": 0,
+    "total_cli_time_ms": 3522,
+    "stdout_bytes_steps_2_to_5": 10756,
+    "total_stdout_bytes": 10848,
+    "search_hits_in_domain": "3/3"
+  },
+  "environment": {
+    "python_version": "3.14.4",
+    "os": "linux",
+    "note": "Wall time of the entrypoint process. Working tree had unrelated uncommitted changes; rev is HEAD only."
+  }
+}

@@ -1,7 +1,7 @@
 """Task-key derivation: numbers, sources and prefixes.
 
-The CLI never allocates task numbers. It only validates and derives keys from
-the explicit contract:
+The CLI never invents task numbers. It validates and derives keys from the
+explicit contract; allocation lives in :mod:`arch.task_registry`:
 
 - Jira: bare four-digit number, no prefix.
 - UI (user input): four-digit number with reserved ``UI-`` prefix.
@@ -58,7 +58,7 @@ def normalize_task_identity(
 def parse_task_key(task_key: str) -> dict[str, str | None]:
     """Parse a task_key into source_type, task_number, source_prefix.
 
-    Never allocates a number; only validates and derives from the key itself.
+    Never invents a number; only validates and derives from the key itself.
     """
     match = TASK_KEY_RE.fullmatch(task_key)
     if not match:

@@ -1,0 +1,116 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0028-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "arch task subtask init UI-0028 0003; вход — AC-6 родителя",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "CLI-запись, скан и lint",
+  "kind": "feature",
+  "intent": "Дать CLI точечное управление терминами и проверку прозы: добавить или удалить официальный либо поисковый синоним, добавить и обновить термин, пометить устаревшим, а также классифицировать вхождения терминов в документах и предложить объявление terms — с предпросмотром, атомарной записью и явными кодами выхода.",
+  "scope": {
+    "in": [
+      "arch glossary synonym add/remove",
+      "arch glossary add/update/deprecate",
+      "arch glossary scan и --suggest",
+      "Атомарная запись glossary.json и --dry-run",
+      "Коды выхода 0/1/5 и машинный JSON-ответ",
+      "Обновление карты CLI и справки"
+    ],
+    "out": [
+      "Ревизии, журнал событий и идемпотентность уровня task event",
+      "scan --fix --apply и любая автозамена прозы",
+      "Интерактивный редактор",
+      "Внешние трекеры"
+    ],
+    "allowed_files_modules": [
+      "doc/architecture/",
+      "doc/config/",
+      "doc/tools/arch/",
+      "doc/tools/tests/",
+      "doc/tests/",
+      "doc/tasks/UI-0028/"
+    ]
+  },
+  "current_behavior": "Изменение термина возможно только прямой правкой Markdown; типизированных операций нет.",
+  "evidence": [],
+  "contracts_and_invariants": [
+    "CLI не сочиняет определение и не выбирает термин",
+    "Мутация валидируется теми же инвариантами, что validate",
+    "При ошибке файл не изменяется",
+    "Авторство через файл не запрещается; невалидная форма отвергается check",
+    "scan не пишет файлы; --suggest только предлагает объявление terms"
+  ],
+  "acceptance_criteria": [
+    "AC-6: synonym add/remove, add, update и deprecate меняют только glossary.json атомарно; --dry-run не пишет; невалидный ввод, неизвестный TERM-* и конфликт дают ненулевой код без изменения файла.",
+    "AC-10: scan классифицирует avoid как error, неофициальный синоним как warning, неизвестный и необъявленный термин как info; --suggest возвращает кандидатов terms_add без записи; скан не изменяет ни один файл."
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [
+    "doc/architecture/system/cli-command-map.md",
+    "doc/architecture/system/cli-validation-rules.md",
+    "doc/tools/arch/fs_atomic.py"
+  ],
+  "constraints": [
+    "Переиспользовать существующую атомарную запись, не вводить новый механизм",
+    "Справка и карта CLI обновляются в том же изменении"
+  ],
+  "assumptions": [
+    "Одного файла glossary.json достаточно; конкурентные писатели не рассматриваются"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "Изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "правка data/"
+    ],
+    "approval_required": [
+      "Запуск реализации"
+    ]
+  },
+  "approvals": [],
+  "task_type": "scaffold",
+  "flow": "minimal-scaffold",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [
+    "0001"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Удалить write-команды, оставив glossary.json и validate/build/check; файл продолжает правиться вручную.",
+  "related_docs": [
+    "REG-cli-command-map",
+    "REG-cli-validation-rules"
+  ],
+  "related_tests": [
+    {
+      "test_id": "glossary-write-acceptance",
+      "location": "doc/tests/run.sh",
+      "command": "bash doc/tests/run.sh --brief"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

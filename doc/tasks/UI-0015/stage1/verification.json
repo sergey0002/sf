@@ -3,9 +3,34 @@
   "task_key": "UI-0015",
   "task_number": "0015",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "sha256:68ac0dcf81abc1cad3544f40db64040bbeb446842a7f24fc9118c779eb381c0f",
+  "checks": [
+    {
+      "id": "AC-1-catalog",
+      "covers": ["AC-1"],
+      "command": "python3 -c 'import pathlib,sys; t=pathlib.Path(\"doc/skills/README.md\").read_text(); need=[\"[arch-cli](arch-cli/SKILL.md)\",\"[architecture-read](architecture-read/SKILL.md)\",\"[create-task](create-task/SKILL.md)\",\"[go-to-task](go-to-task/SKILL.md)\",\"Условие выбора\",\"DOM-task-lifecycle#инварианты\"]; m=[n for n in need if n not in t]; print(m or \"catalog-ok\"); sys.exit(bool(m))'",
+      "exit_code": 0,
+      "cases": [],
+      "result": "pass"
+    },
+    {
+      "id": "AC-2-baseline-matches-scenario",
+      "covers": ["AC-2"],
+      "command": "python3 -c 'import json, pathlib, sys; base=json.loads(pathlib.Path(\"doc/tasks/UI-0015/baseline-0.2.0-2026-11-22.json\").read_text()); text=pathlib.Path(\"doc/skills/README.md\").read_text(); bad=[\"scenario missing: \"+s[\"command\"] for s in base[\"steps\"] if s[\"command\"] not in text or s[\"exit_code\"]!=0]; print(bad or \"baseline-matches-scenario\"); sys.exit(bool(bad))'",
+      "exit_code": 0,
+      "cases": [],
+      "result": "pass"
+    },
+    {
+      "id": "AC-2-section-read",
+      "covers": ["AC-2"],
+      "command": "python3 doc/tools/arch/__main__.py docs read 'DOM-task-lifecycle#инварианты' --max-bytes 4000 --json",
+      "exit_code": 0,
+      "cases": [],
+      "result": "pass"
+    }
+  ],
   "planned_checks": [
     {
       "covers": [
@@ -25,5 +50,19 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/skills/README.md",
+      "sha256": "0ab83497cdcea6f3498bcc3d56ef0b07ac010c8b25c65834af7d8a10de2d2ff1"
+    },
+    {
+      "path": "doc/tasks/UI-0015/baseline-0.2.0-2026-11-22.json",
+      "sha256": "44ce6bfc4ba8da68aced5aa6dba3fadd00ab0c4996f598ded6ef8cade6a28ff4"
+    },
+    {
+      "path": "doc/tasks/UI-0015/stage1/plan.md",
+      "sha256": "1604f703c129d2787a8aa935e05b54137f40bb978ca826d1100be980875f83f4"
+    }
   ]
 }
