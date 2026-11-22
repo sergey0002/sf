@@ -3,9 +3,25 @@
   "task_key": "UI-0012",
   "task_number": "0012",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "0cf2b028ee89689f14c3f686c7f1d730adc2918f + working-tree SHA-256 in snapshot_files",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_configured_paths_work_on_clean_layouts doc.tests.test_task_identity.TaskIdentityContractTests.test_bad_project_config_fails_before_index_write -q",
+      "exit_code": 0,
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "result": "Два регрессионных теста прошли. Три чистые раскладки, выбор конфига из другого cwd, точный путь индекса, обнаружение лишнего файла и отказ без изменений дерева."
+    },
+    {
+      "command": "bash doc/tests/run.sh --brief",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Архитектура, индекс, пути, unit/acceptance и fixture UI-0001 прошли."
+    }
+  ],
   "planned_checks": [
     {
       "covers": [
@@ -25,5 +41,67 @@
     "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
     "python3 doc/tools/arch/__main__.py scan --scope all --brief",
     "python3 doc/tools/arch/__main__.py index check"
+  ],
+  "snapshot_files": [
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "8e28381b62173ffe39f84d9897150ac0d4036173788d9c46b7bd0df278caac1a"
+    },
+    {
+      "path": "doc/config/task-conf/types/feature/flows/standard-implementation/config.yaml",
+      "sha256": "0ffdb0a466c399e7a9635c73896622cba33b8bba26bc2044478ee483a30b6dcd"
+    },
+    {
+      "path": "doc/config/task-conf/types/feature/flows/standard-implementation/prompt.md",
+      "sha256": "78974f1eddf5b47efeeae0979ba70ad98d4df94dc93bb65cc77d7be0ffddce00"
+    },
+    {
+      "path": "doc/tools/arch/project_config.py",
+      "sha256": "85e402edd8f9c58e64368e897a282b33a71f4f970c24d091e756e3b9ceb91c0e"
+    },
+    {
+      "path": "doc/tools/arch/store.py",
+      "sha256": "69c070f36d4606ab47dd68c6aeba445109025b33827199a193e7c8825d829e36"
+    },
+    {
+      "path": "doc/tools/arch/cli/app.py",
+      "sha256": "a420e300f446d300c8ecc8d225ab64b686cd01334729d7f9fc1b02af958d6b23"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "591634d1e06f6df36d5b748db4b7f1744bb409e0109e46459cd518f4ac7a6ea0"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "7264388839783c6eb91b6498b0fa1f3d54112c5ff6ce9ece7258db2c7500ab6c"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "828b013c7a19c7a0ecfc7918300c12fd88166ca813f83ca7a93b76ea00dfd7f9"
+    },
+    {
+      "path": "doc/tools/arch/identity.py",
+      "sha256": "d75d3b5508d368732d0b3e2741e35ebabc163e442bdf395e42b94419d6143100"
+    },
+    {
+      "path": "doc/tools/arch/subtask.py",
+      "sha256": "a0e2656e6709ae299fd266e221de0658e1ba6e63c95fdf91c7c5098cfca4f8da"
+    },
+    {
+      "path": "doc/tools/arch/validation.py",
+      "sha256": "c2b793a312948c1c5152dd59d7f84801f62839af97f1add337c8ee25f0fa0889"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "e1aa704661bdb00f9261b0becc6d7a2c5e17e0b098858e289a5acc6408753204"
+    },
+    {
+      "path": "doc/tools/tests/test_arch.py",
+      "sha256": "8d4158ba2576bb1e9a2c2e8054a0ef1aecb92907c8ab8d356436000ababd9a3f"
+    },
+    {
+      "path": "doc/tests/run.sh",
+      "sha256": "ad8126366a3ac06099c2b3a321f9f14503ba6079ed193eaf1fb31dc91a66eb5e"
+    }
   ]
 }

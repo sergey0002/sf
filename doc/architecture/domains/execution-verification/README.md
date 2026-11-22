@@ -5,7 +5,7 @@ title: Выполнение и верификация
 summary: "Границы выполнения задачи одним агентом, одобрения, изолированные рабочие пространства и доказательства."
 status: draft
 domain: execution-verification
-related: [CAP-single-agent-execution, FLOW-verify-task]
+related: [CAP-single-agent-execution, FLOW-verify-task, FLOW-kilo-session-audit]
 implemented: false
 ---
 
@@ -30,6 +30,7 @@ implemented: false
 
 - [Возможность выполнения](capabilities/single-agent-execution.md)
 - [Поток верификации](flow.md)
+- [Аудит локальных сессий Kilo Code](flows/kilo-session-audit.md)
 
 ## Условия остановки
 

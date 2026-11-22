@@ -1,61 +1,22 @@
 ---
 name: create-task
-description: Use when the user asks to create a task from chat/user input (`ui`) or a configured tracker. Clarify blocking ambiguity and produce the single canonical task.json; never create a parallel task.md.
+description: Register a task or decompose a plan from chat or a configured tracker. Produce a source-linked task.json, executable acceptance cases and a verified handoff.
 metadata:
   status: draft
 ---
 
-# Skill: create task
+# Постановка задачи
 
-## Purpose
+Создайте одну каноническую карточку `task.json`. Источники, приоритеты и точка входа описаны в [doc/AGENTS.md](../../AGENTS.md). Команды берите из [arch-cli](../arch-cli/SKILL.md). Постановка заканчивается передачей проверяемого задания. Реализацию начинайте по поручению на выполнение.
 
-Turn a manual or configured tracker request into a normalized `task.json` validated against the current project YAML. Use [doc/AGENTS.md](../../AGENTS.md) for the command entry point and source precedence. Creating a card ends with a verified plan and intended checks. Start implementation when requested.
+При формулировании требований найдите действующее правило по [architecture-read](../architecture-read/SKILL.md). В карточку сохраните ID, в план — точный раздел и связанный AC или CASE. Для кандидата без ключа начинайте с известного домена или поведения.
 
-## Procedure
+1. **Соберите минимальный контекст.** Откройте запрос владельца или ревизию трекера, точный действующий контракт и ближайший пример либо тест. Сохраните источник и ссылки. Сформулируйте пользователя или потребителя, текущее поведение, требуемое наблюдаемое изменение, scope, что должно сохраниться, полномочия и зависимость. Для существующего поведения укажите, что добавляется, изменяется или убирается. Подтверждённый источник определяет требования. Обратимые технические предположения запишите явно. Если варианты меняют контракт, полномочия или результат приёмки, задайте один адресный вопрос или зафиксируйте блокирующее решение в `open_questions`.
+2. **Выберите форму задачи.** Получите тип и flow через `task types`, `task flows --type <type>` и prompts выбранной комбинации. Используйте глубину по риску. Для локальной правки достаточно одного проверяемого сценария, для изменений интерфейса или хранения нужны совместимость и применимые отказы. Декомпозируйте только независимо проверяемые результаты или по политике типа. Ребёнок получает точный вход, свой критерий, границу записи и ссылку на строку родителя. Сверьте зависимости, точки интеграции и порядок.
+3. **Сделайте приёмку исполнимой.** Каждый `AC-N` описывает наблюдаемое обещание. Каждый `CASE-N` описывает отдельный вариант с полями `дано → действие через публичный вход → точное ожидание → способ проверки`. Укажите точный fixture, аргументы, код выхода или ответ и ожидаемое состояние. Для записи укажите, что должно измениться и где, какие файлы или данные должны сохраниться. Для изменённого контракта проверьте применимые стандартный, совместимый, новый и отказной варианты. Если вариант неприменим, кратко объясните это в плане. Каждый оракул выводите из требования или независимого состояния, например из точного пути файла, а не из второго вызова того же компонента, который читает его результат. Сценарий должен выявлять реализацию, которая выглядит правдоподобно и нарушает критерий.
 
-1. **Identify intent and source.** Determine explicit intent, task kind if known, scope/non-goals, acceptance criteria and verification/oracle refs, constraints, assumptions, open questions, target release, approvals and source attachments/references. Treat requests entered by a user as `source.type: ui`; Jira is `source.type: jira`; other sources keep their source type.
+   Для многошаговой записи укажите границы поддерживаемого прерывания, состояние на каждой границе, действие повтора и состояние после отказа. Если есть журнал или конкурентный писатель, задайте отдельные случаи для повреждения журнала, конфликта при возобновлении и конкуренции. Проверка отказа сравнивает всё затронутое дерево, включая дочерние записи и журнал.
+4. **Соберите карточку и стадию.** Назначенный номер берите из запроса, [реестра](../../architecture/system/task-number-registry.md) или утверждённого аллокатора. Если номер ещё не назначен, подготовьте сценарии и запросите номер перед записью карточки. CLI выводит ключ через `task-key`. A four-decimal-digit task number is required. For chat use `source.type: ui`. Keys are Jira `1234` (no prefix), UI `UI-1234` and other sources `<PREFIX>-1234` with a registered prefix. Never invent or allocate one yourself. Сверьте коллизии до записи. В `task.json` сохраните intent, scope, критерии, источники, тип/flow, зависимости, полномочия и ссылки на тесты по схеме. В `stageN/plan.md` запишите порядок, точные точки входа и таблицу `CASE | AC | дано | действие | ожидание | проверка | ребёнок`. Для поведенческой задачи и её технических детей используйте `acceptance_policy: "case-coverage-v1"`. В `stageN/verification.json` сохраните `task_key`, `stage_id`, `status: "not_run"`, `checked_revision: null`, `checks: []` и `planned_checks` с `id`, `covers`, `expected` на каждый обязательный случай. Зарегистрируйте детей по правилам `task decompose`. События трекера служат источником для записи и требуют отдельного разрешения на обратную запись.
+5. **Проверьте задачу глазами нового исполнителя.** Сверьте цепочку `поручение → AC → CASE → публичный вход → проверка → ребёнок`. За один проход найдите потерянное требование, сценарий без оракула, противоречие и скрытую зависимость. Для подзадачи проверьте, что её короткая карточка и ссылки дают достаточно данных для самостоятельного результата. Запустите `task validate`, применимый `task subtask validate`, `task diagnose <key> --json --brief` и `docs paths --check`. `acceptance_plan_ready` проверяет структуру плана и связь кейсов с AC. Смысл оракулов проверяет постановщик. Сообщите ключи, готовность и конкретные открытые решения. При блокировке выполните независимую часть постановки и передайте точный вопрос.
 
-2. **Ask about ambiguity.** Ask the user about ambiguity that blocks safe deterministic setup or acceptance. Do not infer repository, release/branch, owners, priority, requirements, test oracle or technology.
-
-3. **Select task type.** Choose a `task_type` from `doc/config/task-conf/types/*/config.yaml`:
-   - `jira-incoming` — входящая задача из Jira (единственный flujo `jira-process`)
-   - `feature` — новая функциональность или расширение существующей
-   - `bugfix` — исправление дефекта
-   - `docs` — только документация/скиллы/конфиги
-   - `refactor` — улучшение структуры без изменения поведения
-   - `research` — исследование, desk research, сравнение вариантов
-   - `planning` — технический план, спецификация, ADR
-   - `audit` — аудит документации, кода или архитектуры
-   - `scaffold` — создание каркаса задачи
-
-   Прочти `prompt.md` выбранного типа — это стартовый промпт (по принципу скилла), исполняемый при начале работы над задачей этого типа.
-
-4. **Select flow.** Choose a `flow` from `doc/config/task-conf/types/<type>/flows/<flow>/config.yaml` allowed for the selected type (see `arch task flows --type <type>`). The flow is locked to the task and read during execution; its `prompt.md` defines how the agent should carry out the task. Прочти `prompt.md` выбранного flujo.
-
-5. **Evaluate complexity.** Assign `complexity` (low/medium/high/critical) based on scope, number of affected modules, risk, and whether cross-team approval is needed. Use `complexity_default` from the type config as a starting point.
-
-6. **Derive task key.** Require every task to have a four-decimal-digit task number. Derive the key deterministically: Jira `1234` (no prefix), UI/user input `UI-1234`, every other source `<EXPLICIT_PREFIX>-1234`. Use the number or range authorized by the owner, the [number registry](../../architecture/system/task-number-registry.md), or an approved allocator if configured. If none provides an assignment, prepare the plan and request the number. Never invent or allocate one yourself. Check the registry and disk before writing, for every key in a batch.
-
-7. **Create task.json.** Save one `task.json` with fields: `task_key`, `task_number`, `source`, `title`, `kind`, `intent`, `scope`, `acceptance_criteria`, `target_release`, `project_context_refs`, `constraints`, `assumptions`, `open_questions`, `risk`, `authority`, `approvals`, `task_type`, `flow`, `complexity`, `subtasks`, `depends_on`, `phase`, `rollback_plan`, `related_docs`, `related_tests`, `changed_files`, `owner`, `priority`, `stage_history`. Do not author a separate `task.md`.
-
-8. **Plan and decompose.** Give each acceptance criterion an `AC-N` with an observable result and a check or reviewer. Put steps in `stage1/plan.md`. When planned checks need recording, start `stage1/verification.json` with `status: not_run` and no executed results. Add children for independently verifiable outcomes; obey the type's `subtask_policy`. Record `depends_on` with exact task or child keys. Check duplicates, missing references and cycles before writing. Use `arch task decompose <task_key> --subtask-id NNNN --subtask-title "..."` for scaffolding. The current command can write part of a batch before a later conflict, so preflight all IDs and paths. Complete each child's own record and plan.
-
-9. **Validate and register.** Validate the parent with `arch task validate <task_key>` and each immediate child with `arch task subtask validate <parent> <id>`. Cross-check the parent's child paths against the files. Update the number registry and run `arch docs paths --check`. Report keys and any unresolved blockers. Claim implementation or test results only when separately verified.
-
-## Subtask closure policy
-
-Use [go-to-task](../go-to-task/SKILL.md) for readiness checks and closing an implemented task.
-
-## Reading type and flow prompts
-
-- `arch task type-prompt --type <type>` — стартовый промпт типа (как скилл).
-- `arch task flow-prompt --type <type> --flow <flow>` — стартовый промпт flujo.
-
-## Must not
-
-- Write to the external tracker unless an explicit approved command/policy exists.
-- Use an untrusted native ID directly as a path.
-- Decide semantic completeness with regex/CLI heuristics.
-- Silently rewrite an original task snapshot after task execution begins.
-- Create `task.md` as an alternative to `task.json`.
-- Allocate a task number automatically; numbers come from the user or an approved allocator.
+Пример и правила приёмки — в [потоке создания задачи](../../architecture/domains/task-intake/flows/create-task.md). Для восстановления или исполнения используйте [go-to-task](../go-to-task/SKILL.md).

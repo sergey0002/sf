@@ -19,7 +19,7 @@ implemented: false
 
 ```
 doc/tools/arch/
-├── __init__.py        — публичный API, версия 0.2.0
+├── __init__.py        — публичный API, версия 0.2.0 (совпадает с pyproject.toml)
 ├── __main__.py        — точка входа python -m arch и прямой запуск
 ├── cli/
 │   ├── app.py         — argparse парсер, run(), диспетчеризация
@@ -27,8 +27,9 @@ doc/tools/arch/
 │   ├── output.py      — JSON-envelope и human/brief/quiet/verbose вывод
 │   └── commands/      — Command-интерфейс, реестр и команды
 │       ├── base.py
-│       ├── registry.py
-│       ├── builtin.py — list/show/index/validate/scan/docs/task
+│       ├── registry.py — реестр отвергает повторную регистрацию имени
+│       ├── builtin.py — list/show/index/validate/scan/docs
+│       ├── task.py    — parser, dispatch и вывод task/subtask
 │       └── task_key.py — task-key
 ├── constants.py       — regex, имена ключей для YAML, path_is_allowed()
 ├── identity.py        — task-key derive, task_dir(), parse_task_key()
@@ -36,11 +37,16 @@ doc/tools/arch/
 ├── validation.py      — validate_task_json(), task-conf loaders, check_subtasks_closed(), validate_paths()
 ├── store.py           — ArchitectureStore, Document, UniqueKeyLoader
 ├── subtask.py         — subtask_dir(), scaffold_subtask_json(), list_stages(), list_sub_subtasks()
+├── fs_atomic.py       — атомарная запись файла и журнал составной записи
+├── task_ops.py        — lifecycle-сценарии task/subtask без argparse и вывода
+├── acceptance.py      — покрытие запланированных кейсов и проверка SHA-256 доказательств
+├── evidence.py        — запись результата явной проверки на выбранном снимке
 └── body_validation.py — validate_document_body(), get_supported_body_types()
 ```
 
 ### 1.2 Точка входа
 
+- установленный console script `arch` — entry point `arch.cli.app:run` из `pyproject.toml`
 - `python3 -m arch` — из директории `doc/tools/`
 - `python3 doc/tools/arch/__main__.py` — прямой запуск, работает из любого cwd
 - Аргумент `--root <path>` — опционально, проектный корень (по умолчанию: `Path(__file__).resolve().parents[4]` из `cli/app.py`)
@@ -437,35 +443,49 @@ arch task status <task_key>
 arch task decompose <task_key> --subtask-id NNNN --subtask-title "..." [--subtask-id NNNN --subtask-title "..." ...]
 ```
 
-- Читает task.json, валидирует
-- Создаёт subtask/<id>/ с task.json и stage1/
-- Добавляет subtask в parent task.json subtasks массив
-- --subtask-id и --subtask-title должны быть в равном количестве
-- Отказывает если subtask директория уже существует
+- Читает родительский task.json; требует, чтобы `subtasks` был массивом, а `task.md` отсутствовал. Остальные поля родителя проверяет `task validate`, чтобы decompose не блокировал первый пакет из-за ещё не заполненных семантических полей
+- Проверяет весь пакет до записи: `--subtask-id` и `--subtask-title` в равном количестве, ID из четырёх цифр и уникальны внутри пакета, заголовки непустые, ID не объявлены в родителе, каталоги ещё не существуют
+- При любой ошибке пакета не создаёт каталогов и не меняет родителя
+- Создаёт `subtasks/<id>/` с `task.json` и `stage1/`, затем добавляет запись в `subtasks` родителя
+- Одиночные записи заменяются атомарно; перед составной записью создаётся журнал `.arch-write-journal.json`, который удаляется последним
+- Повторный вызов с тем же пакетом при наличии журнала возобновляет запись; другой пакет даёт конфликт
 
 ### 9.12 Команда task diagnose
 
 ```
-arch task diagnose <task_key> [--json]
+arch task diagnose <task_key> [--json] [--brief]
 ```
 
-- Читает task.json
-- Вызывает check_subtasks_closed()
-- Выводит: тип, flujo, сложность, фаза, все сабтаски с фазами, can_close, блокеры
-- subtask_closed_count / subtask_count
+- Проверяет карточку и объединение объявленных детей с непосредственными каталогами. `can_close` отражает машинные предусловия.
+- Разрешает `depends_on` через настроенный корень задач, включая ключи детей. `dependencies` содержит `task_key`, `required_by`, `state` и доступную фазу. Краткий режим ограничивает список тремя строками. Эти же зависимости применяет `close`.
+- При `acceptance_policy: case-coverage-v1` сверяет связанные кейсы и хеши заявленных входов. `acceptance_plan_ready` сообщает о структурной готовности текущей стадии. Формат и правила описаны в [записи доказательств](../domains/task-lifecycle/entities/verification-evidence.md).
+- Полный ответ включает сведения о детях и блокировки. `--brief` сохраняет счётчики, показывает до трёх блокировок и возвращает `refs` к карточке и существующим артефактам последней по номеру стадии.
 
 ### 9.13 Команда task close
 
 ```
-arch task close <task_key> [--json]
+arch task close <task_key> [--json] [--dry-run]
 ```
 
-- Вызывает check_subtasks_closed()
-- Если не все закрыты — ошибка exit 1 со списком блокеров
-- Устанавливает phase = "completed" в task.json
-- Выводит подтверждение
+- Использует предусловия `diagnose`. При `--dry-run` возвращает `would_close` и блокировки без записи.
+- Отказ по предусловиям — exit 1 и JSON envelope в stderr при `--json`. Карточка сохраняется.
+- При успешном закрытии устанавливает `phase: completed` атомарной заменой файла. Агент до вызова проверяет приёмку и применимое одобрение.
 
-### 9.14 Команда task subtask
+### 9.14 Устойчивая запись и восстановление
+
+- `fs_atomic.atomic_write_text` пишет временный файл в каталоге цели, вызывает `fsync` и заменяет цель через `os.replace`. При исключении временный файл удаляется. Завершение процесса до замены может оставить файл из зарезервированного пространства имён `.<имя-цели>.<суффикс>.tmp`.
+- `decompose`, фактический `close` и `subtask init` под одним родителем используют неблокирующий advisory `flock` каталога задачи. Занятый писатель даёт exit 5 до записи. Гарантия относится к этим операциям CLI на поддерживающей `flock` локальной POSIX ФС. Для восстановления проверяется прерывание процесса. Сохранность после отключения питания и координация прямого редактирования файлов находятся за этой границей.
+- Составная запись публикует `.arch-write-journal.json` со `schema_version: 1`, `kind: decompose`, `task_key` и упорядоченным пакетом `subtasks: [{id, title}]`. Родитель дополняется после детей, временные остатки убираются перед удалением журнала.
+
+| Состояние | Поведение CLI |
+|---|---|
+| Журнал отсутствует | Проверяются все ID, заголовки и коллизии. Файлы создаются только после полного preflight. |
+| Журнал повреждён или недоступен для чтения | `diagnose` и `status` возвращают `incomplete_write.state: invalid`; `scan --scope tasks` сообщает причину. Preview закрытия возвращает `would_close: false`, фактическое закрытие блокируется. Операции записи сохраняют дерево. Оператор сверяет журнал и записи до восстановления. |
+| Журнал валиден, пакет отличается или существующие записи конфликтуют | Exit 5. Родитель, дети, журнал и временные файлы сохраняются. При повторе весь пакет проверяется до первой записи или уборки. |
+| Журнал валиден, пакет совпадает | Сверяются ключ и заголовок ребёнка, а для объявленного ребёнка также заголовок и путь в родителе. Частичный каталог может содержать `stage1` и обычные временные файлы записи `task.json` из зарезервированного пространства имён. Недостающая запись восстанавливается. Повтор после записи родителя удаляет журнал без повторной записи родителя. |
+| Журнал валиден, вызван `close` или `subtask init` | Запись блокируется. Возобновите `decompose` с тем же пакетом. |
+
+### 9.15 Команда task subtask
 
 ```
 arch task subtask init <parent_key> <subtask_id>
@@ -477,7 +497,7 @@ arch task subtask status <parent_key> <subtask_id>
 - validate: валидирует subtask task.json через validate_task_json()
 - status: показывает phase, task_type, flow, stages
 
-### 9.15 Команда docs paths --check
+### 9.16 Команда docs paths --check
 
 ```
 arch docs paths --check
@@ -486,7 +506,7 @@ arch docs paths --check
 - Вызывает validate_paths()
 - Выводит "All doc/ paths are declared and valid" или список ошибок
 
-### 9.16 Команда task-key
+### 9.17 Команда task-key
 
 ```
 arch task-key --source <source> --number <number> [--prefix <prefix>]
@@ -495,7 +515,7 @@ arch task-key --source <source> --number <number> [--prefix <prefix>]
 - Вызывает normalize_task_identity()
 - Выводит JSON с task_key, task_number, source_type, source_prefix
 
-### 9.17 Команда validate (архитектура)
+### 9.18 Команда validate (архитектура)
 
 ```
 arch validate [--json]
@@ -504,7 +524,7 @@ arch validate [--json]
 - Вызывает store.validate(check_index=True)
 - Проверяет все frontmatter, refs, ID, индекс
 
-### 9.18 Команда docs related
+### 9.19 Команда docs related
 
 ```
 arch docs related <id> [--depth N]
@@ -513,16 +533,19 @@ arch docs related <id> [--depth N]
 - Строит граф связанных документов начиная с id
 - Обход по metadata.related до глубины depth
 
-### 9.19 Команды list/show/index
+### 9.20 Команды list/show/index
 
 | Команда | Описание |
 |---------|----------|
-| `arch list [--type] [--domain] [--status] [--json]` | Список документов по точным фильтрам |
+| `arch list [--id ID ...] [--type] [--domain] [--status] [--json]` | Метаданные и путь без тела. Повторные ID объединяются, фильтры по типу, домену и статусу пересекаются с ними. При отсутствии совпадений возвращается пустой список с exit 0. |
+| `arch docs tree` | JSON envelope с `architecture_root` относительно проекта, опциональным `guide` и `tree`. Каждый узел содержит `directories` по имени и массив `documents` с `id`, `title`, `type`, `status`, `path`. Путь документа относителен к архитектуре, тело выдаёт `arch show <id>`. |
+| `arch task flow-steps --type <type> --flow <flow>` | JSON envelope с `type`, `flow`, `steps`. Массив сохраняет порядок YAML. Каждый элемент содержит `id`, доступные метаданные шага и проектно-относительный `prompt_path`. |
+| `arch task flow-prompt --type <type> --flow <flow> [--step <id>]` | Без `--step` возвращает общий Markdown. Для объявленного шага читает `stepsprompt/<id>.md` или выделяет его пронумерованный пункт из общего промпта. Неизвестный или отсутствующий промпт даёт exit 20. |
 | `arch show <id> [--format markdown\|json]` | Один документ по точному ID |
 | `arch index build` | Построить index.json |
 | `arch index check` | Проверить актуальность индекса |
 
-### 9.20 Формат вывода
+### 9.21 Формат вывода
 
 - JSON в stdout для структурированных команд (indent=2, ensure_ascii=False)
 - Текст в stdout для читаемых команд (list, show markdown, validate без --json)
@@ -531,7 +554,7 @@ arch docs related <id> [--depth N]
 - `--brief` — сокращённый текстовый режим
 - `--fields` — выбор подмножества полей JSON
 
-### 9.21 Exit-коды
+### 9.22 Exit-коды
 
 | Код | Смысл |
 |-----|-------|
@@ -543,7 +566,7 @@ arch docs related <id> [--depth N]
 | 20 | Объект не найден |
 | 75 | Временная ошибка |
 
-### 9.22 Обработка ошибок
+### 9.23 Обработка ошибок
 
 Все доменные модули возвращают списки строк ошибок или выбрасывают `ValueError`/`OSError`. `cli.main()` конвертирует их в exit code 1 с сообщением `ERROR: <текст>` на stderr.
 
@@ -551,6 +574,22 @@ arch docs related <id> [--depth N]
 - Поле, вызвавшее ошибку (где применимо)
 - Ожидаемое vs фактическое значение
 - Предложение по исправлению (suggestion)
+
+### 9.24 Команда session (аудит Kilo)
+
+```
+arch session find --match <text> [--db <path>] [--directory <dir>] [--all-projects] [--role any|user|assistant] [--limit N] [--json]
+arch session digest <session_id> [--db <path>] [--match <text>] [--max-events N] [--full-text] [--no-children]
+arch session events <session_id> [--db <path>] [--message <id>] [--part <id>] [--offset N] [--limit N] [--full]
+```
+
+- Модуль `session_audit.py` открывает базу через `mode=ro` и `PRAGMA query_only=ON`; путь берётся из `--db`, затем `KILO_AUDIT_DB`, затем `~/.local/share/kilo/kilo.db`.
+- `find` ищет подстроку в `part.data.text`, исключает synthetic/ignored части и ограничивает область каталогом проекта либо `--all-projects`. Возвращает `match_count`, `matched_message_ids`, первое совпадение и сниппет.
+- `digest` возвращает `schema: kilo-session-digest-v1`: `session`, `dialog`, `stats.tools`, `stats.activities`, `tool_calls`, `markers`, `timeline`, `timeline_omitted`, `label_index`, `phases`, `anomalies`, `drill`. `tool_calls` содержит полный компактный список вызовов и не обрезается вместе с `timeline`. Метки выводятся из путей и команд детерминированно: `skill:`, `rule:`, `flow:`, `flow-step:`, `type:`, `task:`, `subtask:`, `stage:`, `arch:`, `arch-flow:`, `cli:`, `test:`, `ref:`.
+- `timeline` ограничивается `--max-events` (по умолчанию 1000), сохраняя начало и конец и вставляя событие `omitted`. `label_index` хранит до 20 ссылок на метку.
+- `events` фильтрует части по `--message`/`--part`, поддерживает `--offset`/`--limit` и по умолчанию обрезает текст и вывод до 4000 символов; `--full` отключает обрезку.
+- Исход вызова: `failure` при `state.status` в `error`/`failed` или ненулевом `metadata.exit`; `success` при `completed`; иначе `unknown`. Токены суммируются по assistant-сообщениям.
+- Команда read-only: не пишет в базу, task records и рабочее дерево. Смысловая оценка сессии остаётся у агента.
 
 ## 10. Форматы файлов
 

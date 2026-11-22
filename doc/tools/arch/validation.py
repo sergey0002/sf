@@ -12,6 +12,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .acceptance import CASE_COVERAGE, acceptance_state, criterion_ids
+
 try:
     import yaml  # noqa: F401
 except ImportError:  # pragma: no cover - exercised by CLI users
@@ -21,15 +23,8 @@ from .constants import (
     TASK_NUMBER_RE,
     TASK_KEY_RE,
     FLOW_RE,
-    PATHS_CONFIG_RELATIVE,
-    ALLOWED_PATHS_KEY,
-    PROJECT_KEY,
-    STRUCTURE_RULES_KEY,
     ONLY_DECLARED_PATHS_KEY,
-    ARCHITECTURE_DOC_EXTENSIONS_KEY,
     FRONTMATTER_REQUIRED_FOR_KEY,
-    GENERATED_FILES_KEY,
-    PROJECT_ID_FORMATS_KEY,
     PROJECT_DOCUMENT_TYPES_KEY,
     PROJECT_DOCUMENT_STATUSES_KEY,
     PROJECT_TASK_TYPES_KEY,
@@ -37,7 +32,8 @@ from .constants import (
     PROJECT_RISK_LEVELS_KEY,
     PROJECT_SOURCE_TYPES_KEY,
     PROJECT_TASK_SCHEMA_REQUIRED_FIELDS_KEY,
-    TASK_CONF_TYPES_DIR,
+    ROOT_TASK_CONF_KEY,
+    ROOT_TASKS_KEY,
     TASK_CONF_ID_KEY,
     TASK_CONF_ALLOWED_FLOWS_KEY,
     TASK_CONF_SUBTASK_POLICY_KEY,
@@ -47,22 +43,12 @@ from .constants import (
     path_is_allowed,
     FRONTMATTER,
 )
+from .project_config import DEFAULT_ROOTS, ProjectConfig, load_project_config
+from .subtask import current_stage, list_stages
+from typing import Union
 
 
-# ---------------------------------------------------------------------------
-# task.json validation — config-driven
-# ---------------------------------------------------------------------------
-
-
-def _load_project_config(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
-    """Загрузить проектную секцию paths.yaml."""
-    config, errors = load_paths_config(root)
-    if errors:
-        return None, errors
-    project = config.get(PROJECT_KEY, {}) or {}
-    if not isinstance(project, dict):
-        return None, ["paths.yaml: project must be a mapping"]
-    return project, errors
+ProjectConfigOrPath = Union[ProjectConfig, Path]
 
 
 def _get_list(project: dict[str, Any], key: str) -> list[str]:
@@ -184,7 +170,7 @@ def _validate_source_field(source: Any, source_types: list[str], task_key: str, 
 
 
 def _validate_research_docs(
-    research_docs: Any, task_key: str, errors: list[str]
+    research_docs: Any, task_key: str, errors: list[str], project_config: ProjectConfig | None,
 ) -> None:
     """Валидация массива research_docs."""
     if research_docs is None:
@@ -192,7 +178,9 @@ def _validate_research_docs(
     if not isinstance(research_docs, list):
         errors.append("task.json: research_docs must be an array")
         return
-    expected_prefix = f"doc/tasks/{task_key}/research/"
+    tasks_path = (project_config.tasks_root.relative_to(project_config.root).as_posix()
+                  if project_config else DEFAULT_ROOTS[ROOT_TASKS_KEY])
+    expected_prefix = f"{tasks_path}/{task_key}/research/"
     for i, rd in enumerate(research_docs):
         if not isinstance(rd, dict):
             errors.append(f"task.json: research_docs[{i}] must be an object")
@@ -216,33 +204,14 @@ def _validate_research_docs(
         if path is not None and not isinstance(path, str):
             errors.append(f"task.json: research_docs[{i}].path must be a string")
         elif path is not None:
-            if not path.startswith(expected_prefix) or not path.endswith(".md"):
+            if (not path.startswith(expected_prefix) or not path.endswith(".md")
+                    or ".." in Path(path).parts):
                 errors.append(
                     f"task.json: research_docs[{i}].path must be under {expected_prefix} and end with .md, got {path!r}"
                 )
 
 
-def _validate_task_type_vs_flow(
-    root: Path, task_type: str, flow: str, errors: list[str]
-) -> None:
-    """Проверяет, что поток flow разрешён для типа задачи task_type по task-conf."""
-    types, terrors = load_task_conf_types(root)
-    if terrors:
-        for e in terrors:
-            errors.append(e)
-        return
-    if task_type not in types:
-        return  # type config may not exist yet; not a hard error
-    type_conf = types[task_type]
-    allowed_flows = type_conf.get(TASK_CONF_ALLOWED_FLOWS_KEY, [])
-    if flow not in allowed_flows:
-        errors.append(
-            f"task.json: flow {flow!r} not allowed for task_type {task_type!r}; "
-            f"allowed: {', '.join(allowed_flows) or 'none'}"
-        )
-
-
-def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = None) -> list[str]:
+def validate_task_json(data: dict[str, Any], task_key: str, project_config: ProjectConfigOrPath | None = None) -> list[str]:
     """Validate a parsed task.json structure. Returns list of error messages.
 
     All rules are loaded from YAML configs:
@@ -254,14 +223,20 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
     errors: list[str] = []
     if not isinstance(data, dict):
         return ["task.json is not a JSON object"]
+    if "acceptance_policy" in data:
+        if data["acceptance_policy"] != CASE_COVERAGE:
+            errors.append(f"task.json: acceptance_policy must be {CASE_COVERAGE!r}")
+        else:
+            try:
+                criterion_ids(data)
+            except ValueError as exc:
+                errors.append(f"task.json: {exc}")
 
     # --- Load project config -------------------------------------------------
-    project, proj_errors = _load_project_config(root) if root else (None, [])
-    # A missing/broken project config is an error, but structural field checks
-    # must still run so the caller gets actionable field-level diagnostics.
-    errors.extend(proj_errors)
-    if project is None:
-        project = {}
+    if isinstance(project_config, Path):
+        project_config, config_errors = load_project_config(project_config)
+        errors.extend(config_errors)
+    project = project_config.get_project_section() if project_config else {}
 
     task_types = _get_list(project, PROJECT_TASK_TYPES_KEY)
     phases = _get_list(project, PROJECT_PHASES_KEY)
@@ -274,13 +249,10 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
     # --- Load task type config ----------------------------------------------
     type_conf: dict[str, Any] = {}
     task_type = data.get("task_type")
-    if task_type and root:
-        types, terrors = load_task_conf_types(root)
-        if terrors:
-            for e in terrors:
-                errors.append(e)
-        if task_type in types:
-            type_conf = types[task_type]
+    if isinstance(task_type, str) and task_type and project_config:
+        types, type_errors = load_task_conf_types(project_config)
+        errors.extend(type_errors)
+        type_conf = types.get(task_type, {})
 
     # --- Required fields: base (paths.yaml) + type-specific (task-conf) -----
     type_required = type_conf.get(TASK_CONF_REQUIRED_FIELDS_KEY, [])
@@ -344,8 +316,13 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
             errors.append(
                 f"task.json: flow must be a lowercase slug (a-z, 0-9, -), got {flow!r}"
             )
-        elif task_type and root:
-            _validate_task_type_vs_flow(root, task_type, flow, errors)
+        elif type_conf:
+            allowed_flows = type_conf.get(TASK_CONF_ALLOWED_FLOWS_KEY, [])
+            if flow not in allowed_flows:
+                errors.append(
+                    f"task.json: flow {flow!r} not allowed for task_type {task_type!r}; "
+                    f"allowed: {', '.join(allowed_flows) or 'none'}"
+                )
 
     # --- complexity ----------------------------------------------------------
     complexity = data.get("complexity")
@@ -423,7 +400,7 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
         _validate_array_of_strings(data.get(field_name), field_name, errors)
 
     # --- research_docs (special validation with path prefix) -----------------
-    _validate_research_docs(data.get("research_docs"), task_key, errors)
+    _validate_research_docs(data.get("research_docs"), task_key, errors, project_config)
 
     return errors
 
@@ -433,14 +410,20 @@ def validate_task_json(data: dict[str, Any], task_key: str, root: Path | None = 
 # ---------------------------------------------------------------------------
 
 
-def load_task_conf_types(root: Path) -> tuple[dict[str, Any], list[str]]:
+def _task_conf_location(config: ProjectConfigOrPath) -> tuple[Path, Path]:
+    if isinstance(config, ProjectConfig):
+        return config.root, config.task_conf_root / "types"
+    return config, config / DEFAULT_ROOTS[ROOT_TASK_CONF_KEY] / "types"
+
+
+def load_task_conf_types(config: ProjectConfigOrPath) -> tuple[dict[str, Any], list[str]]:
     """Загрузить все конфиги типов задач из doc/config/task-conf/types/*/config.yaml.
 
     Каждый тип — папка с config.yaml и prompt.md, внутри подпапка flows/.
     Возвращает словарь {type_id: conf} где conf включает поле flows со списком
     конфигов потоков этого типа.
     """
-    types_dir = root / TASK_CONF_TYPES_DIR
+    root, types_dir = _task_conf_location(config)
     errors: list[str] = []
     types: dict[str, Any] = {}
     if not types_dir.is_dir():
@@ -488,13 +471,13 @@ def load_task_conf_types(root: Path) -> tuple[dict[str, Any], list[str]]:
 
 
 def load_task_conf_flows_for_type(
-    root: Path, type_id: str
+    config: ProjectConfigOrPath, type_id: str
 ) -> tuple[dict[str, Any], list[str]]:
     """Загрузить конфиги потоков для конкретного типа задач.
 
     Возвращает (flows, errors) где flows — словарь {flow_id: conf}.
     """
-    types, errors = load_task_conf_types(root)
+    types, errors = load_task_conf_types(config)
     if errors:
         return {}, errors
     if type_id not in types:
@@ -502,9 +485,10 @@ def load_task_conf_flows_for_type(
     return types[type_id].get("flows", {}), errors
 
 
-def load_task_conf_prompt(root: Path, type_id: str) -> tuple[str | None, list[str]]:
+def load_task_conf_prompt(config: ProjectConfigOrPath, type_id: str) -> tuple[str | None, list[str]]:
     """Загрузить стартовый промпт типа задачи из doc/config/task-conf/types/<type>/prompt.md."""
-    prompt_path = root / TASK_CONF_TYPES_DIR / type_id / "prompt.md"
+    root, types_dir = _task_conf_location(config)
+    prompt_path = types_dir / type_id / "prompt.md"
     errors: list[str] = []
     if not prompt_path.exists():
         return None, [f"Prompt not found: {prompt_path.relative_to(root)}"]
@@ -516,13 +500,12 @@ def load_task_conf_prompt(root: Path, type_id: str) -> tuple[str | None, list[st
 
 
 def load_task_conf_flow_prompt(
-    root: Path, type_id: str, flow_id: str
+    config: ProjectConfigOrPath, type_id: str, flow_id: str
 ) -> tuple[str | None, list[str]]:
     """Загрузить стартовый промпт потока из
     doc/config/task-conf/types/<type>/flows/<flow>/prompt.md."""
-    prompt_path = (
-        root / TASK_CONF_TYPES_DIR / type_id / "flows" / flow_id / "prompt.md"
-    )
+    root, types_dir = _task_conf_location(config)
+    prompt_path = types_dir / type_id / "flows" / flow_id / "prompt.md"
     errors: list[str] = []
     if not prompt_path.exists():
         return None, [f"Flow prompt not found: {prompt_path.relative_to(root)}"]
@@ -533,51 +516,143 @@ def load_task_conf_flow_prompt(
     return content, errors
 
 
+def flow_prompt_steps(flow: dict[str, Any]) -> list[dict[str, Any]]:
+    """Validate ordered step IDs before resolving any prompt file."""
+    steps = flow.get("steps")
+    if not isinstance(steps, list) or not steps:
+        raise ValueError("flow steps must be a non-empty array")
+    seen = set()
+    for step in steps:
+        step_id = step.get("id") if isinstance(step, dict) else None
+        if not isinstance(step_id, str) or not re.fullmatch(r"[a-z][a-z0-9-]*", step_id):
+            raise ValueError(f"invalid flow step ID: {step_id!r}")
+        if step_id in seen:
+            raise ValueError(f"duplicate flow step ID: {step_id}")
+        seen.add(step_id)
+    return steps
+
+
+def flow_step_path(config: ProjectConfig, type_id: str, flow_id: str, step_id: str) -> Path:
+    folder = config.task_conf_root / "types" / type_id / "flows" / flow_id
+    path = folder / "stepsprompt" / f"{step_id}.md"
+    resolved_folder = folder.resolve()
+    if not resolved_folder.is_relative_to(config.task_conf_root) or not path.resolve().is_relative_to(resolved_folder):
+        raise ValueError(f"step prompt escapes configured flow directory: {step_id}")
+    return path
+
+
+def load_task_conf_step_prompt(
+    config: ProjectConfig, type_id: str, flow_id: str, step_id: str,
+) -> tuple[str | None, list[str]]:
+    """Read an override or the selected numbered item of the legacy prompt."""
+    path = flow_step_path(config, type_id, flow_id, step_id)
+    if path.exists() or path.is_symlink():
+        try:
+            prompt = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            return None, [f"Cannot read step prompt {path.relative_to(config.root)}: {exc}"]
+        if not prompt.strip():
+            return None, [f"Empty step prompt: {path.relative_to(config.root)}"]
+        return prompt, []
+
+    prompt, errors = load_task_conf_flow_prompt(config, type_id, flow_id)
+    if errors:
+        return None, errors
+    lines = (prompt or "").splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^[0-9]+\. `([^`]+)`", line)
+        if not match or match[1] != step_id:
+            continue
+        end = i + 1
+        while end < len(lines) and (not lines[end].strip() or lines[end].startswith((" ", "\t"))):
+            end += 1
+        return "\n".join(lines[i:end]).rstrip() + "\n", []
+    return None, [f"No prompt for step {step_id!r} in flow {flow_id!r}"]
+
+
 # ---------------------------------------------------------------------------
 # Subtask closure policy check
 # ---------------------------------------------------------------------------
 
 
-def check_subtasks_closed(root: Path, task_key: str) -> tuple[bool, list[str]]:
-    """Проверяет, закрыты ли все подзадачи задачи.
+def inspect_subtasks(
+    tdir: Path, task: dict[str, Any], *, project_root: Path | None = None,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Return the same immediate-child facts for diagnosis and closure."""
+    records = task.get("subtasks", [])
+    blockers: list[str] = []
+    declared: dict[str, dict[str, Any]] = {}
+    if not isinstance(records, list):
+        blockers.append("task.json: subtasks must be an array")
+        records = []
+    for record in records:
+        sub_id = record.get("id") if isinstance(record, dict) else None
+        if not isinstance(sub_id, str) or not TASK_NUMBER_RE.fullmatch(sub_id):
+            blockers.append("Declared subtask must have a four-digit id")
+        elif sub_id in declared:
+            blockers.append(f"Declared subtask {sub_id}: duplicate id")
+        else:
+            declared[sub_id] = record
 
-    Возвращает (all_closed, errors). Если close_policy требует all_subtasks_required
-    и есть открытые/незавершённые подзадачи — возвращает False со списком ошибок.
-    """
+    subdir = tdir / "subtasks"
+    disk = {p.name: p for p in subdir.iterdir() if p.is_dir()} if subdir.is_dir() else {}
+    rows: list[dict[str, Any]] = []
+    for sub_id in sorted(declared.keys() | disk.keys()):
+        record = declared.get(sub_id)
+        folder = disk.get(sub_id)
+        row: dict[str, Any] = {
+            "id": sub_id, "title": "", "phase": "missing",
+            "declared": record is not None, "on_disk": folder is not None,
+        }
+        if record is not None:
+            row.update(title=record.get("title", ""), declared_title=record.get("title", ""),
+                       declared_status=record.get("status", ""))
+        if folder is None:
+            row["error"] = "directory missing on disk"
+            blockers.append(f"Declared subtask {sub_id}: {row['error']}")
+        else:
+            try:
+                data = json.loads((folder / "task.json").read_text(encoding="utf-8"))
+                if not isinstance(data, dict):
+                    raise ValueError("task.json must be a JSON object")
+            except FileNotFoundError:
+                row["error"] = "task.json missing"
+            except (ValueError, OSError) as exc:
+                row.update(phase="invalid", error=f"cannot read task.json: {exc}")
+            else:
+                phase = data.get("phase", "unset")
+                row.update(id=data.get("task_key", sub_id), title=data.get("title", row["title"]),
+                           phase=phase, task_type=data.get("task_type", "unset"),
+                           flow=data.get("flow", "unset"))
+                if phase != "completed":
+                    blockers.append(f"Subtask {sub_id}: phase is {phase!r}, not completed")
+                elif project_root is not None and "acceptance_policy" in data:
+                    if data["acceptance_policy"] != CASE_COVERAGE:
+                        blockers.append(f"Subtask {sub_id}: unsupported acceptance_policy")
+                    else:
+                        _, evidence_problems = acceptance_state(
+                            project_root, folder, data, current_stage(list_stages(folder))
+                        )
+                        blockers.extend(f"Subtask {sub_id}: {problem}" for problem in evidence_problems)
+            if "error" in row:
+                blockers.append(f"Subtask {sub_id}: {row['error']}")
+        rows.append(row)
+    return rows, blockers
+
+
+def check_subtasks_closed(root: Path, task_key: str) -> tuple[bool, list[str]]:
+    """Compatibility helper for callers that pass a root and task key."""
     from .identity import task_dir
 
-    root = Path(root)
-    tdir = task_dir(root, task_key)
-    if not tdir.is_dir():
-        return False, [f"Task directory not found: {tdir.relative_to(root)}"]
-
-    subtasks_dir = tdir / "subtasks"
-    if not subtasks_dir.is_dir():
-        return True, []  # нет подзадач — считаем закрытым
-
-    errors: list[str] = []
-    all_closed = True
-    for st_dir in sorted(subtasks_dir.iterdir()):
-        if not st_dir.is_dir():
-            continue
-        st_json = st_dir / "task.json"
-        if not st_json.exists():
-            errors.append(f"Subtask {st_dir.name}: task.json missing")
-            all_closed = False
-            continue
-        try:
-            data = json.loads(st_json.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            errors.append(f"Subtask {st_dir.name}: invalid JSON: {exc}")
-            all_closed = False
-            continue
-        phase = data.get("phase", "")
-        if phase != "completed":
-            all_closed = False
-            errors.append(
-                f"Subtask {st_dir.name}: phase is {phase!r}, not completed"
-            )
-    return all_closed, errors
+    tdir = task_dir(Path(root), task_key)
+    try:
+        data = json.loads((tdir / "task.json").read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("task.json must be a JSON object")
+    except (ValueError, OSError) as exc:
+        return False, [f"Task {task_key}: cannot read task.json: {exc}"]
+    _, blockers = inspect_subtasks(tdir, data)
+    return not blockers, blockers
 
 
 # ---------------------------------------------------------------------------
@@ -585,24 +660,15 @@ def check_subtasks_closed(root: Path, task_key: str) -> tuple[bool, list[str]]:
 # ---------------------------------------------------------------------------
 
 
-def load_paths_config(root: Path) -> tuple[dict[str, Any] | None, list[str]]:
-    """Load doc/config/paths.yaml. Returns (config, errors)."""
-    config_path = root / PATHS_CONFIG_RELATIVE
-    errors: list[str] = []
-    if not config_path.exists():
-        return None, [f"Paths config not found: {config_path.relative_to(root)}"]
-    if yaml is None:
-        return None, ["PyYAML is not installed; cannot read paths.yaml"]
-    try:
-        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        return None, [f"Paths config invalid YAML: {exc}"]
-    if not isinstance(config, dict):
-        return None, ["Paths config is not a YAML mapping"]
-    return config, errors
+def load_paths_config(project_config: ProjectConfigOrPath) -> tuple[dict[str, Any] | None, list[str]]:
+    """Return the parsed YAML for existing programmatic callers."""
+    if isinstance(project_config, ProjectConfig):
+        return project_config.raw_config, []
+    config, errors = load_project_config(project_config)
+    return (config.raw_config if config else None), errors
 
 
-def validate_paths(root: Path) -> list[str]:
+def validate_paths(project_config: ProjectConfig) -> list[str]:
     """Validate doc/ against declared paths in paths.yaml.
 
     Returns list of human-readable error messages (empty when valid).
@@ -613,59 +679,55 @@ def validate_paths(root: Path) -> list[str]:
     """
     errors: list[str] = []
 
-    config, config_errors = load_paths_config(root)
-    if config_errors:
-        return config_errors
-
-    allowed_paths = config.get(ALLOWED_PATHS_KEY, [])
-    if not isinstance(allowed_paths, list):
-        errors.append("paths.yaml: allowed_paths must be a list")
-        return errors
-
-    structure_rules = config.get(STRUCTURE_RULES_KEY, {}) or {}
+    root = project_config.root
+    allowed_paths = project_config.get_allowed_paths()
+    structure_rules = project_config.get_structure_rules()
     only_declared = structure_rules.get(ONLY_DECLARED_PATHS_KEY, True)
-    arch_extensions = structure_rules.get(ARCHITECTURE_DOC_EXTENSIONS_KEY, [".md", ".json"])
     frontmatter_required = structure_rules.get(FRONTMATTER_REQUIRED_FOR_KEY, [])
-    generated_files = structure_rules.get(GENERATED_FILES_KEY, []) or []
+    config_name = project_config.config_path
 
-    doc_root = root / "doc"
-    if not doc_root.is_dir():
-        return [f"doc/ directory not found: {doc_root.relative_to(root)}"]
+    candidates = {project_config.doc_root, project_config.architecture_root,
+                  project_config.tasks_root, project_config.schemas_root,
+                  project_config.skills_root, project_config.task_conf_root, project_config.config_root}
+    scan_roots = []
+    for directory in sorted(candidates, key=lambda path: len(path.parts)):
+        if directory.is_dir() and not any(directory.is_relative_to(parent) for parent in scan_roots):
+            scan_roots.append(directory)
 
-    # Collect all actual files under doc/ (excluding caches)
     actual_files: list[str] = []
-    for path in doc_root.rglob("*"):
-        if path.is_file() and "__pycache__" not in path.parts and ".pytest_cache" not in path.parts:
-            rel = str(path.relative_to(root))
-            actual_files.append(rel)
+    for directory in scan_roots:
+        for path in directory.rglob("*"):
+            rel = path.relative_to(root)
+            if {"__pycache__", ".pytest_cache", ".git"}.intersection(rel.parts):
+                continue
+            if path.is_symlink() and not path.resolve().is_relative_to(root):
+                errors.append(f"Path escapes project root: {rel}")
+                continue
+            if path.is_file():
+                actual_files.append(rel.as_posix())
 
-    # 1. Every actual file must be allowed
-    for rel in sorted(actual_files):
-        if not path_is_allowed(rel, allowed_paths):
-            errors.append(
-                f"Undeclared path in doc/: {rel} — not listed in {PATHS_CONFIG_RELATIVE} allowed_paths"
-            )
+    if only_declared:
+        for rel in sorted(actual_files):
+            if not path_is_allowed(rel, allowed_paths):
+                errors.append(f"Undeclared path in doc/: {rel} — not listed in {config_name} allowed_paths")
 
-    # 2. Declared paths that are exact (no { }) should exist on disk
     for pattern in allowed_paths:
-        if "{" not in pattern:
-            full = root / pattern
-            if not full.exists():
-                errors.append(
-                    f"Declared path missing on disk: {pattern} — expected by {PATHS_CONFIG_RELATIVE}"
-                )
+        if "{" not in pattern and "*" not in pattern and not (root / pattern).exists():
+            errors.append(f"Declared path missing on disk: {pattern} — expected by {config_name}")
 
     # 3. Frontmatter required for architecture .md files
     import fnmatch
 
+    # Use the resolved architecture root pattern for matching
+    arch_root_rel = project_config.architecture_root.relative_to(project_config.root).as_posix()
     arch_md_files = [
         rel for rel in actual_files
-        if rel.startswith("doc/architecture/") and rel.endswith(".md")
+        if rel.startswith(f"{arch_root_rel}/") and rel.endswith(".md")
     ]
     for rel in sorted(arch_md_files):
         if not any(fnmatch.fnmatch(rel, pat) for pat in frontmatter_required):
             continue
-        full = root / rel
+        full = project_config.root / rel
         try:
             content = full.read_text(encoding="utf-8")
         except OSError as exc:
@@ -687,7 +749,7 @@ def validate_paths(root: Path) -> list[str]:
             if required not in front:
                 errors.append(f"Frontmatter missing required field {required!r}: {rel}")
         ftype = front.get("type")
-        project = config.get(PROJECT_KEY, {}) or {}
+        project = project_config.get_project_section()
         doc_types = project.get(PROJECT_DOCUMENT_TYPES_KEY, [])
         if ftype and doc_types and ftype not in doc_types:
             errors.append(f"Unknown document type {ftype!r}: {rel}")

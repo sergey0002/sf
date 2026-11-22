@@ -87,7 +87,7 @@
     "UI-0011",
     "UI-0012"
   ],
-  "phase": "intake",
+  "phase": "verification",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Выделить lifecycle-сценарии из builtin.py и сохранить совместимые точки входа.",
@@ -111,10 +111,43 @@
       "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
     }
   ],
-  "research_docs": [],
+  "research_docs": [
+    {
+      "id": "kilo-session-audit",
+      "title": "Аудит реализации и восстановления UI-0013",
+      "path": "doc/tasks/UI-0013/research/kilo-session-audit.md",
+      "source_type": "internal",
+      "source_ref": "ses_dfce657aeffe4Z13ZklVkXrtjq",
+      "summary": "Исторический аудит с тремя воспроизведёнными дефектами. Исправления проверены на стадии 2.",
+      "status": "confirmed"
+    }
+  ],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "doc/tools/arch/fs_atomic.py",
+      "doc/tools/arch/task_ops.py",
+      "doc/tools/arch/cli/commands/task.py",
+      "doc/config/task-conf/types/refactor/flows/standard-implementation/stepsprompt/plan.md"
+    ],
+    "modified": [
+      "doc/tools/arch/cli/app.py",
+      "doc/tools/arch/cli/commands/builtin.py",
+      "doc/tools/arch/cli/commands/registry.py",
+      "doc/tools/tests/test_arch.py",
+      "doc/tests/test_task_identity.py",
+      "doc/config/paths.yaml",
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/cli-package.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/tools/README.md",
+      "doc/tests/README.md",
+      "doc/skills/arch-cli/SKILL.md",
+      "README.md",
+      "doc/tasks/UI-0013/stage1/plan.md",
+      "doc/skills/create-task/SKILL.md",
+      "doc/skills/go-to-task/SKILL.md",
+      "doc/config/task-conf/types/refactor/flows/standard-implementation/prompt.md"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -122,7 +155,12 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "verification"
+    },
+    {
+      "stage_id": "stage2",
+      "status": "verification"
     }
-  ]
+  ],
+  "acceptance_policy": "case-coverage-v1"
 }

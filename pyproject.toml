@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arch-cli"
+dynamic = ["version"]
+description = "Deterministic architecture and task CLI for the agent-oriented software factory"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "PyYAML>=6.0,<7",
+    "jsonschema>=4.20,<5",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.scripts]
+arch = "arch.cli.app:run"
+
+[tool.setuptools.dynamic]
+version = {attr = "arch.__version__"}
+
+[tool.setuptools]
+package-dir = {"" = "doc/tools"}
+
+[tool.setuptools.packages.find]
+where = ["doc/tools"]
+include = ["arch", "arch.*"]

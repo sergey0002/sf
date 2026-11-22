@@ -54,6 +54,11 @@ def list_stages(stdir: Path) -> list[str]:
     )
 
 
+def current_stage(stages: list[str]) -> str | None:
+    numbered = (stage for stage in stages if stage[5:].isdecimal())
+    return max(numbered, key=lambda stage: int(stage[5:]), default=None)
+
+
 def list_sub_subtasks(stdir: Path) -> list[str]:
     """Return sorted sub-subtask directory names (excluding stage dirs)."""
     sub_dir = stdir / "subtasks"

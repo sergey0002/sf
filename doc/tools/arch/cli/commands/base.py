@@ -3,7 +3,7 @@
 Every command implements:
 - name() -> str
 - setup_parser(subparser) -> None
-- execute(args, root, store) -> int
+- execute(args, project_config, store) -> int
 
 This follows the Command pattern and Liskov Substitution Principle:
 all commands share the same interface and can be substituted interchangeably.
@@ -19,6 +19,7 @@ from typing import Any
 
 from arch.cli.errors import CliEnvelope, CliError, ok_envelope, error_envelope
 from arch.cli.output import print_envelope, is_tty
+from arch.project_config import ProjectConfig
 
 
 class Command(ABC):
@@ -44,7 +45,7 @@ class Command(ABC):
 
     @abstractmethod
     def execute(
-        self, args: argparse.Namespace, root: Path, store: Any
+        self, args: argparse.Namespace, project_config: ProjectConfig, store: Any
     ) -> int:
         """Execute the command and return an exit code."""
 

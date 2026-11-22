@@ -3,27 +3,92 @@
   "task_key": "UI-0011",
   "task_number": "0011",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
-  "planned_checks": [
+  "status": "passed",
+  "checked_revision": "0cf2b028ee89689f14c3f686c7f1d730adc2918f + working-tree snapshot in snapshot_files",
+  "snapshot_files": [
     {
-      "covers": [
-        "AC-1"
-      ],
-      "expected": "AC-1: diagnose и close указывают один отсутствующий ID; отказ и dry-run сохраняют исходную запись побайтно."
+      "path": "doc/tools/arch/validation.py",
+      "sha256": "cffec4865fbdf72f00742a64509ac76f6ac5ed99be12e6df065351359ee96e03"
     },
     {
-      "covers": [
-        "AC-2"
-      ],
-      "expected": "AC-2: Совместимая валидная задача без обязательных детей закрывается; CLI-тест проверяет код процесса и JSON."
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "ad12ccc9eea12908d9ae0778f63b9937753a918c7be432bc9d283f620d5f21e9"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "f6bae5d5b8e14448c70c3981d61c64288c501fd64259dbc9c74a2dc7a3f19b1a"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "0e28ee034be27c07160693e9107dd40df82d5044a86ddeeb08c0192d8de3332e"
     }
   ],
-  "baseline_commands": [
-    "python3 -m unittest discover -s doc/tools/tests -q",
-    "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
-    "python3 doc/tools/arch/__main__.py scan --scope all --brief",
-    "python3 doc/tools/arch/__main__.py index check"
-  ]
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_close_and_diagnose_share_blockers_without_writing doc.tests.test_task_identity.TaskIdentityContractTests.test_close_valid_task_and_brief_diagnosis -q",
+      "exit_code": 0,
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "result": "2 tests pass. Missing declared child and unfinished disk-only child block identically; JSON stderr and byte equality on refusal/preview are asserted. Valid task without children closes with exit 0 and JSON success."
+    },
+    {
+      "command": "python3 -m unittest discover -s doc/tools/tests -q",
+      "exit_code": 0,
+      "covers": [],
+      "result": "5 unit tests pass."
+    },
+    {
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
+      "exit_code": 0,
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "result": "38 acceptance tests pass."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py index check",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Passed."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py validate",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Passed."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py docs paths --check",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Passed."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py task validate UI-0011",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Passed."
+    }
+  ],
+  "prior_run": {
+    "source": "seesionaudit.md",
+    "state": "Kilo manual checks; superseded for acceptance by scenario assertions on valid fixtures."
+  },
+  "baseline": {
+    "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_close_and_diagnose_share_blockers_without_writing doc.tests.test_task_identity.TaskIdentityContractTests.test_close_valid_task_and_brief_diagnosis -q",
+    "result": "Before patch the tests exposed text stderr, missing blocker for a disk-only child, and an unsupported --brief flag."
+  },
+  "context_measurement": {
+    "task_key": "UI-0012",
+    "full_stdout_bytes": 1388,
+    "brief_stdout_bytes": 776,
+    "scope": "Single CLI response, no model token measurement."
+  },
+  "review": {
+    "status": "pending",
+    "required": "Owner approval per bugfix/standard-implementation close step"
+  }
 }

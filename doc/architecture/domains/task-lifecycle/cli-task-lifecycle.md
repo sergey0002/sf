@@ -57,7 +57,7 @@ doc/tasks/<task_key>/
 - Выводит JSON с `task_key`, `task_number`, `source_type`, `source_prefix`, этапами, файлами верификации.
 - Код выхода 1, если `task.json` отсутствует.
 
-## Инварианты
+## Инварианты {#invariants}
 
 - `task_key` должен совпадать с именем директории.
 - `task_number` должен быть ровно четырьмя десятичными цифрами.

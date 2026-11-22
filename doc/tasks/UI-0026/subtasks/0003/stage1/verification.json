@@ -1,0 +1,13 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0026-0003",
+  "task_number": "0003",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-8", "covers": ["AC-1"], "expected": "Совместимость сохранена, справка и примеры согласованы, тесты проходят."},
+    {"id": "CASE-9", "covers": ["AC-2"], "expected": "Пять правильных исходов, медиана байтов ниже, число вызовов не выше."}
+  ]
+}

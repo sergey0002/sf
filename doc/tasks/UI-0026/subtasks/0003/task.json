@@ -1,0 +1,60 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0026-0003",
+  "task_number": "0003",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Пилот, совместимость и сравнение",
+  "kind": "feature",
+  "intent": "Проверить сквозной пилот закрытия задачи, совместимость и экономию контекста.",
+  "scope": {
+    "in": ["Разметка пилота, справка, регрессия, замер; CASE-8–CASE-9 родителя"],
+    "out": ["Изменение правил закрытия, массовая миграция, внешняя публикация"],
+    "allowed_files_modules": ["doc/tests/", "doc/tools/tests/", "doc/architecture/", "doc/skills/arch-cli/", "doc/skills/architecture-read/", "doc/tasks/UI-0026/"]
+  },
+  "current_behavior": null,
+  "evidence": [],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": ["AC-1: Старые вызовы совместимы; новая справка и примеры соответствуют публичному CLI.", "AC-2: Пилот даёт 5 из 5 ожидаемых исходов, меньший медианный объём и не больше вызовов."],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": [],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Убрать пилотную разметку, примеры и тесты, не меняя правила закрытия.",
+  "implementation_plan": ["После 0001 и 0002: пилотная разметка → справка → регрессия и сравнительный прогон"],
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

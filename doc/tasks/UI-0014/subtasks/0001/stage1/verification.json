@@ -1,23 +1,80 @@
 {
   "schema_version": "draft-0.1",
   "task_key": "UI-0014-0001",
-  "task_number": "0001",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checks": [
+    {
+      "command": "python3 doc/tools/arch/__main__.py --version",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tools.tests.test_arch.PackagingContractTests -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_installed_package_reports_metadata_version_and_runtime_resources -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
+      "id": "CASE-1",
       "covers": [
         "AC-1"
       ],
-      "expected": "AC-1: CLI запускается из чистой установки и сообщает версию пакета."
+      "expected": "AC-1: From an installed artifact the CLI runs outside the source checkout and reports the package metadata version."
     }
   ],
-  "baseline_commands": [
-    "python3 -m unittest discover -s doc/tools/tests -q",
-    "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
-    "python3 doc/tools/arch/__main__.py scan --scope all --brief",
-    "python3 doc/tools/arch/__main__.py index check"
-  ]
+  "snapshot_files": [
+    {
+      "path": "README.md",
+      "sha256": "5bc7c12ec43dd9d489b4fd73e7fca2fb0d0cbea4d7351c62843473c14a0e8d3c"
+    },
+    {
+      "path": "doc/architecture/system/cli-package.md",
+      "sha256": "15c666fa5aefc4e76eb5806db422be3a9caa5e9c16f17df1aae54947a11b1070"
+    },
+    {
+      "path": "doc/architecture/system/implementation-spec.md",
+      "sha256": "f34b38f68a646845cf59a4e093f3958ecd17fff02f5f8573fcba07e9222cf337"
+    },
+    {
+      "path": "doc/tasks/UI-0014/subtasks/0001/stage1/plan.md",
+      "sha256": "d1e042893e723e17085cbeae932773ae54896d949dc80d378d1d7365770c0c26"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "4a98638a3bb81baa67c53975dfbd7354dd579d123ba6d29c34b2386f4143c4e8"
+    },
+    {
+      "path": "doc/tools/README.md",
+      "sha256": "673a44bbca7ca24c682e61568f50dea22e2249e57eabb42b8471fd0cf7a54fb1"
+    },
+    {
+      "path": "doc/tools/arch/cli/app.py",
+      "sha256": "39e4fe2e82aeb50d48331f647a76a604ce5a44df7952b0d58ab08997fdb113d3"
+    },
+    {
+      "path": "doc/tools/tests/test_arch.py",
+      "sha256": "6155d8765ecbb4abee956900dcb03dcbceb23aee9c626fdc5ee9451c28c12318"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "20e408dbd8cb4e6b6a05398c34c17b21848843a51288885effa140c5e61da9eb"
+    }
+  ],
+  "checked_revision": "sha256:422c35a1b44fc2593557267d51a693a3469c032f5c975524e0013c2d7627f1bd"
 }

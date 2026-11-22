@@ -1,23 +1,116 @@
 {
   "schema_version": "draft-0.1",
   "task_key": "UI-0014-0002",
-  "task_number": "0002",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_index_gate_rejects_stale_index_without_writing -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_index_gate_detects_environment_dependent_rebuild -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_in_copy_gate_tolerates_missing_local_config_without_touching_checkout -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_evidence_accepts_subtask_key -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --in-copy --index-only",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --in-copy --ci",
+      "exit_code": 0,
+      "cases": [
+        "CASE-2"
+      ],
+      "result": "Command exited with status 0."
+    }
+  ],
   "planned_checks": [
     {
+      "id": "CASE-2",
       "covers": [
         "AC-1"
       ],
-      "expected": "AC-1: Устаревший индекс приводит к отказу до пересборки; основной checkout проверка не меняет."
+      "expected": "AC-1: A stale index fails before any rebuild, the primary checkout stays unchanged, and two rebuilds with different hash seeds are byte-identical."
     }
   ],
-  "baseline_commands": [
-    "python3 -m unittest discover -s doc/tools/tests -q",
-    "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
-    "python3 doc/tools/arch/__main__.py scan --scope all --brief",
-    "python3 doc/tools/arch/__main__.py index check"
-  ]
+  "snapshot_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "4213b673442d2e456582fda996b555b1953daf918ead12dedb11c2fa37c5e6a6"
+    },
+    {
+      "path": "README.md",
+      "sha256": "5bc7c12ec43dd9d489b4fd73e7fca2fb0d0cbea4d7351c62843473c14a0e8d3c"
+    },
+    {
+      "path": "doc/architecture/index.json",
+      "sha256": "e6d61a8e8589922223c199da06d505dfc7c600048e9b99f3b500eec2833d7882"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "e7fea97ca55502c4c64876180c98d8a5c65529249ca4bc3f3e3e0ba34780b865"
+    },
+    {
+      "path": "doc/architecture/system/testing.md",
+      "sha256": "4cf29e45ee6604414da23449560bd3f522fb0530376f3d5a04822722720cbeb7"
+    },
+    {
+      "path": "doc/tasks/UI-0014/subtasks/0002/stage1/plan.md",
+      "sha256": "dc9861f46ea21ec52b92f00e92c2fed6272d65c71b93cc1c5ec91f47562b377f"
+    },
+    {
+      "path": "doc/tests/README.md",
+      "sha256": "751df11774eab021b926cab36f710a820bbe7c1c35e6a1aaf8a07cea0f18a85e"
+    },
+    {
+      "path": "doc/tests/run.sh",
+      "sha256": "2f6c16169825e177f9296f48a6410756907a16ddbbe13b2a805acc4b9fcd725e"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "4a98638a3bb81baa67c53975dfbd7354dd579d123ba6d29c34b2386f4143c4e8"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "9a2bdb680d354ac404a8398306a487ea36ef69597e4eecf5cdc4c481d63ecde8"
+    },
+    {
+      "path": "doc/tools/arch/evidence.py",
+      "sha256": "75638571e045149b07fe52e05c247733acea1e3e2533281fd889d50c09efe42a"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "5e3a82f9612a4987ea018f638978813abad23f538ee4493fb0d36d9d4bd55d5d"
+    }
+  ],
+  "checked_revision": "sha256:642c4234b599f19949cea88b99a9d9e0ec4e1402c263c44441b99c319372a61a"
 }

@@ -94,7 +94,7 @@
   "depends_on": [
     "UI-0012-0001"
   ],
-  "phase": "intake",
+  "phase": "completed",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Подключить CLI, индекс и проверки к разрешённым корням; обновить практические примеры."
@@ -115,6 +115,11 @@
       "test_id": "environment-acceptance",
       "location": "doc/tests/test_task_identity.py",
       "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    },
+    {
+      "test_id": "project-config-clean-layouts",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_configured_paths_work_on_clean_layouts -q"
     }
   ],
   "research_docs": [],
@@ -128,7 +133,7 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed"
     }
   ]
 }

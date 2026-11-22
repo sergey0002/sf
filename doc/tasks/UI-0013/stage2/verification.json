@@ -1,0 +1,186 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0013",
+  "task_number": "0013",
+  "stage_id": "stage2",
+  "status": "passed",
+  "checked_revision": "sha256:0df8e2027499407a9b12a75871810d70e42ded47175ade76173bb889dd5dbb5b",
+  "snapshot_files": [
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "d600eff4e466c132d020a7c35f8527821c4e4f8634b0aea6ca42436b6b3bddd2"
+    },
+    {
+      "path": "doc/architecture/system/implementation-spec.md",
+      "sha256": "0577cf2a8db7224a97d079cb1d4af0f4a718e33677cf2042a8070ca0b1009742"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "2ab3f03357c3b7c8b7d51516916b305057741f5d56965d6dc10719280154cc8e"
+    },
+    {
+      "path": "doc/config/task-conf/types/refactor/flows/standard-implementation/config.yaml",
+      "sha256": "05aca9259435e1d90ef8a4635fac317bd97c02b894b4ca61f0d16f4387f89055"
+    },
+    {
+      "path": "doc/config/task-conf/types/refactor/flows/standard-implementation/prompt.md",
+      "sha256": "953877aab5226e4e1c1e996c4867f0b28989f04518e4edd47cef27483a4cbcfd"
+    },
+    {
+      "path": "doc/config/task-conf/types/refactor/flows/standard-implementation/stepsprompt/plan.md",
+      "sha256": "7d65aaf423ee4af487e47017b7bbe22a9ca9f64c1cd8aab6dbab1cb13655667e"
+    },
+    {
+      "path": "doc/skills/arch-cli/SKILL.md",
+      "sha256": "d8ccab5f471e337b5c5bb20c88a415712069473d0660e305f421c8d4b41645f7"
+    },
+    {
+      "path": "doc/skills/create-task/SKILL.md",
+      "sha256": "ee6a050c1daf63c5e57eb9f4ec4492e0b244efbdcf4e88c68d695c35692300e1"
+    },
+    {
+      "path": "doc/skills/go-to-task/SKILL.md",
+      "sha256": "c94189cff2e293039251b79f15aa14a124bc093453fe89bb18cd91d1650991e0"
+    },
+    {
+      "path": "doc/tasks/UI-0013/stage2/plan.md",
+      "sha256": "fcd0b5c7cbe0d72b59d1ca0d0a82221ca36dc20cd8db5ea62d02268242a5984a"
+    },
+    {
+      "path": "doc/tests/run.sh",
+      "sha256": "ad8126366a3ac06099c2b3a321f9f14503ba6079ed193eaf1fb31dc91a66eb5e"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "02159313b1776b8e4089bee4e5081dc680993db4a7ba7f8dde1ba193c978989c"
+    },
+    {
+      "path": "doc/tools/arch/acceptance.py",
+      "sha256": "316db900964921c80b23917afee329fb80d6587022d82417c0b50f04d3f43d42"
+    },
+    {
+      "path": "doc/tools/arch/cli/app.py",
+      "sha256": "a420e300f446d300c8ecc8d225ab64b686cd01334729d7f9fc1b02af958d6b23"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "53845d44b3cee839db87949977fd764ac0f05da9a94ee2c82a429797034dc24d"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/registry.py",
+      "sha256": "7728b6646b1eac1003329811e88c7c918ca77d8e54e1b730cb9b719dc24a6ed2"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "b7f063297dc760f9f7c4c983099720a53a341cb57cff7e7049ee114a25a73cd5"
+    },
+    {
+      "path": "doc/tools/arch/evidence.py",
+      "sha256": "268c3306be3def39cd8f12210a5407961d708a5645b5e0932bfa9fb2f63495f0"
+    },
+    {
+      "path": "doc/tools/arch/fs_atomic.py",
+      "sha256": "091f2a6003b8390fc053d9dd7e174394213db64134cf72cc7a8eb7e5f7d01927"
+    },
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "fc6d4cbd110fcef0ff16f92e3d92dc1e858c1116868f907dbb1d14f80b9cc72a"
+    },
+    {
+      "path": "doc/tools/tests/test_arch.py",
+      "sha256": "8d4158ba2576bb1e9a2c2e8054a0ef1aecb92907c8ab8d356436000ababd9a3f"
+    }
+  ],
+  "planned_checks": [
+    {
+      "id": "CASE-1",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Плохой пакет и поздняя коллизия дают отказ до изменения дерева.",
+      "test_selectors": [
+        "test_decompose_rejects_invalid_package_before_writing",
+        "test_resume_conflict_in_later_child_changes_nothing"
+      ]
+    },
+    {
+      "id": "CASE-2",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Некорректный журнал виден, блокирует записи и сохраняет дерево.",
+      "test_selectors": [
+        "test_invalid_decompose_journal_blocks_readiness_and_mutations"
+      ]
+    },
+    {
+      "id": "CASE-3",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Остановка при фактической записи ребёнка и остаток до публикации журнала восстанавливаются.",
+      "test_selectors": [
+        "test_decompose_recovers_after_process_exits_during_atomic_write",
+        "test_decompose_recovers_from_leftover_temps_and_committed_parent"
+      ]
+    },
+    {
+      "id": "CASE-4",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Повтор валидного пакета доводит все записи до конца. Другой пакет отказывается. Уже записанный родитель сохраняется.",
+      "test_selectors": [
+        "test_decompose_recovers_from_leftover_temps_and_committed_parent",
+        "test_decompose_resumes_interrupted_write",
+        "test_decompose_refuses_different_package_while_journal_pending"
+      ]
+    },
+    {
+      "id": "CASE-5",
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "Второй писатель получает exit 5, дерево цело. После освобождения блокировки повтор успешен.",
+      "test_selectors": [
+        "test_task_writer_conflict_leaves_tree_unchanged"
+      ]
+    },
+    {
+      "id": "CASE-6",
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "Старые запросы, результат пакета и отказ закрытия совместимы.",
+      "test_selectors": [
+        "test_task_config_queries_keep_working",
+        "test_decompose_writes_package_and_diagnose_reports_it",
+        "test_close_and_diagnose_share_blockers_without_writing"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_rejects_invalid_package_before_writing doc.tests.test_task_identity.TaskIdentityContractTests.test_resume_conflict_in_later_child_changes_nothing doc.tests.test_task_identity.TaskIdentityContractTests.test_invalid_decompose_journal_blocks_readiness_and_mutations doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_recovers_after_process_exits_during_atomic_write doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_recovers_from_leftover_temps_and_committed_parent doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_resumes_interrupted_write doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_refuses_different_package_while_journal_pending doc.tests.test_task_identity.TaskIdentityContractTests.test_task_writer_conflict_leaves_tree_unchanged doc.tests.test_task_identity.TaskIdentityContractTests.test_task_config_queries_keep_working doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_writes_package_and_diagnose_reports_it doc.tests.test_task_identity.TaskIdentityContractTests.test_close_and_diagnose_share_blockers_without_writing -q",
+      "exit_code": 0,
+      "cases": [
+        "CASE-1",
+        "CASE-2",
+        "CASE-3",
+        "CASE-4",
+        "CASE-5",
+        "CASE-6"
+      ],
+      "result": "Command exited with status 0."
+    },
+    {
+      "command": "bash doc/tests/run.sh --brief",
+      "exit_code": 0,
+      "cases": [],
+      "result": "Command exited with status 0."
+    }
+  ],
+  "limitations": [
+    "Прерывание процесса и конкурентные записи проверены на локальной POSIX ФС. Прямые редакторы не участвуют в advisory-блокировке."
+  ]
+}

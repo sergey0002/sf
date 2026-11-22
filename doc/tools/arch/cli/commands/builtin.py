@@ -10,44 +10,42 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from pathlib import Path
-from typing import Any
+from pathlib import Path, PurePosixPath
 
 from arch.cli.commands.base import Command
 from arch.cli.commands.registry import register
 from arch.cli.errors import (
     CliError,
-    CliEnvelope,
     EXIT_ARGS,
-    EXIT_CONFLICT,
     EXIT_ERROR,
     EXIT_NOT_FOUND,
-    EXIT_OK,
-    error_envelope,
     multi_error_envelope,
     ok_envelope,
 )
-from arch.cli.output import print_envelope, print_stderr
+from arch.cli.output import print_envelope
 
 from arch.store import ArchitectureStore
 from arch.validation import (
+    flow_prompt_steps,
+    load_task_conf_step_prompt,
     validate_task_json,
     validate_paths,
     load_task_conf_types,
-    load_task_conf_flows_for_type,
-    load_task_conf_prompt,
-    load_task_conf_flow_prompt,
-    check_subtasks_closed,
 )
-from arch.identity import (
-    normalize_task_identity,
-    parse_task_key,
-    task_dir,
-    TASK_NUMBER_RE,
-)
-from arch.schema import scaffold_task_json, TASK_DIR_TEMPLATE
-from arch.subtask import subtask_dir, scaffold_subtask_json, list_stages, list_sub_subtasks
 from arch.body_validation import validate_document_body
+from arch.doc_ops import (
+    DEFAULT_CONTEXT_BYTES,
+    DEFAULT_READ_BYTES,
+    DocOpsError,
+    check_links,
+    context,
+    impact,
+    read_section,
+    search,
+    table_of_contents,
+)
+from arch.project_config import ProjectConfig
+from arch.task_ops import pending_write
 
 
 # ============================================================================
@@ -61,12 +59,13 @@ class ListCommand(Command):
     name = "list"
 
     def setup_parser(self, subparser: argparse.ArgumentParser) -> None:
+        subparser.add_argument("--id", dest="doc_ids", action="append", help="exact document ID (repeatable)")
         subparser.add_argument("--type", dest="doc_type")
         subparser.add_argument("--domain")
         subparser.add_argument("--status")
         subparser.add_argument("--json", action="store_true", help="JSON envelope output")
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
         docs, errors = store.load_documents()
         if errors:
             errs = [CliError(code="DOC-LOAD", message=e, exit_code=1) for e in errors]
@@ -74,9 +73,12 @@ class ListCommand(Command):
             print_envelope(envelope, json_mode=getattr(args, "json", False), stream=sys.stderr)
             return 1
 
+        doc_ids = set(args.doc_ids or ())
         items = []
         for doc in docs:
             md = doc.metadata
+            if doc_ids and md.get("id") not in doc_ids:
+                continue
             if args.doc_type and md.get("type") != args.doc_type:
                 continue
             if args.domain and md.get("domain") != args.domain:
@@ -120,7 +122,7 @@ class ShowCommand(Command):
             "--format", choices=("markdown", "json"), default="markdown",
         )
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
         docs, errors = store.load_documents()
         if errors:
             errs = [CliError(code="DOC-LOAD", message=e, exit_code=1) for e in errors]
@@ -169,7 +171,7 @@ class IndexCommand(Command):
         sub.add_parser("build", help="validate sources then atomically build index.json")
         sub.add_parser("check", help="check index freshness without writing")
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
         if args.index_action == "build":
             index, errors = store.build_index()
             if errors:
@@ -206,11 +208,11 @@ class ValidateCommand(Command):
         subparser.add_argument("path", nargs="?", help="specific document or directory to validate")
         subparser.add_argument("--json", action="store_true", help="JSON envelope output")
         subparser.add_argument("--quiet", action="store_true", help="print only errors, no OK summary")
-        subparser.add_argument("--brief", action="store_true", help="one-line summary: OK or N error(s)")
+        subparser.add_argument("--brief", action="store_true", help="one-line success; detailed errors on stderr")
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
         if args.path:
-            target = root / args.path
+            target = project_config.root / args.path
             if not target.exists():
                 return self._fail(
                     "NOT-FOUND", f"path not found: {args.path}",
@@ -254,26 +256,15 @@ class ValidateCommand(Command):
             print_envelope(envelope, json_mode=True)
             return 1 if errors else 0
 
-        if brief:
-            if not errors:
-                print("OK")
-            else:
-                print(f"{len(errors)} error(s)")
-            return 1 if errors else 0
-
-        if quiet:
-            if not errors:
-                return 0
+        if errors:
             for error in errors:
                 print(f"ERROR: {error}", file=sys.stderr)
             return 1
-
-        if not errors:
+        if brief:
+            print(f"OK validate: {args.path or 'architecture'}")
+        elif not quiet:
             print("Architecture documentation is valid")
-        else:
-            for error in errors:
-                print(f"ERROR: {error}", file=sys.stderr)
-        return 1 if errors else 0
+        return 0
 
 
 # ============================================================================
@@ -297,11 +288,11 @@ class ScanCommand(Command):
         subparser.add_argument("--quiet", action="store_true",
                                help="print only incidents, no OK summary (saves context)")
         subparser.add_argument("--brief", action="store_true",
-                               help="one-line summary: OK or N incident(s) found")
+                               help="one-line success; actionable incidents on stderr")
         subparser.add_argument("--verbose", action="store_true",
                                help="full per-incident detail (default for non-JSON)")
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
         scope = args.scope
         errors: list[str] = []
         incidents: list[CliError] = []
@@ -309,13 +300,14 @@ class ScanCommand(Command):
 
         # --- Documents ---
         docs = []
-        if scope in ("all", "docs"):
+        if scope in ("all", "docs", "index"):
             docs, load_errors = store.load_documents()
             scanned_count = len(docs)
             for le in load_errors:
                 incidents.append(CliError(code="DOC-LOAD", message=le, exit_code=1))
                 errors.append(le)
 
+        if scope in ("all", "docs"):
             link_errors = store.validate_links(docs)
             for le in link_errors:
                 incidents.append(CliError(code="DOC-LINK", message=le, exit_code=1))
@@ -326,7 +318,7 @@ class ScanCommand(Command):
                 incidents.append(CliError(code="DOC-RELATED", message=re_, exit_code=1))
                 errors.append(re_)
 
-            schemas_dir = store.docs / "schemas"
+            schemas_dir = project_config.schemas_root
             for doc in docs:
                 doc_type = doc.metadata.get("type")
                 if doc_type:
@@ -342,35 +334,36 @@ class ScanCommand(Command):
 
         # --- Index ---
         if scope in ("all", "index"):
+            index_rel = store.index_path.relative_to(project_config.root)
             try:
                 actual_index = json.loads(store.index_path.read_text(encoding="utf-8"))
                 expected_index = store.make_index(docs)
                 if actual_index != expected_index:
-                    msg = "doc/architecture/index.json: stale; run `arch index build`"
+                    msg = f"{index_rel}: stale; run `arch index build`"
                     incidents.append(CliError(code="DOC-INDEX", message=msg, exit_code=1,
                                               suggestion="run `arch index build` to regenerate"))
                     errors.append(msg)
             except FileNotFoundError:
-                msg = "doc/architecture/index.json: missing; run `arch index build`"
+                msg = f"{index_rel}: missing; run `arch index build`"
                 incidents.append(CliError(code="DOC-INDEX", message=msg, exit_code=1,
                                           suggestion="run `arch index build` to regenerate"))
                 errors.append(msg)
             except json.JSONDecodeError as exc:
-                msg = f"doc/architecture/index.json: invalid JSON: {exc}"
+                msg = f"{index_rel}: invalid JSON: {exc}"
                 incidents.append(CliError(code="DOC-INDEX", message=msg, exit_code=1))
                 errors.append(msg)
 
         # --- Paths ---
         if scope in ("all", "paths"):
-            path_errors = validate_paths(root)
+            path_errors = validate_paths(project_config)
             for pe in path_errors:
                 incidents.append(CliError(code="PATH", message=pe, exit_code=1,
-                                          suggestion="add path to doc/config/paths.yaml allowed_paths or remove the file"))
+                                          suggestion="compare the file with the selected project's allowed_paths"))
                 errors.append(pe)
 
         # --- Tasks ---
         if scope in ("all", "tasks"):
-            task_errors = _scan_all_tasks(root)
+            task_errors = _scan_all_tasks(project_config)
             for te in task_errors:
                 incidents.append(CliError(
                     code="TASK", message=te["message"],
@@ -382,7 +375,7 @@ class ScanCommand(Command):
 
         # --- Task-conf ---
         if scope in ("all", "task-conf"):
-            task_conf_errors = _scan_task_conf(root)
+            task_conf_errors = _scan_task_conf(project_config)
             for tce in task_conf_errors:
                 incidents.append(CliError(code="TASK-CONF", message=tce, exit_code=1))
                 errors.append(tce)
@@ -415,15 +408,14 @@ class ScanCommand(Command):
 
         if brief:
             if total == 0:
-                print("OK")
-            else:
-                print(f"{total} incident(s) found")
-            return 1 if total > 0 else 0
+                print(f"OK scan: {scope}")
+                return 0
+            print(f"ERROR scan: {scope} ({total} incident(s))", file=sys.stderr)
 
-        if quiet:
+        if quiet or brief:
             if total == 0:
                 return 0
-            for inc in incidents:
+            for inc in incidents[:10] if brief else incidents:
                 field_part = f" [{inc.field}]" if inc.field else ""
                 print(
                     f"[{inc.code}] {inc.message}{field_part} (exit {inc.exit_code})",
@@ -431,6 +423,8 @@ class ScanCommand(Command):
                 )
                 if getattr(args, "fix_hints", False) and inc.suggestion:
                     print(f"      fix: {inc.suggestion}", file=sys.stderr)
+            if brief and total > 10:
+                print(f"{total - 10} more; rerun without --brief for full details.", file=sys.stderr)
             return 1
 
         # Verbose (default)
@@ -447,10 +441,10 @@ class ScanCommand(Command):
         return 1 if total > 0 else 0
 
 
-def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
-    """Scan every task.json under doc/tasks/ and return incidents."""
+def _scan_all_tasks(project_config: ProjectConfig) -> list[dict[str, str]]:
+    """Scan every task.json in the configured tasks root and return incidents."""
     incidents: list[dict[str, str]] = []
-    tasks_root = root / "doc" / "tasks"
+    tasks_root = project_config.tasks_root
     if not tasks_root.is_dir():
         return incidents
 
@@ -463,7 +457,7 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
             incidents.append({
                 "message": f"task {task_key}: task.json missing",
                 "field": "task.json",
-                "suggestion": f"create {tjson.relative_to(root)}",
+                "suggestion": f"create {tjson.relative_to(project_config.root)}",
             })
             continue
         try:
@@ -472,10 +466,10 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
             incidents.append({
                 "message": f"task {task_key}: task.json invalid JSON: {exc}",
                 "field": "task.json",
-                "suggestion": f"fix JSON syntax in {tjson.relative_to(root)}",
+                "suggestion": f"fix JSON syntax in {tjson.relative_to(project_config.root)}",
             })
             continue
-        errors = validate_task_json(data, task_key, root)
+        errors = validate_task_json(data, task_key, project_config)
         task_md = task_dir_path / "task.md"
         if task_md.exists():
             errors.append(
@@ -485,7 +479,16 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
             incidents.append({
                 "message": f"task {task_key}: {err}",
                 "field": "task.json",
-                "suggestion": f"fix {tjson.relative_to(root)}",
+                "suggestion": f"fix {tjson.relative_to(project_config.root)}",
+            })
+
+        pending = pending_write(task_dir_path)
+        if pending is not None:
+            incidents.append({
+                "message": f"task {task_key}: {pending['message']}",
+                "field": "task.json",
+                "suggestion": ("inspect the journal and records before retrying"
+                               if pending.get("state") == "invalid" else "rerun the recorded command to resume"),
             })
 
         subtasks_dir = task_dir_path / "subtasks"
@@ -498,7 +501,7 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
                     incidents.append({
                         "message": f"task {task_key}/subtasks/{st_dir.name}: task.json missing",
                         "field": "task.json",
-                        "suggestion": f"create {st_json.relative_to(root)}",
+                        "suggestion": f"create {st_json.relative_to(project_config.root)}",
                     })
                     continue
                 try:
@@ -507,10 +510,10 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
                     incidents.append({
                         "message": f"task {task_key}/subtasks/{st_dir.name}: invalid JSON: {exc}",
                         "field": "task.json",
-                        "suggestion": f"fix JSON syntax in {st_json.relative_to(root)}",
+                        "suggestion": f"fix JSON syntax in {st_json.relative_to(project_config.root)}",
                     })
                     continue
-                st_errors = validate_task_json(st_data, f"{task_key}-{st_dir.name}", root)
+                st_errors = validate_task_json(st_data, f"{task_key}-{st_dir.name}", project_config)
                 st_md = st_dir / "task.md"
                 if st_md.exists():
                     st_errors.append(
@@ -520,16 +523,16 @@ def _scan_all_tasks(root: Path) -> list[dict[str, str]]:
                     incidents.append({
                         "message": f"task {task_key}/subtasks/{st_dir.name}: {serr}",
                         "field": "task.json",
-                        "suggestion": f"fix {st_json.relative_to(root)}",
+                        "suggestion": f"fix {st_json.relative_to(project_config.root)}",
                     })
 
     return incidents
 
 
-def _scan_task_conf(root: Path) -> list[str]:
+def _scan_task_conf(project_config: ProjectConfig) -> list[str]:
     """Validate task-conf hierarchy: types, flows, prompts."""
     errors: list[str] = []
-    types, terrors = load_task_conf_types(root)
+    types, terrors = load_task_conf_types(project_config)
     for te in terrors:
         errors.append(te)
     for type_id, conf in types.items():
@@ -541,19 +544,29 @@ def _scan_task_conf(root: Path) -> list[str]:
                     f"task-conf type {type_id}: allowed_flow {fid!r} has no flow config at "
                     f"types/{type_id}/flows/{fid}/config.yaml"
                 )
-        prompt_path = root / "doc/config/task-conf/types" / type_id / "prompt.md"
+        prompt_path = project_config.task_conf_root / "types" / type_id / "prompt.md"
         if not prompt_path.exists():
             errors.append(
-                f"task-conf type {type_id}: missing prompt.md at {prompt_path.relative_to(root)}"
+                f"task-conf type {type_id}: missing prompt.md at {prompt_path.relative_to(project_config.root)}"
             )
-        for fid in flows:
+        for fid, flow in flows.items():
             flow_prompt = (
-                root / "doc/config/task-conf/types" / type_id / "flows" / fid / "prompt.md"
+                project_config.task_conf_root / "types" / type_id / "flows" / fid / "prompt.md"
             )
             if not flow_prompt.exists():
                 errors.append(
-                    f"task-conf type {type_id} flow {fid}: missing prompt.md at {flow_prompt.relative_to(root)}"
+                    f"task-conf type {type_id} flow {fid}: missing prompt.md at {flow_prompt.relative_to(project_config.root)}"
                 )
+            try:
+                step_ids = {step["id"] for step in flow_prompt_steps(flow)}
+                for path in sorted((flow_prompt.parent / "stepsprompt").glob("*.md")):
+                    if path.stem not in step_ids:
+                        errors.append(f"task-conf {type_id}/{fid}: undeclared step prompt {path.name}")
+                        continue
+                    _, prompt_errors = load_task_conf_step_prompt(project_config, type_id, fid, path.stem)
+                    errors.extend(prompt_errors)
+            except (ValueError, OSError, RuntimeError) as exc:
+                errors.append(f"task-conf {type_id}/{fid}: {exc}")
     return errors
 
 
@@ -563,7 +576,7 @@ def _scan_task_conf(root: Path) -> list[str]:
 
 @register
 class DocsPathsCommand(Command):
-    """Validate doc/ against declared paths in paths.yaml."""
+    """Inspect configured paths and validate their contents."""
 
     name = "docs"
 
@@ -571,12 +584,15 @@ class DocsPathsCommand(Command):
         sub = subparser.add_subparsers(dest="docs_action", required=True)
 
         paths_parser = sub.add_parser(
-            "paths", help="validate doc/ against declared paths in paths.yaml"
+            "paths", help="show or validate configured documentation paths"
         )
-        paths_parser.add_argument(
-            "--check", action="store_true", required=True,
+        action = paths_parser.add_mutually_exclusive_group(required=True)
+        action.add_argument(
+            "--check", action="store_true",
             help="check declared paths vs actual files",
         )
+        action.add_argument("--resolved", action="store_true", help="show effective paths as JSON")
+        sub.add_parser("tree", help="show the full architecture table of contents as JSON")
 
         related_parser = sub.add_parser(
             "related", help="show related document graph"
@@ -586,12 +602,99 @@ class DocsPathsCommand(Command):
             "--depth", type=int, default=2, help="max traversal depth (default 2)",
         )
 
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
+        read_parser = sub.add_parser(
+            "read", help="read one addressable section: DOC-ID#section-id"
+        )
+        read_parser.add_argument("ref", help="DOC-ID#section-id")
+        read_parser.add_argument(
+            "--max-bytes", type=int, default=DEFAULT_READ_BYTES,
+            help=f"maximum section size in bytes (default {DEFAULT_READ_BYTES})",
+        )
+        read_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+        toc_parser = sub.add_parser("toc", help="list stable and generated section anchors")
+        toc_parser.add_argument("id", help="document ID")
+        toc_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+        search_parser = sub.add_parser("search", help="search sections in product or reference docs")
+        search_parser.add_argument("query", help="search terms (all must match)")
+        search_parser.add_argument(
+            "--scope", choices=("product", "reference", "all"), default="product",
+            help="document corpus (default product)",
+        )
+        search_parser.add_argument("--limit", type=int, default=5, help="maximum hits (default 5)")
+        search_parser.add_argument(
+            "--include-archived", action="store_true",
+            help="include superseded, deprecated and rejected documents",
+        )
+        search_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+        links_parser = sub.add_parser("check-links", help="report broken local links and anchors")
+        links_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+        context_parser = sub.add_parser(
+            "context", help="collect declared document context for a task and case"
+        )
+        context_parser.add_argument("--task", required=True, help="task or subtask key")
+        context_parser.add_argument("--case", dest="case_id", help="planned CASE-N")
+        context_parser.add_argument(
+            "--max-bytes", type=int, default=DEFAULT_CONTEXT_BYTES,
+            help=f"maximum payload size in bytes (default {DEFAULT_CONTEXT_BYTES})",
+        )
+        context_parser.add_argument(
+            "--since-snapshot", type=Path, help="previous context JSON; return only the delta",
+        )
+        context_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+        impact_parser = sub.add_parser(
+            "impact", help="report changed sections and declared consumers since a Git revision"
+        )
+        impact_parser.add_argument("--since", required=True, help="Git revision to compare with")
+        impact_parser.add_argument("--json", action="store_true", help="JSON envelope output")
+
+    def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
+        if args.docs_action == "tree":
+            docs, errors = store.load_documents()
+            if errors:
+                errs = [CliError(code="DOC-LOAD", message=error, exit_code=1) for error in errors]
+                print_envelope(multi_error_envelope(errs), json_mode=True, stream=sys.stderr)
+                return 1
+            tree = {"directories": {}, "documents": []}
+            for doc in sorted(docs, key=lambda item: item.relative_path):
+                parent = tree
+                for name in PurePosixPath(doc.relative_path).parts[:-1]:
+                    parent = parent["directories"].setdefault(name, {"directories": {}, "documents": []})
+                parent["documents"].append({
+                    "id": doc.metadata["id"], "title": doc.metadata["title"],
+                    "type": doc.metadata["type"], "status": doc.metadata["status"],
+                    "path": doc.relative_path,
+                })
+            root = project_config.architecture_root
+            data = {"architecture_root": root.relative_to(project_config.root).as_posix(), "tree": tree}
+            if (root / "README.md").is_file():
+                data["guide"] = "README.md"
+            print_envelope(ok_envelope(data), json_mode=True)
+            return 0
+
         if args.docs_action == "paths":
-            errors = validate_paths(root)
+            if args.resolved:
+                root = project_config.root
+
+                def display(path: Path) -> str:
+                    return path.relative_to(root).as_posix() if path.is_relative_to(root) else path.as_posix()
+
+                data = {
+                    "project_root": root.as_posix(),
+                    "config": display(project_config.config_path),
+                    "doc_root": display(project_config.doc_root),
+                    "roots": {key: display(path) for key, path in project_config.roots.items()},
+                }
+                print_envelope(ok_envelope(data), json_mode=True)
+                return 0
+            errors = validate_paths(project_config)
             if errors:
                 errs = [CliError(code="PATH", message=e, exit_code=1,
-                                 suggestion="add to doc/config/paths.yaml allowed_paths or remove the file")
+                                 suggestion="compare the file location with the selected project's allowed_paths")
                         for e in errors]
                 envelope = multi_error_envelope(errs)
                 print_envelope(envelope, json_mode=False, stream=sys.stderr)
@@ -647,735 +750,95 @@ class DocsPathsCommand(Command):
             print_envelope(ok_envelope(data=result), json_mode=True)
             return 0
 
+        if args.docs_action in {"read", "toc", "search", "check-links", "context", "impact"}:
+            try:
+                if args.docs_action == "read":
+                    data = read_section(store, args.ref, args.max_bytes)
+                    if args.json:
+                        print_envelope(ok_envelope(data), json_mode=True)
+                    else:
+                        print(data["content"])
+                    return 0
+
+                if args.docs_action == "toc":
+                    data = table_of_contents(store, args.id)
+                    if args.json:
+                        print_envelope(ok_envelope(data), json_mode=True)
+                    else:
+                        print(f"{data['doc_id']}\t{data['path']}\t{data['status']}")
+                        for item in data["sections"]:
+                            marker = "stable" if item["stable"] else "slug"
+                            print(f"{item['line_start']:>5}\t{'#' * item['level']} {item['title']}"
+                                  f"\t#{item['anchor']}\t{marker}")
+                    return 0
+
+                if args.docs_action == "search":
+                    data = search(
+                        store, args.query, scope=args.scope, limit=args.limit,
+                        include_archived=args.include_archived,
+                    )
+                    if args.json:
+                        print_envelope(ok_envelope(data), json_mode=True)
+                    else:
+                        print(f"hits: {data['total_matched']} (showing {len(data['hits'])})")
+                        for item in data["hits"]:
+                            anchor = f"#{item['anchor']}" if item["anchor"] else ""
+                            line = f":{item['line']}" if item["line"] else ""
+                            print(f"{item['score']:>5}\t{item['id']}{anchor}{line}"
+                                  f"\t{item['match']}\t{item['snippet']}")
+                    return 0
+
+                if args.docs_action == "check-links":
+                    data = check_links(store)
+                    if args.json:
+                        envelope = ok_envelope(data) if not data["incident_count"] else (
+                            multi_error_envelope(
+                                [CliError(code=item["code"], message=item["message"], exit_code=1)
+                                 for item in data["incidents"]],
+                                data=data,
+                            )
+                        )
+                        print_envelope(envelope, json_mode=True)
+                    else:
+                        for item in data["incidents"]:
+                            print(f"[{item['code']}] {item['message']}", file=sys.stderr)
+                        if not data["incident_count"]:
+                            print(f"OK check-links: {data['scanned_documents']} documents")
+                    return 1 if data["incident_count"] else 0
+
+                if args.docs_action == "context":
+                    data = context(
+                        store, args.task, case_id=args.case_id,
+                        max_bytes=args.max_bytes, since_snapshot=args.since_snapshot,
+                    )
+                    if args.json:
+                        print_envelope(ok_envelope(data), json_mode=True)
+                    else:
+                        print(f"task {data['task_key']} stage {data['stage'] or '-'} "
+                              f"complete={data['complete']}")
+                        for item in data["items"]:
+                            print(f"{item.get('kind')}\t{item.get('ref')}\t"
+                                  f"{item.get('state')}\t{item.get('path') or ''}")
+                        if data.get("delta"):
+                            print(f"delta: {data['delta']}")
+                    return 0
+
+                if args.docs_action == "impact":
+                    data = impact(store, args.since)
+                    if args.json:
+                        print_envelope(ok_envelope(data), json_mode=True)
+                    else:
+                        print(f"changed files: {len(data['changed_files'])}")
+                        for item in data["affected"]:
+                            print(f"{item['kind']}\t{item['id']}\t{item['via']}\t{item['path']}")
+                        if data["unverified_coverage"]:
+                            print("unverified coverage: " + ", ".join(data["unverified_coverage"]))
+                    return 0
+            except DocOpsError as exc:
+                return self._fail(
+                    exc.code, exc.message, field=exc.field, suggestion=exc.suggestion,
+                    exit_code=exc.exit_code, data=exc.data, args=args,
+                )
+
         return self._fail("ARGS", f"unknown docs action: {args.docs_action}",
                           exit_code=EXIT_ARGS, args=args)
-
-
-# ============================================================================
-# Task command (lifecycle)
-# ============================================================================
-
-@register
-class TaskCommand(Command):
-    """Task lifecycle operations (init, validate, workspace, status)."""
-
-    name = "task"
-
-    def setup_parser(self, subparser: argparse.ArgumentParser) -> None:
-        sub = subparser.add_subparsers(dest="task_action", required=True)
-
-        # init
-        p = sub.add_parser("init", help="create task directory and scaffold task.json")
-        p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
-
-        # validate
-        p = sub.add_parser("validate", help="validate task.json structure and consistency")
-        p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
-        p.add_argument("--json", action="store_true", help="JSON envelope output")
-
-        # workspace
-        p = sub.add_parser("workspace", help="prepare task workspace (branch, base commit)")
-        p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
-
-        # status
-        p = sub.add_parser("status", help="show task state, stages and verification")
-        p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
-        p.add_argument("--json", action="store_true", help="JSON output")
-
-        # types
-        p = sub.add_parser("types", help="list available task types from task-conf")
-        p.add_argument("--json", action="store_true", help="JSON output")
-
-        # flows
-        p = sub.add_parser("flows", help="list flows for a task type from task-conf")
-        p.add_argument("--type", required=True, help="task type (e.g. feature, bugfix)")
-        p.add_argument("--json", action="store_true", help="JSON output")
-
-        # type-prompt
-        p = sub.add_parser("type-prompt", help="show the start prompt (skill) for a task type")
-        p.add_argument("--type", required=True, help="task type")
-
-        # flow-prompt
-        p = sub.add_parser("flow-prompt", help="show the start prompt (skill) for a flow")
-        p.add_argument("--type", required=True, help="task type")
-        p.add_argument("--flow", required=True, help="flow id")
-
-        # decompose
-        p = sub.add_parser("decompose", help="create subtasks for a task")
-        p.add_argument("task_key", help="task key")
-        p.add_argument("--subtask-id", action="append", help="subtask ID (4 digits), repeatable")
-        p.add_argument("--subtask-title", action="append", help="subtask title, repeatable")
-
-        # diagnose
-        p = sub.add_parser("diagnose", help="Gantt-style diagnosis of task and subtasks")
-        p.add_argument("task_key", help="task key")
-        p.add_argument("--json", action="store_true", help="JSON output")
-
-        # close
-        p = sub.add_parser("close", help="close a task (fails if subtasks not all completed)")
-        p.add_argument("task_key", help="task key")
-        p.add_argument("--json", action="store_true", help="JSON output")
-
-        # subtask
-        st = sub.add_parser("subtask", help="subtask lifecycle operations")
-        st_sub = st.add_subparsers(dest="subtask_action", required=True)
-
-        st_init = st_sub.add_parser("init", help="create subtask directory and scaffold task.json")
-        st_init.add_argument("parent_task_key", help="parent task key")
-        st_init.add_argument("subtask_id", help="subtask ID")
-
-        st_validate = st_sub.add_parser("validate", help="validate subtask task.json")
-        st_validate.add_argument("parent_task_key", help="parent task key")
-        st_validate.add_argument("subtask_id", help="subtask ID")
-
-        st_status = st_sub.add_parser("status", help="show subtask state")
-        st_status.add_argument("parent_task_key", help="parent task key")
-        st_status.add_argument("subtask_id", help="subtask ID")
-
-    def execute(self, args: argparse.Namespace, root: Path, store: ArchitectureStore) -> int:
-        if args.task_action == "subtask":
-            return self._subtask(args, root)
-
-        if args.task_action == "types":
-            return self._types(args, root)
-        if args.task_action == "flows":
-            return self._flows(args, root)
-        if args.task_action == "type-prompt":
-            return self._type_prompt(args, root)
-        if args.task_action == "flow-prompt":
-            return self._flow_prompt(args, root)
-
-        # Commands requiring task_key
-        try:
-            parsed = parse_task_key(args.task_key)
-        except ValueError as exc:
-            return self._fail(
-                "ARGS", str(exc), field="task_key", exit_code=EXIT_ARGS,
-                suggestion="use format: 1234 (Jira), UI-1234 (UI), or PREFIX-1234 (other)",
-                args=args,
-            )
-
-        task_key = args.task_key
-        task_number = parsed["task_number"]
-        source_type = parsed["source_type"]
-        source_prefix = parsed["source_prefix"]
-
-        tdir = task_dir(root, task_key)
-        tjson = tdir / "task.json"
-
-        if args.task_action == "init":
-            return self._task_init(args, root, tdir, tjson, task_key, task_number, source_type, source_prefix)
-        if args.task_action == "validate":
-            return self._task_validate(args, root, tdir, tjson, task_key)
-        if args.task_action == "workspace":
-            return self._task_workspace(args, root, tdir, tjson, task_key, task_number, source_type)
-        if args.task_action == "status":
-            return self._task_status(args, root, tdir, tjson, task_key, task_number, source_type, source_prefix)
-        if args.task_action == "decompose":
-            return self._task_decompose(args, root, tdir, tjson, task_key, task_number, source_type)
-        if args.task_action == "diagnose":
-            return self._task_diagnose(args, root, tdir, tjson, task_key, task_number, source_type)
-        if args.task_action == "close":
-            return self._task_close(args, root, tdir, tjson, task_key)
-
-        return self._fail("ARGS", f"unknown task action: {args.task_action}",
-                          exit_code=EXIT_ARGS, args=args)
-
-    # ----- subtask -----
-
-    def _subtask(self, args: argparse.Namespace, root: Path) -> int:
-        parent_task_key = args.parent_task_key
-        subtask_id = args.subtask_id
-        if not TASK_NUMBER_RE.fullmatch(subtask_id):
-            return self._fail(
-                "ARGS", f"subtask_id must be exactly four decimal digits, got {subtask_id!r}",
-                field="subtask_id", exit_code=EXIT_ARGS,
-            )
-
-        parent_tdir = task_dir(root, parent_task_key)
-        if not parent_tdir.is_dir():
-            return self._fail(
-                "NOT-FOUND", f"parent task directory not found: {parent_tdir.relative_to(root)}",
-                field="parent_task_key",
-                suggestion=f"create parent task first: arch task init {parent_task_key}",
-                exit_code=EXIT_NOT_FOUND,
-            )
-
-        stdir = subtask_dir(root, parent_task_key, subtask_id)
-        stjson = stdir / "task.json"
-
-        if args.subtask_action == "init":
-            if stdir.exists():
-                return self._fail(
-                    "CONFLICT", f"subtask directory already exists: {stdir.relative_to(root)}",
-                    field="subtask_id", exit_code=EXIT_CONFLICT,
-                    suggestion=f"use a different --subtask-id or remove {stdir.relative_to(root)}",
-                )
-            stdir.mkdir(parents=True, exist_ok=True)
-            (stdir / "stage1").mkdir(parents=True, exist_ok=True)
-            stjson.write_text(
-                scaffold_subtask_json(parent_task_key, subtask_id), encoding="utf-8"
-            )
-            print_envelope(
-                ok_envelope(data={
-                    "ok": True,
-                    "parent_task_key": parent_task_key,
-                    "subtask_id": subtask_id,
-                    "subtask_key": f"{parent_task_key}-{subtask_id}",
-                    "directory": str(stdir.relative_to(root)),
-                    "task_json": str(stjson.relative_to(root)),
-                    "stage_dir": str((stdir / "stage1").relative_to(root)),
-                    "note": "subtasks are always manual; no external source binding",
-                }),
-                json_mode=False,
-            )
-            return 0
-
-        if args.subtask_action == "validate":
-            if not stjson.exists():
-                return self._fail(
-                    "NOT-FOUND", f"subtask task.json not found: {stjson.relative_to(root)}",
-                    field="subtask_id", exit_code=EXIT_NOT_FOUND,
-                    suggestion=f"create it: arch task subtask init {parent_task_key} {subtask_id}",
-                )
-            try:
-                data = json.loads(stjson.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as exc:
-                return self._fail(
-                    "INVALID", f"subtask task.json invalid JSON: {exc}",
-                    field="task.json", exit_code=EXIT_ERROR,
-                    suggestion=f"fix JSON syntax in {stjson.relative_to(root)}",
-                )
-            errors = validate_task_json(data, f"{parent_task_key}-{subtask_id}", root)
-            st_md = stdir / "task.md"
-            if st_md.exists():
-                errors.append(
-                    "task.md exists; manifest requires task.json as the only canonical input"
-                )
-            if errors:
-                errs = [CliError(code="VALIDATION", message=e, field="task.json",
-                                 exit_code=EXIT_ERROR,
-                                 suggestion=f"fix {stjson.relative_to(root)}")
-                        for e in errors]
-                envelope = multi_error_envelope(errs)
-                print_envelope(envelope, json_mode=False, stream=sys.stderr)
-                return 1
-            print_envelope(
-                ok_envelope(data={"ok": True,
-                                "message": f"subtask {parent_task_key}-{subtask_id} is valid"}),
-                json_mode=False,
-            )
-            return 0
-
-        if args.subtask_action == "status":
-            if not stjson.exists():
-                return self._fail(
-                    "NOT-FOUND", f"subtask task.json not found: {stjson.relative_to(root)}",
-                    field="subtask_id", exit_code=EXIT_NOT_FOUND,
-                )
-            try:
-                data = json.loads(stjson.read_text(encoding="utf-8"))
-            except json.JSONDecodeError as exc:
-                return self._fail(
-                    "INVALID", f"subtask task.json invalid JSON: {exc}",
-                    field="task.json", exit_code=EXIT_ERROR,
-                )
-            print_envelope(
-                ok_envelope(data={
-                    "parent_task_key": parent_task_key,
-                    "subtask_id": subtask_id,
-                    "subtask_key": f"{parent_task_key}-{subtask_id}",
-                    "directory": str(stdir.relative_to(root)),
-                    "task_json": str(stjson.relative_to(root)),
-                    "stages": list_stages(stdir),
-                    "sub_subtasks": list_sub_subtasks(stdir),
-                    "phase": data.get("phase", "unset"),
-                    "task_type": data.get("task_type", "unset"),
-                }),
-                json_mode=False,
-            )
-            return 0
-
-        return self._fail("ARGS", f"unknown subtask action: {args.subtask_action}",
-                          exit_code=EXIT_ARGS)
-
-    # ----- task types -----
-
-    def _types(self, args: argparse.Namespace, root: Path) -> int:
-        types, errors = load_task_conf_types(root)
-        if errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-
-        items = []
-        for tid, conf in sorted(types.items()):
-            items.append({
-                "id": tid,
-                "title": conf.get("title"),
-                "description": conf.get("description"),
-                "complexity_default": conf.get("complexity_default"),
-                "default_flow": conf.get("default_flow"),
-                "allowed_flows": conf.get("allowed_flows", []),
-                "subtask_policy": conf.get("subtask_policy"),
-                "close_policy": conf.get("close_policy"),
-                "flow_count": len(conf.get("flows", {})),
-            })
-
-        if getattr(args, "json", False):
-            print_envelope(ok_envelope(data=items), json_mode=True)
-        else:
-            for item in items:
-                print(
-                    f"{item['id']}\t{item.get('title') or '-'}\t"
-                    f"default_flow={item.get('default_flow') or '-'}\t"
-                    f"subtasks={item.get('subtask_policy') or '-'}\t"
-                    f"close={item.get('close_policy') or '-'}\t"
-                    f"flows={item.get('flow_count')}"
-                )
-        return 0
-
-    def _flows(self, args: argparse.Namespace, root: Path) -> int:
-        type_id = args.type
-        types, errors = load_task_conf_types(root)
-        if errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-        if type_id not in types:
-            return self._fail(
-                "NOT-FOUND", f"task type {type_id!r} not found in task-conf",
-                field="type", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"available types: {', '.join(sorted(types))}",
-            )
-        flows, flow_errors = load_task_conf_flows_for_type(root, type_id)
-        if flow_errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in flow_errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-
-        allowed = types[type_id].get("allowed_flows", [])
-        items = []
-        for fid in allowed:
-            conf = flows.get(fid, {})
-            items.append({
-                "id": fid,
-                "title": conf.get("title"),
-                "description": conf.get("description"),
-                "type": conf.get("type"),
-            })
-
-        if getattr(args, "json", False):
-            print_envelope(
-                ok_envelope(data={"type": type_id, "flows": items}), json_mode=True
-            )
-        else:
-            print(f"Flows for task type {type_id}:")
-            for item in items:
-                print(f"  {item['id']}\t{item.get('title') or '-'}\t({item.get('type') or '-'})")
-        return 0
-
-    def _type_prompt(self, args: argparse.Namespace, root: Path) -> int:
-        type_id = args.type
-        types, errors = load_task_conf_types(root)
-        if errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-        if type_id not in types:
-            return self._fail(
-                "NOT-FOUND", f"task type {type_id!r} not found in task-conf",
-                field="type", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"available types: {', '.join(sorted(types))}",
-            )
-        prompt, prompt_errors = load_task_conf_prompt(root, type_id)
-        if prompt_errors:
-            errs = [CliError(code="NOT-FOUND", message=e, exit_code=EXIT_NOT_FOUND)
-                    for e in prompt_errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return EXIT_NOT_FOUND
-        print(prompt, end="" if prompt.endswith("\n") else "\n")
-        return 0
-
-    def _flow_prompt(self, args: argparse.Namespace, root: Path) -> int:
-        type_id = args.type
-        flow_id = args.flow
-        types, errors = load_task_conf_types(root)
-        if errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-        if type_id not in types:
-            return self._fail(
-                "NOT-FOUND", f"task type {type_id!r} not found in task-conf",
-                field="type", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"available types: {', '.join(sorted(types))}",
-            )
-        flows, flow_errors = load_task_conf_flows_for_type(root, type_id)
-        if flow_errors:
-            errs = [CliError(code="CONFIG", message=e, exit_code=1) for e in flow_errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-        if flow_id not in flows:
-            return self._fail(
-                "NOT-FOUND", f"flow {flow_id!r} not found for type {type_id!r}",
-                field="flow", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"available flows: {', '.join(sorted(flows))}",
-            )
-        prompt, prompt_errors = load_task_conf_flow_prompt(root, type_id, flow_id)
-        if prompt_errors:
-            errs = [CliError(code="NOT-FOUND", message=e, exit_code=EXIT_NOT_FOUND)
-                    for e in prompt_errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return EXIT_NOT_FOUND
-        print(prompt, end="" if prompt.endswith("\n") else "\n")
-        return 0
-
-    # ----- task init -----
-
-    def _task_init(self, args, root, tdir, tjson, task_key, task_number, source_type, source_prefix) -> int:
-        if tdir.exists():
-            return self._fail(
-                "CONFLICT", f"task directory already exists: {tdir.relative_to(root)}",
-                field="task_key", exit_code=EXIT_CONFLICT,
-                suggestion=f"use a different task key or remove {tdir.relative_to(root)}",
-            )
-        tdir.mkdir(parents=True, exist_ok=True)
-        (tdir / "stage1").mkdir(parents=True, exist_ok=True)
-        tjson.write_text(
-            scaffold_task_json(task_key, task_number, source_type, source_prefix),
-            encoding="utf-8",
-        )
-        print_envelope(
-            ok_envelope(data={
-                "ok": True,
-                "task_key": task_key,
-                "task_number": task_number,
-                "source_type": source_type,
-                "source_prefix": source_prefix,
-                "directory": str(tdir.relative_to(root)),
-                "task_json": str(tjson.relative_to(root)),
-                "stage_dir": str((tdir / "stage1").relative_to(root)),
-            }),
-            json_mode=False,
-        )
-        return 0
-
-    # ----- task validate -----
-
-    def _task_validate(self, args, root, tdir, tjson, task_key) -> int:
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        errors = validate_task_json(data, task_key, root)
-        task_md = tdir / "task.md"
-        if task_md.exists():
-            errors.append(
-                "task.md exists; manifest requires task.json as the only canonical input"
-            )
-        if errors:
-            errs = [CliError(code="VALIDATION", message=e, field="task.json",
-                             exit_code=EXIT_ERROR,
-                             suggestion=f"fix {tjson.relative_to(root)}")
-                    for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=getattr(args, "json", False), stream=sys.stderr)
-            return 1
-        if getattr(args, "json", False):
-            print_envelope(
-                ok_envelope(data={"ok": True, "message": f"task {task_key} is valid"}),
-                json_mode=True,
-            )
-        else:
-            print(f"task {task_key} is valid")
-        return 0
-
-    # ----- task workspace -----
-
-    def _task_workspace(self, args, root, tdir, tjson, task_key, task_number, source_type) -> int:
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        errors = validate_task_json(data, task_key, root)
-        if errors:
-            errs = [CliError(code="VALIDATION", message=e, field="task.json",
-                             exit_code=EXIT_ERROR,
-                             suggestion=f"fix {tjson.relative_to(root)}")
-                    for e in errors]
-            envelope = multi_error_envelope(errs)
-            print_envelope(envelope, json_mode=False, stream=sys.stderr)
-            return 1
-        release = data.get("target_release", "unset")
-        print_envelope(
-            ok_envelope(data={
-                "ok": True,
-                "task_key": task_key,
-                "task_number": task_number,
-                "directory": str(tdir.relative_to(root)),
-                "task_json": str(tjson.relative_to(root)),
-                "target_release": release,
-                "branch_hint": (
-                    f"futures/{task_number}" if source_type == "jira" else f"bugfix/{task_key}"
-                ),
-                "note": "workspace preparation is deterministic; actual git checkout requires configured repository",
-            }),
-            json_mode=False,
-        )
-        return 0
-
-    # ----- task status -----
-
-    def _task_status(self, args, root, tdir, tjson, task_key, task_number, source_type, source_prefix) -> int:
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        stages = list_stages(tdir)
-        verification_files = []
-        for stage in stages:
-            vfile = tdir / stage / "verification.json"
-            if vfile.exists():
-                verification_files.append(str(vfile.relative_to(root)))
-        result = {
-            "task_key": task_key,
-            "task_number": task_number,
-            "source_type": source_type,
-            "source_prefix": source_prefix,
-            "directory": str(tdir.relative_to(root)),
-            "task_json": str(tjson.relative_to(root)),
-            "stages": stages,
-            "verification_files": verification_files,
-            "has_task_md": (tdir / "task.md").exists(),
-            "target_release": data.get("target_release", "unset"),
-            "task_type": data.get("task_type", "unset"),
-            "flow": data.get("flow", "unset"),
-            "complexity": data.get("complexity", "unset"),
-            "phase": data.get("phase", "unset"),
-        }
-        if getattr(args, "json", False):
-            print_envelope(ok_envelope(data=result), json_mode=True)
-        else:
-            print_envelope(ok_envelope(data=result), json_mode=False)
-        return 0
-
-    # ----- task decompose -----
-
-    def _task_decompose(self, args, root, tdir, tjson, task_key, task_number, source_type) -> int:
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        subtask_ids = args.subtask_id or []
-        subtask_titles = args.subtask_title or []
-        if len(subtask_ids) != len(subtask_titles):
-            return self._fail(
-                "ARGS", "--subtask-id and --subtask-title must be provided in equal numbers",
-                field="subtask", exit_code=EXIT_ARGS,
-                suggestion="provide the same number of --subtask-id and --subtask-title flags",
-            )
-
-        created = []
-        for st_id, st_title in zip(subtask_ids, subtask_titles):
-            stdir = subtask_dir(root, task_key, st_id)
-            if stdir.exists():
-                return self._fail(
-                    "CONFLICT", f"subtask directory already exists: {stdir.relative_to(root)}",
-                    field="subtask_id", exit_code=EXIT_CONFLICT,
-                    suggestion=f"use a different --subtask-id or remove {stdir.relative_to(root)}",
-                )
-            stdir.mkdir(parents=True, exist_ok=True)
-            (stdir / "stage1").mkdir(parents=True, exist_ok=True)
-            stjson_path = stdir / "task.json"
-            stjson_path.write_text(
-                scaffold_subtask_json(task_key, st_id, st_title),
-                encoding="utf-8",
-            )
-            created.append({
-                "subtask_id": st_id,
-                "title": st_title,
-                "directory": str(stdir.relative_to(root)),
-                "task_json": str(stjson_path.relative_to(root)),
-            })
-
-        existing_subtasks = data.get("subtasks", [])
-        if not isinstance(existing_subtasks, list):
-            existing_subtasks = []
-        for st_id, st_title in zip(subtask_ids, subtask_titles):
-            existing_subtasks.append(
-                {"id": st_id, "title": st_title, "status": "open",
-                 "path": f"subtasks/{st_id}/task.json"}
-            )
-        data["subtasks"] = existing_subtasks
-        tjson.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-        print_envelope(
-            ok_envelope(data={
-                "ok": True,
-                "task_key": task_key,
-                "subtasks_created": created,
-            }),
-            json_mode=False,
-        )
-        return 0
-
-    # ----- task diagnose -----
-
-    def _task_diagnose(self, args, root, tdir, tjson, task_key, task_number, source_type) -> int:
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        all_closed, close_errors = check_subtasks_closed(root, task_key)
-        stages = list_stages(tdir)
-        subtasks_info = []
-        subtasks_dir = tdir / "subtasks"
-        if subtasks_dir.is_dir():
-            for st_dir in sorted(subtasks_dir.iterdir()):
-                if not st_dir.is_dir():
-                    continue
-                st_json = st_dir / "task.json"
-                if st_json.exists():
-                    try:
-                        st_data = json.loads(st_json.read_text(encoding="utf-8"))
-                        subtasks_info.append({
-                            "id": st_data.get("task_key", st_dir.name),
-                            "title": st_data.get("title", ""),
-                            "phase": st_data.get("phase", "unset"),
-                            "task_type": st_data.get("task_type", "unset"),
-                            "flow": st_data.get("flow", "unset"),
-                        })
-                    except json.JSONDecodeError:
-                        subtasks_info.append({
-                            "id": st_dir.name, "title": "",
-                            "phase": "invalid", "error": "invalid JSON",
-                        })
-        closed_count = sum(1 for s in subtasks_info if s.get("phase") == "completed")
-        result = {
-            "task_key": task_key,
-            "task_number": task_number,
-            "source_type": source_type,
-            "task_type": data.get("task_type"),
-            "flow": data.get("flow"),
-            "complexity": data.get("complexity"),
-            "phase": data.get("phase"),
-            "all_subtasks_closed": all_closed,
-            "can_close": all_closed,
-            "close_blockers": close_errors,
-            "stages": stages,
-            "subtasks": subtasks_info,
-            "subtask_count": len(subtasks_info),
-            "subtask_closed_count": closed_count,
-        }
-        if getattr(args, "json", False):
-            print_envelope(ok_envelope(data=result), json_mode=True)
-        else:
-            print(f"Diagnosis for task {task_key}:")
-            print(f"  type: {data.get('task_type')}  flow: {data.get('flow')}  complexity: {data.get('complexity')}")
-            print(f"  phase: {data.get('phase')}")
-            print(f"  subtasks: {closed_count}/{len(subtasks_info)} closed")
-            print(f"  can_close: {all_closed}")
-            if close_errors:
-                print("  blockers:")
-                for e in close_errors:
-                    print(f"    - {e}")
-            for s in subtasks_info:
-                print(f"    [{s.get('phase')} ] {s.get('id')} — {s.get('title')}")
-        return 0
-
-    # ----- task close -----
-
-    def _task_close(self, args, root, tdir, tjson, task_key) -> int:
-        all_closed, close_errors = check_subtasks_closed(root, task_key)
-        if not all_closed:
-            errs = [CliError(code="BLOCKER", message=e, field="subtasks",
-                             exit_code=EXIT_ERROR,
-                             suggestion="complete all subtasks before closing")
-                    for e in close_errors]
-            print(f"ERROR: cannot close task {task_key}: subtasks not all completed", file=sys.stderr)
-            for e in close_errors:
-                print(f"  - {e}", file=sys.stderr)
-            return 1
-        if not tjson.exists():
-            return self._fail(
-                "NOT-FOUND", f"task.json not found: {tjson.relative_to(root)}",
-                field="task_key", exit_code=EXIT_NOT_FOUND,
-                suggestion=f"create it: arch task init {task_key}",
-            )
-        try:
-            data = json.loads(tjson.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            return self._fail(
-                "INVALID", f"task.json invalid JSON: {exc}",
-                field="task.json", exit_code=EXIT_ERROR,
-                suggestion=f"fix JSON syntax in {tjson.relative_to(root)}",
-            )
-        data["phase"] = "completed"
-        tjson.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        if getattr(args, "json", False):
-            print_envelope(
-                ok_envelope(data={"ok": True, "task_key": task_key, "phase": "completed"}),
-                json_mode=True,
-            )
-        else:
-            print(f"Task {task_key} closed (phase=completed). All subtasks verified completed.")
-        return 0

@@ -1,0 +1,14 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0026-0002",
+  "task_number": "0002",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-5", "covers": ["AC-1"], "expected": "Явные связи и причины в пределах бюджета."},
+    {"id": "CASE-6", "covers": ["AC-2"], "expected": "Дельта верна, пробелы и конфликты явны."},
+    {"id": "CASE-7", "covers": ["AC-3"], "expected": "Impact отличает объявленную связь от неизвестного покрытия."}
+  ]
+}

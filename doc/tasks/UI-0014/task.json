@@ -48,6 +48,7 @@
     "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
     "Разделять выводы агента и фактически выполненные проверки."
   ],
+  "acceptance_policy": "case-coverage-v1",
   "acceptance_criteria": [
     "AC-1: Из установленного пакета доступны CLI и runtime-ресурсы; версия совпадает с метаданными пакета.",
     "AC-2: CI ловит устаревший индекс до пересборки и проверяет воспроизводимость в отдельном дереве."
@@ -92,20 +93,20 @@
     {
       "id": "0001",
       "title": "Устанавливаемый пакет CLI",
-      "status": "open",
+      "status": "completed",
       "path": "subtasks/0001/task.json"
     },
     {
       "id": "0002",
       "title": "Проверки CI и свежести индекса",
-      "status": "open",
+      "status": "completed",
       "path": "subtasks/0002/task.json"
     }
   ],
   "depends_on": [
     "UI-0012"
   ],
-  "phase": "intake",
+  "phase": "verification",
   "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
   "implementation_plan": [
     "Собрать релизный артефакт и проверить установку вне исходного checkout.",
@@ -131,8 +132,24 @@
   ],
   "research_docs": [],
   "changed_files": {
-    "added": [],
-    "modified": [],
+    "added": [
+      "pyproject.toml",
+      ".github/workflows/ci.yml"
+    ],
+    "modified": [
+      "README.md",
+      "doc/tools/README.md",
+      "doc/tools/arch/cli/app.py",
+      "doc/tools/tests/test_arch.py",
+      "doc/tests/README.md",
+      "doc/tests/run.sh",
+      "doc/tests/test_task_identity.py",
+      "doc/architecture/index.json",
+      "doc/architecture/system/cli-command-map.md",
+      "doc/architecture/system/cli-package.md",
+      "doc/architecture/system/implementation-spec.md",
+      "doc/architecture/system/testing.md"
+    ],
     "deleted": []
   },
   "owner": "unset",
@@ -140,7 +157,7 @@
   "stage_history": [
     {
       "stage_id": "stage1",
-      "status": "planned"
+      "status": "completed"
     }
   ]
 }

@@ -42,6 +42,17 @@ ONLY_DECLARED_PATHS_KEY = "only_declared_paths"
 ARCHITECTURE_DOC_EXTENSIONS_KEY = "architecture_doc_extensions"
 FRONTMATTER_REQUIRED_FOR_KEY = "frontmatter_required_for"
 GENERATED_FILES_KEY = "generated_files"
+ROOTS_KEY = "roots"
+
+# Root keys inside paths.yaml
+ROOT_ARCHITECTURE_KEY = "architecture"
+ROOT_TASKS_KEY = "tasks"
+ROOT_SCHEMAS_KEY = "schemas"
+ROOT_TASK_CONF_KEY = "task_conf"
+ROOT_SKILLS_KEY = "skills"
+ROOT_REFERENCE_KEY = "reference"
+ROOT_INDEX_KEY = "index"
+ROOT_CONFIG_KEY = "config"
 
 # Project sub-keys inside paths.yaml
 PROJECT_ID_FORMATS_KEY = "id_formats"

@@ -6,6 +6,11 @@ description: |
 subtask_policy: optional
 close_policy: all_subtasks_required
 steps:
+  - id: architecture-context
+    name: Сбор архитектурного контекста
+    action: read_applicable_project_rules
+    output: stageN/plan.md с источниками, инвариантами и связью с приёмкой
+    gate: relevant_rules_traced_and_conflicts_resolved_for_targeted_work
   - id: plan
     name: Составление плана
     action: create_plan

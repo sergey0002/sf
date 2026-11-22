@@ -7,99 +7,126 @@ version: "1.0"
 doc_root: "doc"
 
 # ---------------------------------------------------------------------------
+# Настраиваемые корни проекта (relative to repository root).
+# Эти корни определяют, где находятся основные компоненты проекта.
+# Можно переопределить через --config для перенесённой или локальной раскладки.
+# ---------------------------------------------------------------------------
+roots:
+  # Корень архитектурной документации
+  architecture: "doc/architecture"
+  # Корень задач
+  tasks: "doc/tasks"
+  # Корень схем
+  schemas: "doc/architecture/schemas"
+  # Корень конфигурации типов задач
+  task_conf: "doc/config/task-conf"
+  # Корень навыков
+  skills: "doc/skills"
+  # Корень справочного контекста (data/)
+  reference: "data"
+  # Путь к индексу (relative to architecture root)
+  index: "index.json"
+  # Корень конфигурации проекта (paths.yaml location)
+  config: "doc/config"
+
+# ---------------------------------------------------------------------------
 # Допустимые пути (relative to repository root). Каждый путь — точный файл или
 # шаблон с подстановкой (marked with {id}). Шаблоны покрывают повторяющиеся
 # сущности (tasks, domains, entities, flows, capabilities, decisions).
+# Пути строятся на основе корней из секции roots.
 # ---------------------------------------------------------------------------
 allowed_paths:
 
   # Корень doc
   - "doc/AGENTS.md"
 
-  # Архитектурная документация
-  - "doc/architecture/README.md"
-  - "doc/architecture/glossary.md"
-  - "doc/architecture/index.json"
+  # Архитектурная документация (использует architecture root)
+  - "{architecture}/README.md"
+  - "{architecture}/glossary.md"
+  - "{architecture}/{index}"
 
   # Системные документы (уровень system)
-  - "doc/architecture/system/manifest.md"
-  - "doc/architecture/system/architecture-contract.md"
-  - "doc/architecture/system/architecture-audit.md"
-  - "doc/architecture/system/cli-command-map.md"
-  - "doc/architecture/system/cli-package.md"
-  - "doc/architecture/system/cli-validation-rules.md"
-  - "doc/architecture/system/components.md"
-  - "doc/architecture/system/constraints-risks.md"
-  - "doc/architecture/system/context.md"
-  - "doc/architecture/system/data.md"
-  - "doc/architecture/system/overview.md"
-  - "doc/architecture/system/quality.md"
-  - "doc/architecture/system/security.md"
-  - "doc/architecture/system/task-number-registry.md"
-  - "doc/architecture/system/implementation-spec.md"
-  - "doc/architecture/system/testing.md"
-  - "doc/architecture/system/examples.md"
-  - "doc/architecture/system/runbook.md"
+  - "{architecture}/system/manifest.md"
+  - "{architecture}/system/architecture-contract.md"
+  - "{architecture}/system/architecture-audit.md"
+  - "{architecture}/system/cli-command-map.md"
+  - "{architecture}/system/cli-package.md"
+  - "{architecture}/system/cli-validation-rules.md"
+  - "{architecture}/system/components.md"
+  - "{architecture}/system/constraints-risks.md"
+  - "{architecture}/system/context.md"
+  - "{architecture}/system/data.md"
+  - "{architecture}/system/overview.md"
+  - "{architecture}/system/quality.md"
+  - "{architecture}/system/security.md"
+  - "{architecture}/system/task-number-registry.md"
+  - "{architecture}/system/implementation-spec.md"
+  - "{architecture}/system/testing.md"
+  - "{architecture}/system/examples.md"
+  - "{architecture}/system/runbook.md"
 
-  # Схемы архитектуры
-  - "doc/architecture/schemas/document.schema.json"
-  - "doc/architecture/schemas/index.schema.json"
-  - "doc/architecture/schemas/bodies/capability-spec.json"
-  - "doc/architecture/schemas/bodies/capability.json"
-  - "doc/architecture/schemas/bodies/component-view.json"
-  - "doc/architecture/schemas/bodies/constraints-risks.json"
-  - "doc/architecture/schemas/bodies/data-view.json"
-  - "doc/architecture/schemas/bodies/decision.json"
-  - "doc/architecture/schemas/bodies/domain.json"
-  - "doc/architecture/schemas/bodies/entity.json"
-  - "doc/architecture/schemas/bodies/flow.json"
-  - "doc/architecture/schemas/bodies/glossary.json"
-  - "doc/architecture/schemas/bodies/quality-attributes.json"
-  - "doc/architecture/schemas/bodies/rule-set.json"
-  - "doc/architecture/schemas/bodies/security-view.json"
-  - "doc/architecture/schemas/bodies/system-context.json"
-  - "doc/architecture/schemas/bodies/system.json"
+  # Схемы архитектуры (использует schemas root)
+  - "{schemas}/document.schema.json"
+  - "{schemas}/index.schema.json"
+  - "{schemas}/bodies/capability-spec.json"
+  - "{schemas}/bodies/capability.json"
+  - "{schemas}/bodies/component-view.json"
+  - "{schemas}/bodies/constraints-risks.json"
+  - "{schemas}/bodies/data-view.json"
+  - "{schemas}/bodies/decision.json"
+  - "{schemas}/bodies/domain.json"
+  - "{schemas}/bodies/entity.json"
+  - "{schemas}/bodies/flow.json"
+  - "{schemas}/bodies/glossary.json"
+  - "{schemas}/bodies/quality-attributes.json"
+  - "{schemas}/bodies/rule-set.json"
+  - "{schemas}/bodies/security-view.json"
+  - "{schemas}/bodies/system-context.json"
+  - "{schemas}/bodies/system.json"
 
   # Решения (ADR) — шаблон для любого ADR
-  - "doc/architecture/decisions/{id}.md"
+  - "{architecture}/decisions/{id}.md"
 
   # Домены — шаблоны
-  - "doc/architecture/domains/{domain}/README.md"
-  - "doc/architecture/domains/{domain}/capability.md"
-  - "doc/architecture/domains/{domain}/flow.md"
-  - "doc/architecture/domains/{domain}/capabilities/{slug}.md"
-  - "doc/architecture/domains/{domain}/flows/{slug}.md"
-  - "doc/architecture/domains/{domain}/entities/{slug}.md"
-  - "doc/architecture/domains/task-lifecycle/cli-task-lifecycle.md"
-  - "doc/architecture/domains/task-lifecycle/cli-subtask-lifecycle.md"
+  - "{architecture}/domains/{domain}/README.md"
+  - "{architecture}/domains/{domain}/capability.md"
+  - "{architecture}/domains/{domain}/flow.md"
+  - "{architecture}/domains/{domain}/capabilities/{slug}.md"
+  - "{architecture}/domains/{domain}/flows/{slug}.md"
+  - "{architecture}/domains/{domain}/entities/{slug}.md"
+  - "{architecture}/domains/task-lifecycle/cli-task-lifecycle.md"
+  - "{architecture}/domains/task-lifecycle/cli-subtask-lifecycle.md"
 
-  # Конфигурация проекта (корень doc)
-  - "doc/config/paths.yaml"
-  # Конфиги типов задач (иерархическая структура)
-  - "doc/config/task-conf/types/{type}/config.yaml"
-  - "doc/config/task-conf/types/{type}/prompt.md"
-  - "doc/config/task-conf/types/{type}/flows/{flow}/config.yaml"
-  - "doc/config/task-conf/types/{type}/flows/{flow}/prompt.md"
+  # Конфигурация проекта (использует config root)
+  - "{config}/paths.yaml"
+  # Конфиги типов задач (иерархическая структура, использует task_conf root)
+  - "{task_conf}/types/{type}/config.yaml"
+  - "{task_conf}/types/{type}/prompt.md"
+  - "{task_conf}/types/{type}/flows/{flow}/config.yaml"
+  - "{task_conf}/types/{type}/flows/{flow}/prompt.md"
+  - "{task_conf}/types/{type}/flows/{flow}/stepsprompt/{slug}.md"
 
-  # Навыки агентов
-  - "doc/skills/README.md"
-  - "doc/skills/{skill_id}/SKILL.md"
+  # Навыки агентов (использует skills root)
+  - "{skills}/README.md"
+  - "{skills}/{skill_id}/SKILL.md"
 
-  # Задачи — шаблон: doc/tasks/{task_key}/...
-  - "doc/tasks/{task_key}/task.json"
-  - "doc/tasks/{task_key}/stage{stage}/plan.md"
-  - "doc/tasks/{task_key}/stage{stage}/verification.json"
-  - "doc/tasks/{task_key}/subtasks/{subtask_id}/task.json"
-  - "doc/tasks/{task_key}/subtasks/{subtask_id}/stage{stage}/plan.md"
-  - "doc/tasks/{task_key}/subtasks/{subtask_id}/stage{stage}/verification.json"
+  # Задачи — шаблон: {tasks}/{task_key}/...
+  - "{tasks}/{task_key}/task.json"
+  - "{tasks}/{task_key}/.arch-write-journal.json"
+  - "{tasks}/{task_key}/stage{stage}/plan.md"
+  - "{tasks}/{task_key}/stage{stage}/verification.json"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/task.json"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/plan.md"
+  - "{tasks}/{task_key}/subtasks/{subtask_id}/stage{stage}/verification.json"
   # Исследования задачи — свободные md-документы, привязанные к таску
-  - "doc/tasks/{task_key}/research/{slug}.md"
+  - "{tasks}/{task_key}/research/{slug}.md"
 
   # Тесты документации
   - "doc/tests/README.md"
   - "doc/tests/SCENARIOS.md"
   - "doc/tests/run.sh"
   - "doc/tests/test_task_identity.py"
+  - "doc/tests/test_doc_contracts.py"
 
   # Инструменты (CLI)
   - "doc/tools/README.md"
@@ -116,14 +143,28 @@ allowed_paths:
   - "doc/tools/arch/cli/commands/registry.py"
   - "doc/tools/arch/cli/commands/task_key.py"
   - "doc/tools/arch/cli/commands/builtin.py"
+  - "doc/tools/arch/cli/commands/task.py"
+  - "doc/tools/arch/cli/commands/session.py"
   - "doc/tools/arch/constants.py"
   - "doc/tools/arch/identity.py"
   - "doc/tools/arch/schema.py"
   - "doc/tools/arch/store.py"
+  - "doc/tools/arch/sections.py"
+  - "doc/tools/arch/doc_ops.py"
   - "doc/tools/arch/subtask.py"
   - "doc/tools/arch/validation.py"
   - "doc/tools/arch/body_validation.py"
+  - "doc/tools/arch/project_config.py"
+  - "doc/tools/arch/acceptance.py"
+  - "doc/tools/arch/evidence.py"
+  - "doc/tools/arch/fs_atomic.py"
+  - "doc/tools/arch/task_ops.py"
+  - "doc/tools/arch/session_audit.py"
+  - "doc/tools/arch/sections.py"
   - "doc/tools/tests/test_arch.py"
+  - "doc/tools/tests/test_sections.py"
+  - "doc/tools/tests/test_session_audit.py"
+  - "doc/tools/tests/test_sections.py"
 
 # ---------------------------------------------------------------------------
 # Прочая конфигурация проекта, читаемая CLI
@@ -252,6 +293,8 @@ project:
       - index check
       - validate
       - docs paths --check
+      - docs paths --resolved
+      - docs tree
       - task-key
       - task init
       - task validate
@@ -259,12 +302,18 @@ project:
       - task status
       - task types
       - task flows --type <type>
+      - task flow-steps
+      - task flow-prompt
+      - task evidence
       - task decompose <task_key>
       - task diagnose <task_key>
       - task close <task_key>
       - task subtask init
       - task subtask validate
       - task subtask status
+      - session find
+      - session digest
+      - session events
     strict_mode: true
     garbage_detector: true
 
@@ -280,7 +329,7 @@ structure_rules:
     - ".json"
   # Фронтмatter обязателен для всех .md в doc/architecture/
   frontmatter_required_for:
-    - "doc/architecture/**/*.md"
+    - "{architecture}/**/*.md"
   # Индекс генерируется, не правится вручную
   generated_files:
-    - "doc/architecture/index.json"
+    - "{architecture}/{index}"

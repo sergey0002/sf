@@ -1,0 +1,60 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0026-0002",
+  "task_number": "0002",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "created by arch task init",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Контекст задачи и анализ влияния",
+  "kind": "feature",
+  "intent": "На резолвере 0001 собрать ограниченный контекст документации и обратную навигацию по явным ссылкам.",
+  "scope": {
+    "in": ["docs context, сравнение снимков, docs impact и CASE-5–CASE-7 родителя"],
+    "out": ["Второй runtime стадии и новый механизм верификации"],
+    "allowed_files_modules": ["doc/tools/arch/", "doc/tools/tests/", "doc/tests/", "doc/architecture/"]
+  },
+  "current_behavior": "Контекст и обратные связи собираются агентом вручную; CLI не показывает причину включения раздела или изменение состава пакета.",
+  "evidence": ["../../stage1/plan.md: CASE-5–CASE-7; doc/skills/architecture-read/SKILL.md"],
+  "contracts_and_invariants": [],
+  "acceptance_criteria": ["AC-1: В пакете только объявленные связи, причины и явные пропуски.", "AC-2: Дельта точна; конфликт, отсутствие и устаревание evidence различимы.", "AC-3: Impact показывает изменённый раздел и объявленных потребителей без обещания полного покрытия."],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "unset",
+  "project_context_refs": [],
+  "constraints": ["До интеграции согласовать стык с UI-0019; общий контекст стадии вне scope."],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "low",
+  "authority": {
+    "allowed": [],
+    "forbidden": [],
+    "approval_required": []
+  },
+  "approvals": [],
+  "task_type": "bugfix",
+  "flow": "standard-implementation",
+  "complexity": "low",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Убрать context/impact, сохранив резолвер и прежние карточки.",
+  "implementation_plan": ["После 0001: разрешение ссылок по кейсу → дельта → обратные связи от diff"],
+  "related_docs": [],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

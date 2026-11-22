@@ -6,6 +6,11 @@ description: |
 subtask_policy: optional
 close_policy: all_subtasks_required
 steps:
+  - id: architecture-context
+    name: Сбор архитектурного контекста
+    action: read_applicable_project_rules
+    output: stageN/plan.md с источниками, инвариантами и связью с приёмкой
+    gate: relevant_rules_traced_and_conflicts_resolved_for_targeted_work
   - id: reproduce
     name: Воспроизведение
     action: reproduce_bug
@@ -15,17 +20,27 @@ steps:
     name: Планирование
     action: create_plan
     output: stageN/plan.md
-    gate: plan_ready_and_required_approval_recorded
+    gate: regression_oracle_and_required_approval_recorded
   - id: fix
     name: Исправление
     action: apply_fix
     output: changed files + regression test
     gate: fix_applied_and_test_added
+  - id: review-implementation
+    name: Ревью реализации
+    action: review_diff_against_acceptance_on_stable_snapshot
+    output: результат ревью и ссылки на доказательства в stageN/plan.md
+    gate: blocking_review_findings_resolved
+  - id: architecture-sync
+    name: Синхронизация архитектурной документации
+    action: record_verified_architecture_delta
+    output: обновлены канонические записи или в плане указана причина отсутствия дельты
+    gate: architecture_delta_matches_verified_behavior_or_no_delta_recorded
   - id: verify
     name: Верификация
     action: run_tests
     output: stageN/verification.json
-    gate: tests_passed
+    gate: mandatory_acceptance_cases_pass_on_evidence_snapshot
   - id: close
     name: Закрытие
     action: close_task

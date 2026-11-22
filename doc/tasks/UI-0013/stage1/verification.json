@@ -3,9 +3,123 @@
   "task_key": "UI-0013",
   "task_number": "0013",
   "stage_id": "stage1",
-  "status": "not_run",
-  "checked_revision": null,
-  "checks": [],
+  "status": "passed",
+  "checked_revision": "0cf2b028ee89689f14c3f686c7f1d730adc2918f + working-tree snapshot in snapshot_files",
+  "snapshot_files": [
+    {
+      "path": "doc/tools/arch/task_ops.py",
+      "sha256": "2d655b62d1a72858cbd8ed38e28d678b8872cb9c8d3216153da02005328ba67a"
+    },
+    {
+      "path": "doc/tools/arch/fs_atomic.py",
+      "sha256": "e59a8b85a290bc6c502a5c7bfecf21395fa7c1980bb6045724de66d723b4cbc8"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/task.py",
+      "sha256": "589f0c74ae3dc73b3b52657612f9f7f8dc1a5b514468fd9b0ac7421c7634b1c8"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/builtin.py",
+      "sha256": "43f7c3ffca426e7976c1e6afb7829d628fa3fce9c344ea742ee3f6d2ba2dcbfa"
+    },
+    {
+      "path": "doc/tools/arch/cli/commands/registry.py",
+      "sha256": "7728b6646b1eac1003329811e88c7c918ca77d8e54e1b730cb9b719dc24a6ed2"
+    },
+    {
+      "path": "doc/tools/arch/cli/app.py",
+      "sha256": "a420e300f446d300c8ecc8d225ab64b686cd01334729d7f9fc1b02af958d6b23"
+    },
+    {
+      "path": "doc/tests/test_task_identity.py",
+      "sha256": "ac210f240be4f1488ef2daba0064f6883c2a2713a00ced60db67bbcbee469fa6"
+    },
+    {
+      "path": "doc/tools/tests/test_arch.py",
+      "sha256": "8d4158ba2576bb1e9a2c2e8054a0ef1aecb92907c8ab8d356436000ababd9a3f"
+    },
+    {
+      "path": "doc/config/paths.yaml",
+      "sha256": "8b36b85589d0af735c27e4e8d0fc260cd373695ccc27aa252c44c440487ddab7"
+    },
+    {
+      "path": "doc/architecture/system/cli-command-map.md",
+      "sha256": "643b5f664d2d85c8f380233c056bec996a26b9e93365f938291e406365fb9c84"
+    },
+    {
+      "path": "doc/architecture/system/implementation-spec.md",
+      "sha256": "799e1ed92ced0d870fae8d1e1822f904e28c51049919540a34ef33b08388f948"
+    },
+    {
+      "path": "doc/architecture/system/cli-package.md",
+      "sha256": "bf134b67c727bcbea977c0332df0f0fcc3e42d50e58a17954a617021b1efead0"
+    },
+    {
+      "path": "doc/architecture/index.json",
+      "sha256": "e6d61a8e8589922223c199da06d505dfc7c600048e9b99f3b500eec2833d7882"
+    }
+  ],
+  "checks": [
+    {
+      "command": "python3 -m unittest doc.tests.test_task_identity.TaskIdentityContractTests.test_task_config_queries_keep_working doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_rejects_invalid_package_before_writing doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_writes_package_and_diagnose_reports_it doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_resumes_interrupted_write doc.tests.test_task_identity.TaskIdentityContractTests.test_decompose_refuses_different_package_while_journal_pending -q",
+      "exit_code": 0,
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "result": "5 tests pass. Invalid package and on-disk collision leave the parent byte-identical and create no child; a valid package creates both children; a pending journal is reported by diagnose, blocks closure, resumes with the same package and refuses a different package."
+    },
+    {
+      "command": "python3 -m unittest discover -s doc/tools/tests -q",
+      "exit_code": 0,
+      "covers": [],
+      "result": "7 unit tests pass, including atomic replacement without temp leftovers and duplicate command registration rejection."
+    },
+    {
+      "command": "bash doc/tests/run.sh --brief",
+      "exit_code": 0,
+      "covers": [
+        "AC-1",
+        "AC-2"
+      ],
+      "result": "OK: architecture, index, paths, unit tests, acceptance tests, UI-0001 JSON. Acceptance suite (47 tests) includes the new lifecycle refusal, success and interruption cases."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py task validate UI-0013",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Passed."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py index check",
+      "exit_code": 0,
+      "covers": [],
+      "result": "Index is current after index build (42 documents)."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py validate --brief",
+      "exit_code": 0,
+      "covers": [],
+      "result": "OK validate: architecture."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py docs paths --check",
+      "exit_code": 0,
+      "covers": [],
+      "result": "All doc/ paths are declared and valid."
+    },
+    {
+      "command": "python3 doc/tools/arch/__main__.py scan --scope all --brief",
+      "exit_code": 0,
+      "covers": [],
+      "result": "OK scan: all."
+    }
+  ],
+  "limitations": [
+    "UI-0012 remains in intake; this slice ran on the shared working tree per owner instruction and did not modify its project-config behavior.",
+    "Concurrent edits to doc/tests/test_task_identity.py and project_config.py were present during the run; the final full-suite pass was repeated after those edits settled.",
+    "A concurrent workstream integrated acceptance-policy checks (arch/acceptance.py) into the shared task_ops.py and added its path declaration; UI-0013 checks cover the lifecycle and write behavior only."
+  ],
   "planned_checks": [
     {
       "covers": [

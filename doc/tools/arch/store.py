@@ -12,38 +12,7 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
 from .body_validation import validate_document_body
-
-
-class UniqueKeyLoader(yaml.SafeLoader):
-    """Safe YAML loader that rejects duplicate mapping keys."""
-
-
-def _construct_unique_mapping(
-    loader: UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False
-) -> dict:
-    loader.flatten_mapping(node)
-    result: dict[Any, Any] = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        try:
-            duplicate = key in result
-        except TypeError as exc:
-            raise yaml.constructor.ConstructorError(
-                "while constructing a mapping", node.start_mark,
-                "found an unhashable key", key_node.start_mark,
-            ) from exc
-        if duplicate:
-            raise yaml.constructor.ConstructorError(
-                "while constructing a mapping", node.start_mark,
-                f"found duplicate key {key!r}", key_node.start_mark,
-            )
-        result[key] = loader.construct_object(value_node, deep=deep)
-    return result
-
-
-UniqueKeyLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
-)
+from .project_config import ProjectConfig, UniqueKeyLoader
 
 
 @dataclass
@@ -55,12 +24,13 @@ class Document:
 
 
 class ArchitectureStore:
-    def __init__(self, root: Path):
-        self.root = root.resolve()
-        self.docs = self.root / "doc" / "architecture"
-        self.document_schema_path = self.docs / "schemas" / "document.schema.json"
-        self.index_schema_path = self.docs / "schemas" / "index.schema.json"
-        self.index_path = self.docs / "index.json"
+    def __init__(self, project_config: ProjectConfig):
+        self.project_config = project_config
+        self.root = project_config.root
+        self.docs = project_config.architecture_root
+        self.document_schema_path = project_config.schemas_root / "document.schema.json"
+        self.index_schema_path = project_config.schemas_root / "index.schema.json"
+        self.index_path = project_config.index_path
 
     def _load_schema(self, path: Path) -> dict[str, Any]:
         try:
@@ -243,7 +213,7 @@ class ArchitectureStore:
         errors.extend(self.validate_links(docs))
         errors.extend(self.validate_related(docs))
         # Validate document bodies by type schema
-        schemas_dir = self.docs / "schemas"
+        schemas_dir = self.project_config.schemas_root
         for doc in docs:
             doc_type = doc.metadata.get("type")
             if doc_type:
@@ -259,20 +229,19 @@ class ArchitectureStore:
                     actual = json.loads(self.index_path.read_text(encoding="utf-8"))
                 except FileNotFoundError:
                     errors.append(
-                        "doc/architecture/index.json: missing; run `python3 doc/tools/arch/__main__.py index build`"
+                        f"{self.index_path.relative_to(self.root)}: missing; run `python3 doc/tools/arch/__main__.py index build`"
                     )
                 except json.JSONDecodeError as exc:
-                    errors.append(f"doc/architecture/index.json: invalid JSON: {exc}")
+                    errors.append(f"{self.index_path.relative_to(self.root)}: invalid JSON: {exc}")
                 else:
                     errors.extend(self._validate_instance(actual, index_schema, "index.json:"))
                     if actual != expected:
-                        errors.append("doc/architecture/index.json: stale; run `python3 doc/tools/arch/__main__.py index build`")
+                        errors.append(f"{self.index_path.relative_to(self.root)}: stale; run `python3 doc/tools/arch/__main__.py index build`")
         return errors
 
     def write_index(self, index: dict[str, Any]) -> None:
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(index, ensure_ascii=False, indent=2) + "\n"
-        self.index_path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(
             "w", encoding="utf-8", dir=self.index_path.parent, delete=False
         ) as tmp:

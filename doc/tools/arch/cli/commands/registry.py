@@ -29,6 +29,8 @@ class SimpleCommandRegistry:
         self._commands: dict[str, Command] = {}
 
     def register(self, command: Command) -> None:
+        if command.name in self._commands:
+            raise ValueError(f"duplicate command registration: {command.name!r}")
         self._commands[command.name] = command
 
     def get(self, name: str) -> Command | None:

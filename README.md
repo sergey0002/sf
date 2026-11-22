@@ -20,6 +20,8 @@
 | Путь | Назначение | Режим работы |
 |---|---|---|
 | `README.md` | Стартовый контекст и правила | Обновлять при изменении общего workflow |
+| `pyproject.toml` | Метаданные устанавливаемого пакета, зависимости и console script `arch` | Менять вместе с версией пакета и проверками установки |
+| `.github/workflows/` | CI: read-only проверки, тесты и воспроизводимость индекса | Не пересобирать индекс в проверяемом checkout |
 | `doc/architecture/` | Каноническая архитектура, контракты, схемы и generated index | Читать index-first; менять вместе с поведением |
 | `doc/config/` | Машинные политики путей, типов задач и flows | Менять только с проверкой CLI и тестов |
 | `doc/skills/` | Инструкции для смысловых операций агента | Не переносить смысловые решения в CLI |
@@ -55,6 +57,16 @@
 
 CLI запускается из корня репозитория. Он проверяет структуру и выполняет детерминированные операции; интерпретация намерения, релевантность документов и архитектурное суждение остаются обязанностью агента.
 
+Установка из исходного дерева и проверка версии:
+
+```bash
+python3 -m pip install -r doc/tools/requirements.txt
+python3 -m pip install .
+arch --version
+```
+
+Установленный пакет читает проектные данные через `--root`; версия `arch --version` совпадает с метаданными пакета и `arch.__version__`.
+
 ```bash
 # Архитектура и индекс
 python3 doc/tools/arch/__main__.py validate
@@ -65,11 +77,14 @@ python3 doc/tools/arch/__main__.py show SYS-simple-factory
 
 # Пути, frontmatter и конфигурация задач
 python3 doc/tools/arch/__main__.py docs paths --check
+python3 doc/tools/arch/__main__.py docs paths --resolved
 python3 doc/tools/arch/__main__.py task types
 python3 doc/tools/arch/__main__.py task flows --type feature
 ```
 
 Перед новой командой изучите `--help`. Успешный exit code подтверждает только CLI-контракт, а не семантическую правильность решения.
+
+Единый конфиг путей — [doc/config/paths.yaml](doc/config/paths.yaml). Для другой раскладки передайте `--root <project>` и при необходимости `--config <yaml>` перед командой. Относительные пути в YAML считаются от корня проекта, а `roots.index` считается от `roots.architecture`. `docs paths --resolved` возвращает выбранный YAML и фактические пути в JSON. Хранилища архитектуры и задач обходятся по файловой системе, поэтому работают и под `.gitignore`, и без отдельного Git-репозитория.
 
 ## Как исследовать энциклопедии в `data/`
 
@@ -184,8 +199,20 @@ python3 doc/tools/arch/__main__.py task flow-prompt --type <type> --flow <flow>
 ## Обязательные проверки
 
 ```bash
-# Полный набор: 5 unit + 35 acceptance tests
+# Полный набор: unit + acceptance tests, без пересборки индекса в checkout
 bash doc/tests/run.sh
+
+# Компактный итоговый прогон для агента
+bash doc/tests/run.sh --brief
+
+# Проверка свежести и воспроизводимости индекса в отдельном дереве
+bash doc/tests/run.sh --index-only
+
+# То же в изолированной копии, если основной checkout нельзя использовать напрямую
+bash doc/tests/run.sh --in-copy --index-only
+
+# CI-эквивалент: read-only проверки, воспроизводимость и тесты
+bash doc/tests/run.sh --ci
 
 python3 doc/tools/arch/__main__.py validate
 python3 doc/tools/arch/__main__.py index check
@@ -195,7 +222,7 @@ python3 doc/tools/arch/__main__.py docs paths --check
 python3 -m unittest discover -s doc/tools/tests
 ```
 
-После изменения архитектурных документов выполните `index build`, затем `index check`. В отчёте укажите команды, фактический результат и непроверенные области.
+После изменения архитектурных документов выполните `index build` осознанно, затем `index check`. `run.sh` не пересобирает индекс в основном checkout: stale index обнаруживается до любой записи. В отчёте укажите команды, фактический результат и непроверенные области.
 
 ## Безопасность и критерий завершённости
 

@@ -10,7 +10,10 @@ the explicit contract:
 
 from __future__ import annotations
 
-from .constants import TASK_NUMBER_RE, TASK_PREFIX_RE, TASK_KEY_RE
+from pathlib import Path
+
+from .constants import ROOT_TASKS_KEY, TASK_NUMBER_RE, TASK_PREFIX_RE, TASK_KEY_RE
+from .project_config import DEFAULT_ROOTS, ProjectConfig
 
 
 def normalize_task_identity(
@@ -71,9 +74,10 @@ def parse_task_key(task_key: str) -> dict[str, str | None]:
     return {"source_type": "other", "task_number": other_num, "source_prefix": prefix}
 
 
-def task_dir(root, task_key: str):
-    """Return the canonical task directory path for a task key."""
-    from pathlib import Path
-
-    root = Path(root)
-    return root / "doc" / "tasks" / task_key
+def task_dir(root: Path | ProjectConfig, task_key: str) -> Path:
+    """Return the task directory, retaining the default for legacy Path callers."""
+    tasks_root = root.tasks_root if isinstance(root, ProjectConfig) else Path(root) / DEFAULT_ROOTS[ROOT_TASKS_KEY]
+    path = tasks_root / task_key
+    if not path.resolve().is_relative_to(tasks_root.resolve()):
+        raise ValueError(f"task path escapes the configured tasks root: {path}")
+    return path

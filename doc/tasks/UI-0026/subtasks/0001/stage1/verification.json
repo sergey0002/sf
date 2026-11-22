@@ -1,0 +1,15 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0026-0001",
+  "task_number": "0001",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {"id": "CASE-1", "covers": ["AC-1"], "expected": "Ссылка устойчива к переносу; прочитаны точные байты раздела."},
+    {"id": "CASE-2", "covers": ["AC-1", "AC-3"], "expected": "Ошибки адресации, границ и бюджета различимы."},
+    {"id": "CASE-3", "covers": ["AC-2"], "expected": "Детерминированный ограниченный поиск по разрешённым источникам."},
+    {"id": "CASE-4", "covers": ["AC-3"], "expected": "Битый якорь указан с источником; дерево без изменений."}
+  ]
+}

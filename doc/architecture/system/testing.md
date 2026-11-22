@@ -96,6 +96,19 @@ implemented: false
 | .md без frontmatter в doc/architecture/ | ["Missing or invalid YAML frontmatter: <path>"] |
 | .md с недопустимым type в frontmatter | ["Unknown document type '<type>': <path>"] |
 
+### 3.7 session_audit.py
+
+Тесты используют временную SQLite-базу с минимальными таблицами `session`, `message`, `part`. Реальный журнал Kilo не изменяется.
+
+| Тест | Вход | Ожидаемый результат |
+|------|------|--------------------|
+| find_sessions | Текстовая часть с подстрокой | Сессия, `match_count`, первое совпадение и роль |
+| digest_session markers | Части с `skill`, flow prompt, task plan, rules, CLI | Метки `skill:`, `flow:`, `task:`, `stage:`, `rule:`, `cli:` и `arch-flow:` |
+| digest_session stats | Успешный и неуспешный bash | `stats.tools` и `anomalies.failed_tool` |
+| digest_session phases | Чтение, правка, тест | Отрезки `explore`, `edit`, `verify` |
+| session_events | Фильтр по `message_id` | Только части выбранного сообщения с `part_id` |
+| CLI | `session find` и `session digest --db` | JSON-envelope и exit 0 |
+
 ## 4. Integration-тесты
 
 | Тест | Сценарий | Ожидаемый результат |
@@ -164,7 +177,7 @@ implemented: false
 ### 7.1 Unit-тесты (прямой запуск)
 
 ```bash
-cd /home/user/doc/tools
+cd doc/tools
 python -m pytest tests/ -v
 python -m unittest discover tests/ -v
 ```
@@ -172,7 +185,7 @@ python -m unittest discover tests/ -v
 ### 7.2 Integration через CLI
 
 ```bash
-cd /home/user
+# Из корня репозитория
 python doc/tools/arch/__main__.py task types
 python doc/tools/arch/__main__.py task flows --type feature
 python doc/tools/arch/__main__.py task validate UI-0009
@@ -183,13 +196,12 @@ python doc/tools/arch/__main__.py docs paths --check
 
 ```bash
 # Запускать из корня проекта
-cd /home/user
 bash -e << 'EOF'
 python doc/tools/arch/__main__.py task init UI-9999
 python doc/tools/arch/__main__.py task validate UI-9999
 python doc/tools/arch/__main__.py task decompose UI-9999 --subtask-id 0001 --subtask-title "Test subtask"
 python doc/tools/arch/__main__.py task diagnose UI-9999
-python doc/tools/arch/__main__.py task close UI-9999  # должен失败ть
+python doc/tools/arch/__main__.py task close UI-9999  # должен упасть
 # ... обновить subtask phase на completed
 python doc/tools/arch/__main__.py task close UI-9999  # должен пройти
 EOF
@@ -224,13 +236,16 @@ EOF
 
 ## 10. Запуск в CI
 
+CI сначала проверяет свежесть индекса без записи, затем запускает тесты и отдельно подтверждает воспроизводимость двумя пересборками с разными `PYTHONHASHSEED` во временных деревьях. Установка проверяется из собранного wheel в отдельном окружении вне исходного checkout.
+
 ```yaml
-# Пример конфигурации CI (псевдоформат)
 steps:
-  - run: pip install -r doc/tools/requirements.txt
-  - run: python -m pytest doc/tools/tests/ -v
-  - run: python doc/tools/arch/__main__.py task types
-  - run: python doc/tools/arch/__main__.py task validate UI-0009
-  - run: python doc/tools/arch/__main__.py docs paths --check
-  - run: python doc/tools/arch/__main__.py task close UI-0009  # только если все subtasks закрыты
+  - run: python -m pip install -r doc/tools/requirements.txt
+  - run: bash doc/tests/run.sh --ci
+  - run: python -m pip wheel --no-build-isolation --no-deps -w dist .
+  - run: python -m venv "$RUNNER_TEMP/arch-venv"
+  - run: '"$RUNNER_TEMP/arch-venv/bin/pip" install dist/*.whl'
+  - run: cd "$RUNNER_TEMP" && "$RUNNER_TEMP/arch-venv/bin/arch" --version
 ```
+
+`bash doc/tests/run.sh --ci` выполняет read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными hash seed, unit/acceptance и fixture. `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. Acceptance-тест собирает wheel, устанавливает его в отдельный target и проверяет `arch --version`, метаданные пакета и чтение проектных ресурсов через `--root`. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую.

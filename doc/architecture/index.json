@@ -156,7 +156,8 @@
       "domain": "execution-verification",
       "related": [
         "CAP-single-agent-execution",
-        "FLOW-verify-task"
+        "FLOW-verify-task",
+        "FLOW-kilo-session-audit"
       ],
       "implemented": false
     },
@@ -348,6 +349,21 @@
         "ENT-task-input",
         "ENT-stage-artifact",
         "CAP-single-agent-execution"
+      ],
+      "implemented": false
+    },
+    {
+      "id": "FLOW-kilo-session-audit",
+      "type": "flow",
+      "title": "Аудит локальных сессий Kilo Code",
+      "summary": "Поиск сессии, проверка выполнения задачи, анализ инструментов и расхода контекста по локальной SQLite.",
+      "status": "draft",
+      "path": "domains/execution-verification/flows/kilo-session-audit.md",
+      "domain": "execution-verification",
+      "related": [
+        "DOM-execution-verification",
+        "FLOW-verify-task",
+        "FLOW-document-session"
       ],
       "implemented": false
     },
