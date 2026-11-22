@@ -24,6 +24,7 @@ class TaskFieldsContractTests(unittest.TestCase):
         (self.root / "doc").mkdir()
         shutil.copytree(ROOT / "doc/config", self.root / "doc/config")
         (self.root / "doc/tasks").mkdir()
+        (self.root / "doc/skills").mkdir()
         (self.root / "doc/architecture").mkdir()
         shutil.copytree(
             ROOT / "doc/architecture/schemas", self.root / "doc/architecture/schemas"
@@ -104,10 +105,10 @@ class TaskFieldsContractTests(unittest.TestCase):
         result = self.cli(
             "task", "decompose", key,
             "--subtask-id", "0001", "--subtask-title", "Child slice",
-            "--subtask-type", "refactor",
-            "--subtask-flow", "standard-implementation",
-            "--subtask-complexity", "low",
-            "--subtask-estimate", "1",
+            "--subtask-type", "0001=refactor",
+            "--subtask-flow", "0001=standard-implementation",
+            "--subtask-complexity", "0001=low",
+            "--subtask-estimate", "0001=1",
             "--json",
         )
         self.assertEqual(result.returncode, 0, result.stderr)

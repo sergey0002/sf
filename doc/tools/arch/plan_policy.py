@@ -153,6 +153,8 @@ def task_conf_integrity(config: Any, declared_types: list[str]) -> list[str]:
     schema = config.schemas_root / "task-conf.schema.json"
     problems = []
     selectable = []
+    if not root.is_dir():
+        return [f"task-conf: types directory is missing: {root.relative_to(config.root).as_posix()}"]
     for directory in sorted(path for path in root.iterdir() if path.is_dir()):
         config_path = directory / "config.yaml"
         if not config_path.is_file():

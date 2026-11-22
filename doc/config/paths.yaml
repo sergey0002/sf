@@ -146,6 +146,7 @@ allowed_paths:
   - "doc/tests/test_doc_contracts.py"
   - "doc/tests/test_doc_type_registry.py"
   - "doc/tests/test_plan_policy.py"
+  - "doc/tests/test_task_fields.py"
   # Baseline замеры (тестовые артефакты)
   - "doc/tests/baseline/{slug}.json"
 

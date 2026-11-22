@@ -1297,7 +1297,7 @@ def closure_state(
     blockers.extend(dependency_blockers)
     plan_ready = None
     if data.get("acceptance_policy") == CASE_COVERAGE:
-        plan_ready, evidence_problems = acceptance_state(project_config.root, tdir, data, stage)
+        plan_ready, evidence_problems = acceptance_state(project_config, tdir, data, stage)
         blockers.extend(evidence_problems)
     else:
         blockers.extend(_evidence_blockers(project_config.root, tdir, stage))
@@ -1774,7 +1774,7 @@ def subtask_validate(
     if (stdir / "task.md").exists():
         errors.append(TASK_MD_ERROR)
     if not errors and data.get("acceptance_policy") == CASE_COVERAGE:
-        _, errors = acceptance_state(project_config.root, stdir, data,
+        _, errors = acceptance_state(project_config, stdir, data,
                                      current_stage(list_stages(stdir)), check_evidence=False)
     return f"subtask {parent_task_key}-{subtask_id} is valid", errors
 

@@ -223,11 +223,13 @@ def acceptance_state(
         if not isinstance(evidence, dict) or evidence.get("task_key") != task.get("task_key") or evidence.get("stage_id") != stage:
             raise ValueError("verification.json must identify this task and stage")
         planned = planned_case_ids(evidence, criterion_ids(task))
-        if policy is not None:
+        plan_text = (path.parent / "plan.md").read_text(encoding="utf-8")
+        # Rules are part of the opt-in tier contract: a plan without a tier marker
+        # keeps the pre-policy behaviour and is never judged by type rules.
+        if policy is not None and PLAN_TIER.search(plan_text):
             from .plan_policy import evaluate_rules
             if rule_problems := evaluate_rules(
-                (path.parent / "plan.md").read_text(encoding="utf-8"), policy,
-                case_count=len(planned), task=task,
+                plan_text, policy, case_count=len(planned), task=task,
             ):
                 raise ValueError("; ".join(rule_problems))
     except (OSError, ValueError) as exc:

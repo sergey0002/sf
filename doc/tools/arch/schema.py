@@ -50,7 +50,7 @@ TASK_DIR_TEMPLATE = {
         "approval_required": [],
     },
     "approvals": [],
-    "task_type": "feature",
+    "task_type": None,
     "flow": None,
     "complexity": "low",
     "estimate_hours": None,
@@ -78,7 +78,12 @@ TASK_DIR_TEMPLATE = {
 
 
 def scaffold_task_json(task_key: str, task_number: str, source_type: str, source_prefix=None) -> str:
-    """Build a minimal scaffold task.json with semantic fields left unset."""
+    """Build a minimal scaffold task.json with semantic fields left unset.
+
+    ``task_type`` and ``flow`` stay null so the scaffold is valid for
+    ``task validate``: the agent chooses the work shape (a hardcoded type with a
+    ``subtask_policy`` would make ``task new`` emit an invalid card).
+    """
     data = json.loads(json.dumps(TASK_DIR_TEMPLATE))
     data["task_key"] = task_key
     data["task_number"] = task_number
