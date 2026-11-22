@@ -18,3 +18,27 @@ required_fields:
   - evidence
 forbidden_in_scope:
   - "автоматическое исправление без одобрения"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Объём, Findings]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Объём и критерии, Метод, Findings, Отклонения, Границы покрытия, Рекомендации]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high]
+      required_sections: [Задача и связи, Объём и критерии, Метод, Findings, Отклонения, Границы покрытия, Риски и приоритеты, Рекомендации]
+      template: plan/full.md
+  acceptance:
+    profile: audit
+    rules:
+    - {kind: section_present, section: 'Findings'}
+    - {kind: table_column, section: 'Findings', column: 'Severity'}
+    - {kind: section_present, section: 'Границы покрытия'}

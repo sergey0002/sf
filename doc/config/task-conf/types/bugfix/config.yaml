@@ -20,3 +20,27 @@ required_fields:
   - acceptance_criteria
 forbidden_in_scope:
   - "изменение API контрактов без отдельного одобрения"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Воспроизведение, Изменение]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель, Воспроизведение, Причина, Правила, Решение, Регрессия, Оценка, Риски]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Задача и связи, Цель, Воспроизведение, Причина, Правила, Решение, Регрессия, Границы данных, Оценка, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: regression
+    rules:
+    - {kind: case_min, min: 2}
+    - {kind: section_present, section: 'Воспроизведение'}
+    - {kind: section_present, section: 'Регрессия'}

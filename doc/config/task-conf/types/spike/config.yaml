@@ -1,0 +1,37 @@
+id: spike
+title: Спайк
+description: |
+  Ограниченное по времени исследование с решением о следующем шаге. Прототип не является production-кодом.
+complexity_default: medium
+complexity_allowed:
+  - low
+  - medium
+allowed_flows:
+  - spike-first
+default_flow: spike-first
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - acceptance_criteria
+  - rollback_plan
+forbidden_in_scope:
+  - "изменение вне объявленного результата типа"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Вопрос, Таймбокс, Решение]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Вопрос, Таймбокс, Метод, Эксперимент или прототип, Результат, Решение и следующие шаги]
+      template: plan/standard.md
+  acceptance:
+    profile: decision
+    rules:
+    - {kind: section_present, section: 'Таймбокс'}
+    - {kind: section_present, section: 'Решение'}

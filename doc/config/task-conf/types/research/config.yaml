@@ -17,3 +17,23 @@ required_fields:
   - evidence
 forbidden_in_scope:
   - "реализация без отдельного решения владельца"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Вопрос, Выводы]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Вопросы, Метод, Источники, Варианты и критерии, Выводы, Рекомендация, Ограничения, Открытые вопросы]
+      template: plan/standard.md
+  acceptance:
+    profile: research
+    rules:
+    - {kind: section_min_items, section: 'Источники', min: 3}
+    - {kind: section_min_items, section: 'Варианты и критерии', min: 2}
+    - {kind: section_present, section: 'Рекомендация'}

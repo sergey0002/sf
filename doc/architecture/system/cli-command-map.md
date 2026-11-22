@@ -29,6 +29,7 @@ implemented: true
 | `arch task subtask init <parent> <id> [--task-type TYPE] [--flow FLOW] [--complexity LEVEL] [--estimate-hours N] [--json]` | `cli/commands/task` / `task_ops` / `subtask` | `TaskCommand` → `task_ops.subtask_init` | Создать директорию субтаски и атомарно записать скффолд `task.json` с выбранными агентом типом, flow, сложностью и оценкой |
 | `arch task subtask validate <parent> <id> [--json]` | `cli/commands/task` / `task_ops` | `TaskCommand` → `task_ops.subtask_validate` | Валидировать `task.json` субтаски |
 | `arch task subtask status <parent> <id> [--json]` | `cli/commands/task` / `task_ops` | `TaskCommand` → `task_ops.subtask_status` | Показать состояние субтаски, этапы, phase, task_type |
+| `arch task plan-policy --type <type> --json` | `cli/commands/task` / `plan_policy` | `TaskCommand._plan_policy` | Read-only разрешённая политика плана и правила приёмки выбранного типа |
 | `arch task types` | `cli/commands/task` / `validation` | `TaskCommand._types` → `load_task_conf_types` | Список всех типов задач из task-conf с allowed_flows, subtask_policy, close_policy |
 | `arch task flows --type <type>` | `cli/commands/task` / `validation` | `TaskCommand._flows` → `load_task_conf_flows_for_type` | Список разрешённых flow для типа задачи |
 | `arch task type-prompt --type <type>` | `cli/commands/task` / `validation` | `TaskCommand._type_prompt` → `load_task_conf_prompt` | Вывод стартового промпта типа (как скилл агента) |

@@ -98,6 +98,10 @@ implemented: true
 | `rollback_plan` | строка | null | должна быть строкой или `null` |
 | `estimate_hours` | число | положительное число часов; ставит агент, CLI проверяет диапазон |
 
+## Политика плана и правила приёмки
+
+`doc/config/task-conf/plan-defaults.yaml` задаёт дефолтные tier'ы и safety floor. `types/<type>/config.yaml` может объявить `plan` и `acceptance.rules`. Разрешение идёт `type → defaults`; `scan --scope task-conf` сверяет выбираемые типы с `paths.yaml task_types`, шаблоны, покрытие complexity и ссылки на правила. `selectable: false` обозначает legacy-тип и не требует записи в `task_types`.
+
 ## Управление типами и flujo (task-conf)
 
 | Поле | Ограничение |

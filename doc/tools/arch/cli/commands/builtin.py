@@ -541,6 +541,9 @@ def _scan_task_conf(project_config: ProjectConfig) -> list[str]:
     types, terrors = load_task_conf_types(project_config)
     for te in terrors:
         errors.append(te)
+    from arch.plan_policy import task_conf_integrity
+    declared = project_config.get_project_section().get("task_types", [])
+    errors.extend(task_conf_integrity(project_config, declared if isinstance(declared, list) else []))
     for type_id, conf in types.items():
         allowed = conf.get("allowed_flows", [])
         flows = conf.get("flows", {})

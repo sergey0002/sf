@@ -43,3 +43,26 @@ stage_template:
     name: Верификация
     artifacts: [verification.json, evidence]
     gates: [approval_obtained]
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Источник, Требование]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Источник и маппинг, Требование, Границы, План, Приёмка, Синхронизация с трекером, Риски]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Задача и связи, Источник и маппинг, Требование, Границы, План, Приёмка, Синхронизация с трекером, Полномочия записи, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: intake
+    rules:
+    - {kind: section_present, section: 'Источник и маппинг'}
+    - {kind: case_min, min: 1}

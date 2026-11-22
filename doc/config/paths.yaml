@@ -71,6 +71,7 @@ allowed_paths:
   - "{schemas}/index.schema.json"
   - "{schemas}/flow.schema.json"
   - "{schemas}/flow-selection.schema.json"
+  - "{schemas}/task-conf.schema.json"
   - "{schemas}/bodies/capability-spec.json"
   - "{schemas}/bodies/capability.json"
   - "{schemas}/bodies/component-view.json"
@@ -105,6 +106,42 @@ allowed_paths:
   - "{config}/agent-policy.yaml"
   - "{config}/task-registry.json"
   # Конфиги типов задач (иерархическая структура, использует task_conf root)
+  - "{task_conf}/plan-defaults.yaml"
+  - "{task_conf}/types/audit/plan/full.md"
+  - "{task_conf}/types/audit/plan/micro.md"
+  - "{task_conf}/types/audit/plan/standard.md"
+  - "{task_conf}/types/bugfix/plan/full.md"
+  - "{task_conf}/types/bugfix/plan/micro.md"
+  - "{task_conf}/types/bugfix/plan/standard.md"
+  - "{task_conf}/types/docs/plan/full.md"
+  - "{task_conf}/types/docs/plan/micro.md"
+  - "{task_conf}/types/docs/plan/standard.md"
+  - "{task_conf}/types/feature/plan/full.md"
+  - "{task_conf}/types/feature/plan/micro.md"
+  - "{task_conf}/types/feature/plan/standard.md"
+  - "{task_conf}/types/incident/plan/full.md"
+  - "{task_conf}/types/incident/plan/micro.md"
+  - "{task_conf}/types/incident/plan/standard.md"
+  - "{task_conf}/types/jira-incoming/plan/full.md"
+  - "{task_conf}/types/jira-incoming/plan/micro.md"
+  - "{task_conf}/types/jira-incoming/plan/standard.md"
+  - "{task_conf}/types/migration/plan/full.md"
+  - "{task_conf}/types/migration/plan/micro.md"
+  - "{task_conf}/types/migration/plan/standard.md"
+  - "{task_conf}/types/planning/plan/full.md"
+  - "{task_conf}/types/planning/plan/micro.md"
+  - "{task_conf}/types/planning/plan/standard.md"
+  - "{task_conf}/types/refactor/plan/full.md"
+  - "{task_conf}/types/refactor/plan/micro.md"
+  - "{task_conf}/types/refactor/plan/standard.md"
+  - "{task_conf}/types/research/plan/micro.md"
+  - "{task_conf}/types/research/plan/standard.md"
+  - "{task_conf}/types/scaffold/plan/micro.md"
+  - "{task_conf}/types/spike/plan/micro.md"
+  - "{task_conf}/types/spike/plan/standard.md"
+  - "{task_conf}/types/subtask/plan/full.md"
+  - "{task_conf}/types/subtask/plan/micro.md"
+  - "{task_conf}/types/subtask/plan/standard.md"
   - "{task_conf}/types/{type}/config.yaml"
   - "{task_conf}/types/{type}/prompt.md"
   - "{task_conf}/types/{type}/flow-selection.yaml"
@@ -142,6 +179,7 @@ allowed_paths:
   - "doc/tests/test_task_identity.py"
   - "doc/tests/test_doc_contracts.py"
   - "doc/tests/test_doc_type_registry.py"
+  - "doc/tests/test_plan_policy.py"
   # Baseline замеры (тестовые артефакты)
   - "doc/tests/baseline/{slug}.json"
 
@@ -149,6 +187,7 @@ allowed_paths:
   - "doc/tools/README.md"
   - "doc/tools/requirements.txt"
   - "doc/tools/arch/__init__.py"
+  - "doc/tools/arch/plan_policy.py"
   - "doc/tools/arch/__main__.py"
   # CLI modular package (replaced monolithic cli.py)
   - "doc/tools/arch/cli/__init__.py"
@@ -251,6 +290,9 @@ project:
     - refactor
     - scaffold
     - subtask
+    - spike
+    - migration
+    - incident
 
   # Допустимые phase
   phases:
@@ -260,6 +302,18 @@ project:
     - verification
     - completed
     - blocked
+
+  # Допустимые статусы исполнения задачи (отдельная ось от phase).
+  # phase — жизненный цикл карточки, status — исполнительное состояние.
+  task_statuses:
+    - open
+    - in_progress
+    - paused
+    - blocked
+    - review
+    - done
+    - cancelled
+    - rejected
 
   # Допустимые уровни риска
   risk_levels:
@@ -286,7 +340,6 @@ project:
     - intent
     - scope
     - acceptance_criteria
-    - target_release
     - project_context_refs
     - constraints
     - assumptions
@@ -308,6 +361,9 @@ project:
     - owner
     - priority
     - stage_history
+    - target_release
+    - branch
+    - release_branch
 
   # CLI настройки
   cli:
@@ -352,6 +408,18 @@ project:
       - session events
     strict_mode: true
     garbage_detector: true
+
+  # Конфиг релизов и веток задач.
+  # target_release — целевой релиз задачи (задаётся владельцем, не "unset").
+  # branch — рабочая ветка самой задачи ( patterns: futures/{task_number} для Jira, bugfix/{task_key} для UI).
+  # release_branch — ветка, в которую задача мержится (по умолчанию main, или release-ветка из конфига).
+  release:
+    default_branch: "main"
+    branch_patterns:
+      jira: "futures/{task_number}"
+      ui: "bugfix/{task_key}"
+      other: "task/{task_key}"
+    release_branch_pattern: "release/{version}"
 
 # ---------------------------------------------------------------------------
 # Правила регламента структуры

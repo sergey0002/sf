@@ -1,0 +1,23 @@
+id: incident-response
+title: Инцидент
+type: incident
+description: |
+  Локализация нарушения сервиса и разбор без обвинений.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: plan
+    name: План
+    action: create_plan
+    output: plan.md
+    gate: plan_ready
+  - id: verify
+    name: Проверка
+    action: verify
+    output: verification.json
+    gate: checks_recorded
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals
+    gate: acceptance_recorded

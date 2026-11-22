@@ -63,6 +63,8 @@ PROJECT_PHASES_KEY = "phases"
 PROJECT_RISK_LEVELS_KEY = "risk_levels"
 PROJECT_SOURCE_TYPES_KEY = "source_types"
 PROJECT_TASK_SCHEMA_REQUIRED_FIELDS_KEY = "task_schema_required_fields"
+PROJECT_TASK_STATUSES_KEY = "task_statuses"
+PROJECT_RELEASE_KEY = "release"
 
 # --- Task-conf (doc/config/task-conf/) -----------------------------------------
 
@@ -83,6 +85,7 @@ TASK_CONF_FORBIDDEN_IN_SCOPE_KEY = "forbidden_in_scope"
 
 # Task lifecycle / flow fields
 FLOW_RE = re.compile(r"^[a-z][a-z0-9-]{1,63}$")
+BRANCH_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9/_-]$|^[a-zA-Z0-9]$")
 
 
 def _glob_match(pattern: str, path: str) -> bool:

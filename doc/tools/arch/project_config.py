@@ -179,7 +179,7 @@ def _validate_sections(config: ProjectConfig) -> None:
     if not isinstance(project, dict):
         raise ValueError("project must be a mapping")
     for key in ("document_types", "document_statuses", "task_types", "phases", "risk_levels",
-                "source_types", "task_schema_required_fields"):
+                "source_types", "task_schema_required_fields", "task_statuses"):
         if key in project:
             _string_list(project[key], f"project.{key}")
 

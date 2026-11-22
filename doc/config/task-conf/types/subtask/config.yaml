@@ -18,3 +18,25 @@ required_fields:
   - implementation_plan
 forbidden_in_scope:
   - "дальнейшая декомпозиция: для этого выберите concrete type или создайте отдельную задачу"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Изменение]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель, Приёмка, Оценка, Проверка]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Цель, Правила проекта, Решения, Риск, Приёмка, Оценка, Проверка]
+      template: plan/full.md
+  acceptance:
+    profile: implementation
+    rules:
+    - {kind: case_min, min: 1}

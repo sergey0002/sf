@@ -20,3 +20,26 @@ required_fields:
   - contracts_and_invariants
 forbidden_in_scope:
   - "изменение observable behavior без отдельного одобрения"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Изменение, Эквивалентность]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель, Правила, Решения, Инварианты поведения, Порядок, Дифференциальная проверка, Оценка, Риски]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high]
+      required_sections: [Задача и связи, Цель, Правила, Решения, Инварианты поведения, Контракты данных, Границы прерывания, Дифференциальная проверка, Оценка, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: preservation
+    rules:
+    - {kind: case_min, min: 2}
+    - {kind: section_present, section: 'Инварианты поведения'}

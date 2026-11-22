@@ -57,6 +57,7 @@ TASK_DIR_TEMPLATE = {
     "subtasks": [],
     "depends_on": [],
     "phase": "intake",
+    "status": "open",
     "rollback_plan": None,
     "implementation_plan": [],
     "related_docs": [],
@@ -70,6 +71,9 @@ TASK_DIR_TEMPLATE = {
     "owner": "unset",
     "priority": "unset",
     "stage_history": [],
+    "target_release": "unset",
+    "branch": "unset",
+    "release_branch": "unset",
 }
 
 

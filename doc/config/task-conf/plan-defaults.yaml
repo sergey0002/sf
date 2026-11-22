@@ -1,0 +1,24 @@
+schema_version: plan-policy-1
+safety_floor:
+  - acceptance_coverage
+  - verification_command
+  - rollback
+tiers:
+  micro:
+    complexity: [low]
+    max_nonempty_lines: 60
+    required_sections: [Приёмка, Проверка]
+    template: doc/skills/plan-task/references/plan-micro.md
+  standard:
+    complexity: [low, medium]
+    required_sections: [Цель, Приёмка, Оценка, Проверка]
+    template: doc/skills/plan-task/references/plan-standard.md
+  full:
+    complexity: [low, medium, high, critical]
+    required_sections: [Цель, Правила проекта, Решения, Риск, Приёмка, Оценка, Проверка]
+    template: doc/skills/plan-task/references/plan-full.md
+acceptance:
+  profile: implementation
+  rules:
+    - {kind: case_min, min: 1}
+    - {kind: command, command: arch validate --brief}

@@ -22,3 +22,27 @@ required_fields:
 forbidden_in_scope:
   - "data/ как проектный файл"
   - "task.md как альтернатива task.json"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Изменение, Приёмка, Проверка]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель и границы, Правила проекта, Решения, Артефакты и порядок, Оценка и декомпозиция, Риски и откат]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Задача и связи, Цель и границы, Правила проекта, Решения, Артефакты и порядок, Риски, границы и откат, Оценка и декомпозиция, Открытые вопросы и одобрения]
+      template: plan/full.md
+  acceptance:
+    profile: implementation
+    rules:
+    - {kind: case_min, min: 1}
+    - {kind: case_min, min: 2, when: 'contract_or_storage'}
+    - {kind: command, command: 'arch validate --brief'}

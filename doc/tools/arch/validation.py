@@ -23,6 +23,7 @@ from .constants import (
     TASK_NUMBER_RE,
     TASK_KEY_RE,
     FLOW_RE,
+    BRANCH_RE,
     ONLY_DECLARED_PATHS_KEY,
     FRONTMATTER_REQUIRED_FOR_KEY,
     PROJECT_DOCUMENT_TYPES_KEY,
@@ -32,6 +33,8 @@ from .constants import (
     PROJECT_RISK_LEVELS_KEY,
     PROJECT_SOURCE_TYPES_KEY,
     PROJECT_TASK_SCHEMA_REQUIRED_FIELDS_KEY,
+    PROJECT_TASK_STATUSES_KEY,
+    PROJECT_RELEASE_KEY,
     ROOT_TASK_CONF_KEY,
     ROOT_TASKS_KEY,
     TASK_CONF_ID_KEY,
@@ -252,6 +255,7 @@ def validate_task_json(data: dict[str, Any], task_key: str, project_config: Proj
     phases = _get_list(project, PROJECT_PHASES_KEY)
     risk_levels = _get_list(project, PROJECT_RISK_LEVELS_KEY)
     source_types = _get_list(project, PROJECT_SOURCE_TYPES_KEY)
+    task_statuses = _get_list(project, PROJECT_TASK_STATUSES_KEY)
     base_required_fields = _get_list(
         project, PROJECT_TASK_SCHEMA_REQUIRED_FIELDS_KEY
     )
@@ -308,6 +312,39 @@ def validate_task_json(data: dict[str, Any], task_key: str, project_config: Proj
             errors.append(
                 f"task.json: phase must be one of {'/'.join(phases)}, got {phase!r}"
             )
+
+    # --- status enum (исполнительный статус, отдельно от phase) --------------
+    status = data.get("status")
+    if status is not None:
+        if not isinstance(status, str):
+            errors.append("task.json: status must be a string")
+        elif task_statuses and status not in task_statuses:
+            errors.append(
+                f"task.json: status must be one of {'/'.join(task_statuses)}, got {status!r}"
+            )
+
+    # --- release config --------------------------------------------------------
+    release = project.get(PROJECT_RELEASE_KEY, {}) if isinstance(project, dict) else {}
+    default_branch = release.get("default_branch", "main") if isinstance(release, dict) else "main"
+
+    # --- target_release (обязательное, не "unset") -----------------------------
+    target_release = data.get("target_release")
+    if not isinstance(target_release, str) or target_release == "unset":
+        errors.append("task.json: target_release must be set (not 'unset')")
+
+    # --- branch (рабочая ветка задачи, обязательное) --------------------------
+    branch = data.get("branch")
+    if not isinstance(branch, str) or branch == "unset":
+        errors.append("task.json: branch must be set (not 'unset')")
+    elif not BRANCH_RE.fullmatch(branch):
+        errors.append(f"task.json: branch must be a valid git branch name, got {branch!r}")
+
+    # --- release_branch (ветка для мерджа, обязательное) ----------------------
+    release_branch = data.get("release_branch")
+    if not isinstance(release_branch, str) or release_branch == "unset":
+        errors.append("task.json: release_branch must be set (not 'unset')")
+    elif not BRANCH_RE.fullmatch(release_branch):
+        errors.append(f"task.json: release_branch must be a valid git branch name, got {release_branch!r}")
 
     # --- risk enum -----------------------------------------------------------
     risk = data.get("risk")

@@ -441,6 +441,8 @@ def workspace_info(
         "directory": _relative(tdir, project_config),
         "task_json": _relative(tjson, project_config),
         "target_release": data.get("target_release", "unset"),
+        "branch": data.get("branch", "unset"),
+        "release_branch": data.get("release_branch", "unset"),
         "branch_hint": (
             f"futures/{task_number}" if source_type == "jira" else f"bugfix/{task_key}"
         ),
@@ -476,11 +478,14 @@ def status_info(
         "stages": stages,
         "verification_files": verification_files,
         "has_task_md": (tdir / "task.md").exists(),
-        "target_release": data.get("target_release", "unset"),
         "task_type": data.get("task_type", "unset"),
         "flow": data.get("flow", "unset"),
         "complexity": data.get("complexity", "unset"),
         "phase": data.get("phase", "unset"),
+        "status": data.get("status", "unset"),
+        "target_release": data.get("target_release", "unset"),
+        "branch": data.get("branch", "unset"),
+        "release_branch": data.get("release_branch", "unset"),
     }
     info = record_info(tdir, task_key)
     if info is not None:
@@ -1305,6 +1310,7 @@ def diagnose(
         "flow": data.get("flow"),
         "complexity": data.get("complexity"),
         "phase": data.get("phase"),
+        "status": data.get("status"),
         "all_subtasks_closed": not subtask_errors,
         "can_close": not blockers,
         "close_blockers": blockers[:3] if brief else blockers,
@@ -1374,6 +1380,7 @@ def doctor(
     result: dict[str, Any] = {
         "task_key": task_key,
         "phase": diagnosis.get("phase"),
+        "status": diagnosis.get("status"),
         "can_close": diagnosis.get("can_close"),
         "close_blockers": diagnosis.get("close_blockers", []),
         "blocker_count": diagnosis.get("blocker_count", len(diagnosis.get("close_blockers", []))),

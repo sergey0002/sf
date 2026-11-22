@@ -13,3 +13,18 @@ close_policy: all_subtasks_required
 required_fields: []
 forbidden_in_scope:
   - "семантическое содержимое задачи"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Каркас, Проверка]
+      template: plan/micro.md
+  acceptance:
+    profile: scaffold
+    rules:
+    - {kind: case_min, min: 1}
+    - {kind: command, command: 'arch validate --brief'}

@@ -1,0 +1,43 @@
+id: migration
+title: Миграция
+description: |
+  Перевод данных или контракта с проверяемой целостностью, повтором и откатом.
+complexity_default: high
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows:
+  - migration-first
+default_flow: migration-first
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - acceptance_criteria
+  - rollback_plan
+forbidden_in_scope:
+  - "изменение вне объявленного результата типа"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Текущее состояние, Целевое состояние, Откат]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Текущее состояние, Целевое состояние, План миграции, Идемпотентность и повтор, Откат и восстановление, Проверка целостности]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Задача и связи, Текущее состояние, Целевое состояние, План миграции, Идемпотентность и повтор, Откат и восстановление, Проверка целостности, Cutover, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: integrity
+    rules:
+    - {kind: case_min, min: 3}
+    - {kind: section_present, section: 'Проверка целостности'}

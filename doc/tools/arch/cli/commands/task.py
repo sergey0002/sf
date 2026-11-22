@@ -35,6 +35,7 @@ from arch.validation import (
     load_task_conf_prompt,
     load_task_conf_types,
 )
+from arch.plan_policy import resolve_plan_policy
 
 
 @register
@@ -86,6 +87,10 @@ class TaskCommand(Command):
 
         p = sub.add_parser("status", help="show task state, stages and verification")
         p.add_argument("task_key", help="task key (e.g. UI-0004, 0427, GH-0001)")
+        p.add_argument("--json", action="store_true", help="JSON output")
+
+        p = sub.add_parser("plan-policy", help="show the resolved read-only plan policy")
+        p.add_argument("--type", required=True, help="task type ID")
         p.add_argument("--json", action="store_true", help="JSON output")
 
         p = sub.add_parser("types", help="list available task types from task-conf")
@@ -223,6 +228,8 @@ class TaskCommand(Command):
             return self._new_task(args, project_config)
         if args.task_action == "registry":
             return self._registry(args, project_config)
+        if args.task_action == "plan-policy":
+            return self._plan_policy(args, project_config)
         if args.task_action == "types":
             return self._types(args, project_config)
         if args.task_action == "flows":
@@ -735,6 +742,16 @@ class TaskCommand(Command):
         )
 
     # ----- task types -----
+
+    def _plan_policy(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
+        before = project_config.root.stat().st_mtime_ns
+        policy, problems = resolve_plan_policy(project_config, args.type)
+        if problems or policy is None:
+            return self._fail("CONFIG", "; ".join(problems), field="task_type", exit_code=1)
+        if project_config.root.stat().st_mtime_ns != before:
+            return self._fail("IO", "plan-policy changed the project tree", exit_code=1)
+        print_envelope(ok_envelope(data=policy), json_mode=True)
+        return 0
 
     def _types(self, args: argparse.Namespace, project_config: ProjectConfig) -> int:
         types, errors = load_task_conf_types(project_config)

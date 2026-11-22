@@ -1,0 +1,44 @@
+id: incident
+title: Инцидент
+description: |
+  Локализация нарушения сервиса и разбор без обвинений.
+complexity_default: high
+complexity_allowed:
+  - low
+  - medium
+  - high
+  - critical
+allowed_flows:
+  - incident-response
+default_flow: incident-response
+subtask_policy: optional
+close_policy: all_subtasks_required
+required_fields:
+  - acceptance_criteria
+  - rollback_plan
+forbidden_in_scope:
+  - "изменение вне объявленного результата типа"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Влияние, Митигация]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Влияние, Таймлайн, Митигация, Причина, Follow-ups]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high, critical]
+      required_sections: [Задача и связи, Влияние, Таймлайн, Митигация, Причина, Что сработало и что нет, Follow-ups, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: timeline
+    rules:
+    - {kind: section_present, section: 'Таймлайн'}
+    - {kind: section_present, section: 'Follow-ups'}
+    - {kind: case_min, min: 2}

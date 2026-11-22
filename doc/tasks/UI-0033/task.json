@@ -1,0 +1,137 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0033",
+  "task_number": "0033",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Чат, 2026-11-22: добавить стандартные статусы задачи (в т.ч. пауза) отдельно от phase, зафиксировать в paths.yaml, схеме и валидации",
+    "revision": null,
+    "captured_at": null,
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Стандартные статусы задачи (включая паузу), отдельно от phase",
+  "kind": "feature",
+  "intent": "Добавить поле status в task.json с закрытым набором значений (open, in_progress, paused, blocked, review, done, cancelled, rejected), независимо от жизненного цикла phase. Статус хранится в task.json, валидируется CLI, не смешивается с phase.",
+  "scope": {
+    "in": [
+      "doc/config/paths.yaml — блок task_statuses с допустимыми значениями и добавление status в task_schema_required_fields",
+      "doc/tools/arch/schema.py — поле status со значением по умолчанию open в TASK_DIR_TEMPLATE",
+      "doc/tools/arch/validation.py — проверка enum status по task_statuses из paths.yaml",
+      "doc/tools/arch/task_record.py — проверка status при phase.changed/event, при необходимости",
+      "doc/skills/go-to-task/SKILL.md — описание, когда какой статус ставится, и разделение status / phase"
+    ],
+    "out": [
+      "Изменение значений phase (intake, planning, execution, verification, completed, blocked)",
+      "Запись во внешний трекер (Jira), merge, push, deploy",
+      "Автоматический переход статуса без явного действия владельца/агента"
+    ],
+    "allowed_files_modules": [
+      "doc/config/paths.yaml",
+      "doc/tools/arch/schema.py",
+      "doc/tools/arch/validation.py",
+      "doc/tools/arch/task_record.py",
+      "doc/skills/go-to-task/SKILL.md",
+      "doc/tasks/UI-0033/"
+    ]
+  },
+  "current_behavior": "В task.json есть только phase (intake, planning, execution, verification, completed, blocked). Нет отдельного поля исполнительного статуса (open/in_progress/paused/blocked/review/done/cancelled/rejected). Поле status используется только у подзадач в subtasks[].status, но без единого перечня допустимых значений и без валидации.",
+  "evidence": [
+    "doc/config/paths.yaml:263-271 — перечень phases",
+    "doc/config/paths.yaml:287-319 — task_schema_required_fields (нет status)",
+    "doc/tools/arch/schema.py:59 — phase: intake по умолчанию, нет status",
+    "doc/tools/arch/validation.py:302-310 — валидация phase enum, нет status",
+    "doc/tools/arch/task_record.py:457-459 — валидация phase при событиях, нет status",
+    "doc/skills/go-to-task/SKILL.md:46 — готовность к ревью допускает verification, завершение — completed, нет статуса исполнения"
+  ],
+  "contracts_and_invariants": [
+    "status — отдельная ось от phase: phase описывает жизненный цикл, status — исполнительное состояние",
+    "Не смешивать status с phase (taskcontrol.md:22-45)",
+    "task.status у подзадач и status у родителя — один перечень допустимых значений",
+    "Значение по умолчанию: open",
+    "CLI валидирует status по task_statuses из paths.yaml при task init / validate / close"
+  ],
+  "acceptance_criteria": [
+    "AC-1: paths.yaml содержит блок task_statuses с минимум 8 значениями, включая paused",
+    "AC-2: status добавлен в task_schema_required_fields в paths.yaml",
+    "AC-3: TASK_DIR_TEMPLATE в schema.py содержит поле status со значением open",
+    "AC-4: validation.py проверяет, что status — строка из task_statuses, иначе ошибка",
+    "AC-5: arch task init создаёт карточку со status: open",
+    "AC-6: arch validate --brief проходит на конфиге (paths.yaml валиден); существующие карточки без branch/release_branch/target_release не проходят валидацию — это ожидается, поля обязательны",
+    "AC-7: go-to-task SKILL.md описывает правила присвоения статуса, разделение с phase, и правила заполнения target_release / branch / release_branch",
+    "AC-8: task.json содержит target_release (не unset), branch (валидное имя git-ветки), release_branch (валидное имя git-ветки)"
+  ],
+  "acceptance_policy": "case-coverage-v1",
+  "target_release": "0.1.0",
+  "branch": "bugfix/UI-0033",
+  "release_branch": "main",
+  "project_context_refs": [
+    "SYS-simple-factory",
+    "ENT-task-input",
+    "REG-cli-command-map"
+  ],
+  "constraints": [
+    "Не переименовывать tier'ы micro|standard|full",
+    "Не изменять phase и его значения",
+    "Не трогать существующие task.json без необходимости",
+    "Не записывать во внешний трекер, не делать merge/push/deploy"
+  ],
+  "assumptions": [
+    "Статус у существующих карточек отсутствует — валидация не ломает их (status не обязателен для старых)",
+    "target_release, branch, release_branch — обязательные поля; существующие карточки без них не проходят validate",
+    "Владелец задачи устанавливает статус, релиз и ветки вручную, CLI не меняет их автоматически",
+    "Разделение status/phase соответствует taskcontrol.md",
+    "Для дочерней задачи branch по умолчанию наследует ветку родителя (UI-0027, AC-5)"
+  ],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "Локальные изменения в объявленном scope после поручения на реализацию"
+    ],
+    "forbidden": [
+      "Переименование phase, запись во внешний трекер, merge, push и deploy без отдельного разрешения"
+    ],
+    "approval_required": [
+      "Начало реализации",
+      "Ручная проверка и приёмка итогового diff владельцем перед закрытием"
+    ]
+  },
+  "approvals": [],
+  "task_type": "audit",
+  "flow": "research-first",
+  "complexity": "medium",
+  "estimate_hours": 16,
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "status": "open",
+  "rollback_plan": "Удалить блок task_statuses из paths.yaml, убрать status из required_fields, удалить status из TASK_DIR_TEMPLATE и validation.py, вернуть файлы к сохранённому снимку.",
+  "implementation_plan": [
+    "Добавить task_statuses в paths.yaml и status в required_fields",
+    "Добавить status: open в TASK_DIR_TEMPLATE в schema.py",
+    "Добавить валидацию status enum в validation.py",
+    "Создать task.json карточку UI-0033",
+    "Прогнать arch validate --brief и тесты"
+  ],
+  "related_docs": [
+    "SYS-simple-factory",
+    "ENT-task-input",
+    "ENT-task-record",
+    "FLOW-task-lifecycle",
+    "CAP-addressable-contracts"
+  ],
+  "related_tests": [],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": []
+}

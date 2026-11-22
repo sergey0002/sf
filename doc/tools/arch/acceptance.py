@@ -36,7 +36,7 @@ def read_plan_tier(plan: Path) -> str | None:
     return match.group(1) if match else None
 
 
-def plan_tier_problems(plan: Path, task: dict[str, Any]) -> list[str]:
+def plan_tier_problems(plan: Path, task: dict[str, Any], policy: dict[str, Any] | None = None) -> list[str]:
     """Check the declared plan tier against complexity and required sections.
 
     A marker is mandatory only once ``estimate_hours`` is set, so records that
@@ -52,32 +52,31 @@ def plan_tier_problems(plan: Path, task: dict[str, Any]) -> list[str]:
             return ["plan.md: declare <!-- plan-tier: micro|standard|full --> when estimate_hours is set"]
         return []
     tier = match.group(1)
-    if tier not in PLAN_TIERS:
-        return [f"plan.md: unknown plan tier {tier!r}; use micro, standard or full"]
+    tiers = (policy or {}).get("tiers") or {
+        name: {"complexity": values, "required_sections": TIER_SECTIONS[name]}
+        for name, values in TIER_COMPLEXITY.items()
+    }
+    if tier not in tiers:
+        return [f"plan.md: unknown plan tier {tier!r}; use {', '.join(tiers)}"]
+    selected = tiers[tier]
     complexity = task.get("complexity") or "low"
-    if complexity not in TIER_COMPLEXITY[tier]:
+    allowed = selected.get("complexity") or TIER_COMPLEXITY.get(tier, ())
+    if complexity not in allowed:
         return [
             f"plan.md: tier {tier!r} is not allowed for complexity {complexity!r}; "
-            f"allowed: {', '.join(TIER_COMPLEXITY[tier])}"
+            f"allowed: {', '.join(allowed)}"
         ]
     problems: list[str] = []
-    headings = [
-        line.lstrip("#").strip()
-        for line in text.splitlines()
-        if line.startswith("#")
-    ]
-    missing = [
-        keyword for keyword in TIER_SECTIONS[tier]
-        if not any(keyword.casefold() in heading.casefold() for heading in headings)
-    ]
+    headings = [line.lstrip("#").strip() for line in text.splitlines() if line.startswith("#")]
+    required = selected.get("required_sections") or TIER_SECTIONS.get(tier, ())
+    missing = [keyword for keyword in required if not any(keyword.casefold() in heading.casefold() for heading in headings)]
     if missing:
         problems.append(f"plan.md: tier {tier!r} requires sections: {', '.join(missing)}")
-    if tier == "micro":
+    limit = selected.get("max_nonempty_lines")
+    if limit is not None:
         lines = sum(1 for line in text.splitlines() if line.strip())
-        if lines > MICRO_MAX_LINES:
-            problems.append(
-                f"plan.md: micro plan has {lines} non-empty lines; limit is {MICRO_MAX_LINES}, use standard"
-            )
+        if lines > int(limit):
+            problems.append(f"plan.md: {tier} plan has {lines} non-empty lines; limit is {limit}")
     return problems
 
 
@@ -193,12 +192,25 @@ def acceptance_state(
     try:
         if not (path.parent / "plan.md").is_file():
             raise ValueError("plan.md is missing")
-        if tier_problems := plan_tier_problems(path.parent / "plan.md", task):
+        policy = None
+        if root is not None and task.get("task_type"):
+            from .plan_policy import evaluate_rules, resolve_plan_policy
+            from .project_config import ProjectConfig
+            config = root if isinstance(root, ProjectConfig) else None
+            if config is not None:
+                policy, policy_errors = resolve_plan_policy(config, str(task["task_type"]))
+                if policy_errors:
+                    raise ValueError("; ".join(policy_errors))
+        if tier_problems := plan_tier_problems(path.parent / "plan.md", task, policy):
             raise ValueError("; ".join(tier_problems))
         evidence = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(evidence, dict) or evidence.get("task_key") != task.get("task_key") or evidence.get("stage_id") != stage:
             raise ValueError("verification.json must identify this task and stage")
         planned = planned_case_ids(evidence, criterion_ids(task))
+        if policy is not None:
+            from .plan_policy import evaluate_rules
+            if rule_problems := evaluate_rules((path.parent / "plan.md").read_text(encoding="utf-8"), policy, case_count=len(planned)):
+                raise ValueError("; ".join(rule_problems))
     except (OSError, ValueError) as exc:
         return False, [f"acceptance {stage}: {exc}"]
     if not check_evidence:

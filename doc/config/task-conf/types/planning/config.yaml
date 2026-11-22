@@ -18,3 +18,26 @@ required_fields:
   - rollback_plan
 forbidden_in_scope:
   - "реализация кода в рамках этой задачи"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [План, Варианты]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель, Входные требования, Варианты и отклонённые, Решения, Декомпозиция, Зависимости, Критерии готовности, Риски]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high]
+      required_sections: [Задача и связи, Цель, Входные требования, Варианты и отклонённые, Решения, Декомпозиция, Зависимости, Контракты, Критерии готовности, Открытые вопросы и одобрения, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: planning
+    rules:
+    - {kind: section_min_items, section: 'Варианты и отклонённые', min: 2}
+    - {kind: section_present, section: 'Декомпозиция'}

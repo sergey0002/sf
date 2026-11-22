@@ -1,0 +1,23 @@
+id: spike-first
+title: Спайк
+type: spike
+description: |
+  Ограниченное по времени исследование с решением о следующем шаге. Прототип не является production-кодом.
+subtask_policy: optional
+close_policy: all_subtasks_required
+steps:
+  - id: plan
+    name: План
+    action: create_plan
+    output: plan.md
+    gate: plan_ready
+  - id: verify
+    name: Проверка
+    action: verify
+    output: verification.json
+    gate: checks_recorded
+  - id: close
+    name: Закрытие
+    action: close_task
+    output: approvals
+    gate: acceptance_recorded

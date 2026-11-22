@@ -17,3 +17,27 @@ required_fields:
   - changed_files
 forbidden_in_scope:
   - "семантическое содержимое без структурной валидации"
+
+selectable: true
+plan:
+  plan_policy: replace
+  tiers:
+    micro:
+      complexity: [low]
+      max_nonempty_lines: 60
+      required_sections: [Изменение]
+      template: plan/micro.md
+    standard:
+      complexity: [low, medium]
+      required_sections: [Цель, Источники, Затронутые документы, Правила, Проверка путей и ссылок, Оценка, Риски]
+      template: plan/standard.md
+    full:
+      complexity: [low, medium, high]
+      required_sections: [Задача и связи, Цель, Источники, Затронутые документы, Правила, Проверка путей и ссылок, Адреса и индекс, Оценка, Риски]
+      template: plan/full.md
+  acceptance:
+    profile: documentation
+    rules:
+    - {kind: case_min, min: 1}
+    - {kind: command, command: 'arch docs paths --check'}
+    - {kind: command, command: 'arch validate --brief'}
