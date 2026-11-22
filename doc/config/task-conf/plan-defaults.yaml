@@ -20,5 +20,5 @@ tiers:
 acceptance:
   profile: implementation
   rules:
-    - {kind: case_min, min: 1}
-    - {kind: command, command: arch validate --brief}
+    - {kind: case_min, min: 1, applies_to: [micro, standard, full]}
+    - {kind: command, command: arch validate --brief, applies_to: [micro, standard, full]}

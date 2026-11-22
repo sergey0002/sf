@@ -64,7 +64,9 @@ class PlanPolicyTests(unittest.TestCase):
         audit, _ = resolve_plan_policy(self.config, "audit")
         problems = evaluate_rules("## Findings\n\n| ID | Text |\n|---|---|\n| 1 | x |\n", audit)
         self.assertTrue(any("Severity" in item and "table_column" in item for item in problems))
-        problems = evaluate_rules("## Findings\n\n| Severity |\n|---|\n| high |\n## Границы покрытия\n- граница\n", audit, case_count=1)
+        problems = evaluate_rules(
+            "## Findings\n\n| Severity |\n|---|\n| high |\n## Границы покрытия\n- граница\n"
+            "```bash\narch validate --brief\n```\n", audit, case_count=1)
         self.assertEqual(problems, [])
 
     def test_task_conf_scan_passes_and_detects_mismatch(self):

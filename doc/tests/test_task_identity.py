@@ -1275,7 +1275,10 @@ class TaskIdentityContractTests(unittest.TestCase):
         (stage / "plan.md").write_text(plan_text, encoding="utf-8")
         (stage / "verification.json").write_text(json.dumps({
             "task_key": "UI-9999", "stage_id": "stage1", "checks": [],
-            "planned_checks": [{"id": "CASE-1", "covers": ["AC-1"], "expected": "OK"}],
+            "planned_checks": [
+                {"id": "CASE-1", "covers": ["AC-1"], "expected": "OK"},
+                {"id": "CASE-2", "covers": ["AC-1"], "expected": "OK"},
+            ],
         }), encoding="utf-8")
 
     def _plan_ready(self, root):
@@ -1283,8 +1286,10 @@ class TaskIdentityContractTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)["data"]
 
+    # The fixture type is `refactor`, so a tier plan must satisfy its policy profile.
     MICRO_PLAN = (
         "<!-- plan-tier: micro -->\n# UI-9999: small change\n\n"
+        "## Изменение\n\nx\n\n## Эквивалентность\n\nx\n\n"
         "## Приёмка\n\n| CASE | AC | Дано | Действие | Ожидание |\n"
         "|---|---|---|---|---|\n| CASE-1 | AC-1 | fixture | command | exit 0 |\n\n"
         "## Проверка\n\n```bash\narch validate --brief\n```\n"
@@ -1302,9 +1307,12 @@ class TaskIdentityContractTests(unittest.TestCase):
 
             self._write_acceptance_plan(
                 tdir, card,
-                "<!-- plan-tier: full -->\n# Full\n\n## Цель\n\nx\n\n## Правила проекта\n\nx\n\n"
-                "## Решения\n\nx\n\n## Риск и откат\n\nx\n\n## Приёмка\n\nx\n\n"
-                "## Оценка\n\nx\n\n## Проверка\n\nx\n",
+                "<!-- plan-tier: full -->\n# Full\n\n## Задача и связи\n\nx\n\n## Цель\n\nx\n\n"
+                "## Правила проекта\n\nx\n\n## Решения\n\nx\n\n## Инварианты поведения\n\nx\n\n"
+                "## Контракты данных\n\nx\n\n## Границы прерывания\n\nx\n\n"
+                "## Дифференциальная проверка\n\nx\n\n## Приёмка\n\nx\n\n"
+                "## Оценка\n\nx\n\n## Риски\n\nx\n\n"
+                "## Проверка\n\n```bash\narch validate --brief\n```\n",
                 complexity="high",
             )
             self.assertTrue(self._plan_ready(root)["acceptance_plan_ready"])
@@ -1315,8 +1323,11 @@ class TaskIdentityContractTests(unittest.TestCase):
             root = self._prepare_temp_root(temp)
             tdir, card = self._prepare_decompose_parent(root)
             plan = (
-                "# UI-9999\n\n## Цель\n\nx\n\n## Приёмка\n\nx\n\n## Оценка\n\nx\n\n"
-                "## Проверка\n\nx\n"
+                "# UI-9999\n\n## Цель\n\nx\n\n## Правила\n\nx\n\n## Решения\n\nx\n\n"
+                "## Инварианты поведения\n\nx\n\n## Порядок\n\nx\n\n"
+                "## Дифференциальная проверка\n\nx\n\n## Приёмка\n\nx\n\n"
+                "## Оценка\n\nx\n\n## Риски\n\nx\n\n"
+                "## Проверка\n\n```bash\narch validate --brief\n```\n"
             )
             self._write_acceptance_plan(tdir, card, plan, complexity="medium", estimate_hours=4)
             data = self._plan_ready(root)

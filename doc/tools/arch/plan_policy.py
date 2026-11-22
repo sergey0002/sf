@@ -36,6 +36,22 @@ def _schema_errors(schema_path: Path, data: dict[str, Any]) -> list[str]:
         return [f"{schema_path.name}: {exc}"]
 
 
+def _rule_key(rule: dict[str, Any]) -> str:
+    return json.dumps(rule, sort_keys=True, ensure_ascii=False, default=str)
+
+
+def _merge_acceptance(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Type rules extend the default floor; the floor is never dropped."""
+    acceptance = dict(base)
+    merged: dict[str, dict[str, Any]] = {}
+    for rule in [*(base.get("rules") or []), *(override.get("rules") or [])]:
+        if isinstance(rule, dict):
+            merged[_rule_key(rule)] = rule
+    acceptance.update({k: v for k, v in override.items() if k != "rules"})
+    acceptance["rules"] = list(merged.values())
+    return acceptance
+
+
 def _merge_tier(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     result = dict(base)
     for field, item in override.items():
@@ -53,6 +69,7 @@ def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
         for name, tier in (override.get("tiers") or {}).items():
             tiers[name] = _merge_tier((base.get("tiers") or {}).get(name) or {}, tier if isinstance(tier, dict) else {})
         result["tiers"] = tiers
+        result["acceptance"] = _merge_acceptance(base.get("acceptance") or {}, override.get("acceptance") or {})
         return result
     result = dict(base)
     for key, value in override.items():
@@ -62,8 +79,7 @@ def _merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
                 tiers[name] = _merge_tier(tiers.get(name) or {}, tier if isinstance(tier, dict) else {})
             result[key] = tiers
         elif key == "acceptance" and isinstance(value, dict) and isinstance(result.get(key), dict):
-            acceptance = dict(result[key])
-            acceptance.update(value)
+            acceptance = _merge_acceptance(result[key], value)
             result[key] = acceptance
         else:
             result[key] = value
@@ -89,8 +105,12 @@ def _when_matches(when: Any, task: dict[str, Any]) -> bool:
     return any(bool(task.get(key)) for key in keys if isinstance(key, str))
 
 
+DEFAULT_RULE_TIERS = ("standard", "full")
+
+
 def evaluate_rules(
-    plan_text: str, policy: dict[str, Any], *, case_count: int = 0, task: dict[str, Any] | None = None,
+    plan_text: str, policy: dict[str, Any], *, case_count: int = 0,
+    task: dict[str, Any] | None = None, tier: str | None = None,
 ) -> list[str]:
     """Return structural rule failures. Semantic oracle quality is intentionally not judged.
 
@@ -104,6 +124,9 @@ def evaluate_rules(
             problems.append(f"unknown acceptance rule {rule!r}")
             continue
         if rule.get("when") is not None and not _when_matches(rule["when"], task or {}):
+            continue
+        applies = rule.get("applies_to") or list(DEFAULT_RULE_TIERS)
+        if tier is not None and tier not in applies:
             continue
         kind, section = rule["kind"], str(rule.get("section") or "")
         if kind == "section_present" and not any(section.casefold() in heading.casefold() for heading in _headings(plan_text)):

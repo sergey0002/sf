@@ -214,6 +214,8 @@ def acceptance_state(
     try:
         if not (path.parent / "plan.md").is_file():
             raise ValueError("plan.md is missing")
+        from .project_config import ProjectConfig
+        root_path = root.root if isinstance(root, ProjectConfig) else Path(root)
         policy, policy_errors = _plan_policy_for(root, task)
         if policy_errors:
             raise ValueError("; ".join(policy_errors))
@@ -226,10 +228,12 @@ def acceptance_state(
         plan_text = (path.parent / "plan.md").read_text(encoding="utf-8")
         # Rules are part of the opt-in tier contract: a plan without a tier marker
         # keeps the pre-policy behaviour and is never judged by type rules.
-        if policy is not None and PLAN_TIER.search(plan_text):
+        tier_match = PLAN_TIER.search(plan_text)
+        if policy is not None and tier_match:
             from .plan_policy import evaluate_rules
             if rule_problems := evaluate_rules(
                 plan_text, policy, case_count=len(planned), task=task,
+                tier=tier_match.group(1),
             ):
                 raise ValueError("; ".join(rule_problems))
     except (OSError, ValueError) as exc:
@@ -257,7 +261,7 @@ def acceptance_state(
     if evidence.get("status") != "passed" or not _text(evidence.get("checked_revision")):
         problems.append("verification requires status passed and checked_revision")
     else:
-        problems.extend(snapshot_problems(root, evidence.get("snapshot_files"), path.parent / "plan.md"))
+        problems.extend(snapshot_problems(root_path, evidence.get("snapshot_files"), path.parent / "plan.md"))
     if task.get("phase") not in ("verification", "completed"):
         problems.append("task must be in verification before closure")
     return True, [f"acceptance {stage}: {problem}" for problem in problems]
