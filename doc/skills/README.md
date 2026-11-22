@@ -1,11 +1,10 @@
-# Project agent skills (drafts)
+# Скиллы фабрики
 
-These tool-neutral workflow instructions are derived from the root factory manifesto. They are not installed into any specific agent runtime and do not imply the corresponding CLI workflow is implemented.
+Эти инструкции хранятся в проекте. В среде, которая не обнаруживает их автоматически, открывайте нужный `SKILL.md` по маршруту из [doc/AGENTS.md](../AGENTS.md).
 
-| Skill | Use when | Main output |
+| Скилл | Когда применять | Результат |
 |---|---|---|
-| [create-task](create-task/SKILL.md) | User asks to create a task from chat/manual input | One canonical `task.json`; clarify or mark unresolveds rather than invent |
-| [go-to-task](go-to-task/SKILL.md) | User asks to resume/execute a known task key | Selected task/stage, checked workspace state, context links and plan |
-| [задокументируй](document-session/SKILL.md) | User explicitly asks to record confirmed session changes | Task/stage delta or focused architecture update, then structural validation |
-
-The agent uses only the skill relevant to current intent. `doc/tools` performs deterministic architecture-document operations; it does not perform semantic selection, task creation/execution, or judgment-heavy decisions.
+| [create-task](create-task/SKILL.md) | Зарегистрировать новую задачу или декомпозицию | Валидная карточка, план, зависимости и намеченные проверки |
+| [go-to-task](go-to-task/SKILL.md) | Выполнить, продолжить или проверить задачу по точному ключу | Проверяемое изменение и фактическое evidence либо точный блокер |
+| [architecture-docs](architecture-docs/SKILL.md) | Изменить архитектурный контракт, схему документа или каноническое описание | Согласованная правка и структурная проверка |
+| [задокументируй](document-session/SKILL.md) | Зафиксировать подтверждённые факты или решения сессии | Обновление стадии или целевого документа по источникам |

@@ -9,10 +9,10 @@ steps:
   - id: plan
     name: Составление плана
     action: create_plan
-    output: stage1/plan.md
-    gate: constitution_check_passed
+    output: stageN/plan.md
+    gate: plan_reviewed_against_project_contract
   - id: close
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: all_subtasks_closed
+    gate: acceptance_subtasks_and_owner_approval_recorded

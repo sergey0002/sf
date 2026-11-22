@@ -1,0 +1,140 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0016",
+  "task_number": "0016",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P06",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Версионированная запись задачи",
+  "kind": "feature",
+  "intent": "Описать владеющие поля intent, flow version, state и event, затем совместимый формат. Проверить миграцию, запись по ожидаемой ревизии и воспроизведение журнала.",
+  "scope": {
+    "in": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
+  },
+  "current_behavior": "Исходные сведения и ограничения: nextplan.md §6–7, 21. Уточнить baseline в начале выполнения.",
+  "evidence": [
+    "nextplan.md §6–7, 21",
+    "nextplan.md §24, P06"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: Старые записи читаются, миграция повторяема, исходный intent сохраняется.",
+    "AC-2: Повтор события не создаёт вторую запись, конфликт ревизии отклоняется, replay восстанавливает состояние."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: v0.2",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Схемы intent, состояния и миграции",
+      "status": "open",
+      "path": "subtasks/0001/task.json"
+    },
+    {
+      "id": "0002",
+      "title": "Хранение переходов и восстановление",
+      "status": "open",
+      "path": "subtasks/0002/task.json"
+    }
+  ],
+  "depends_on": [
+    "UI-0013"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Описать владеющие поля intent, flow version, state и event, затем совместимый формат.",
+    "Проверить миграцию, запись по ожидаемой ревизии и воспроизведение журнала."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}

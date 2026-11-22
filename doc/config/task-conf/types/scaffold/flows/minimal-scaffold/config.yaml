@@ -15,4 +15,4 @@ steps:
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: scaffold_created
+    gate: acceptance_subtasks_and_applicable_approvals_recorded

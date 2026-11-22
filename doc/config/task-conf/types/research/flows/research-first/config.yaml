@@ -15,10 +15,10 @@ steps:
   - id: recommend
     name: Рекомендация
     action: decision_recommendation
-    output: verification.json с рекомендацией
+    output: рекомендация и ссылки в плане или исследовании
     gate: recommendation_made
   - id: close
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: all_subtasks_closed
+    gate: acceptance_subtasks_and_applicable_approvals_recorded

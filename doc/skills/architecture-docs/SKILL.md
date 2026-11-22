@@ -1,7 +1,8 @@
 ---
 name: architecture-docs
 description: Strict skill for working with architectural documentation. Enforces declared-path-only structure, frontmatter/schema rules, and path validation via CLI.
-status: draft
+metadata:
+  status: draft
 ---
 
 # Skill: architecture-docs (строгий регламент архитектурной документации)
@@ -52,7 +53,7 @@ status: draft
 2. **Индекс-first retrieval:** начать с `doc/architecture/README.md` и компактного индекса; загружать только затронутые документы.
 3. **Минимальный diff:** править ближайший раздел небольшим патчем, не переписывать całый файл.
 4. **Статусы:** неутверждённое содержание — `status: draft`; решение в ADR — `decision_status: proposed`; неизвестное помечать `NEEDS CLARIFICATION`, не маскировать под факт.
-5. **Валидация:** после изменений запустить `arch validate` и `arch docs paths --check`. Исправлять структурные ошибки — агент/человек; CLI не авточинит семантику.
+5. **Валидация:** при проверке существующего индекса сначала запустите `arch index check`. Если изменились источники индекса, пересоберите его отдельным вызовом `arch index build`. Завершите командами `arch validate`, `arch index check` и `arch docs paths --check`. CLI проверяет структуру, смысл подтверждается по источникам.
 6. **Review/approval:** человеческое ревью и утверждение по правилам проекта перед коммитом в канонические docs.
 
 ## CLI-команды, связанные с навыком

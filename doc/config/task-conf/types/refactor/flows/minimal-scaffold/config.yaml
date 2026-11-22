@@ -16,8 +16,13 @@ steps:
     action: apply_refactor
     output: changed files
     gate: refactor_applied
+  - id: verify
+    name: Проверка
+    action: run_tests
+    output: stageN/verification.json
+    gate: relevant_checks_recorded
   - id: close
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: all_subtasks_closed
+    gate: acceptance_subtasks_and_owner_approval_recorded

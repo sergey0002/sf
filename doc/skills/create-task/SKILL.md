@@ -1,14 +1,15 @@
 ---
 name: create-task
 description: Use when the user asks to create a task from chat/user input (`ui`) or a configured tracker. Clarify blocking ambiguity and produce the single canonical task.json; never create a parallel task.md.
-status: draft
+metadata:
+  status: draft
 ---
 
 # Skill: create task
 
 ## Purpose
 
-Turn a manual/chat request into a source-aware normalized `task.json` following the project task schema once that schema exists. The skill also performs decomposition, complexity evaluation, type/flow selection, and creates subtasks via CLI.
+Turn a manual or configured tracker request into a normalized `task.json` validated against the current project YAML. Use [doc/AGENTS.md](../../AGENTS.md) for the command entry point and source precedence. Creating a card ends with a verified plan and intended checks. Start implementation when requested.
 
 ## Procedure
 
@@ -33,17 +34,17 @@ Turn a manual/chat request into a source-aware normalized `task.json` following 
 
 5. **Evaluate complexity.** Assign `complexity` (low/medium/high/critical) based on scope, number of affected modules, risk, and whether cross-team approval is needed. Use `complexity_default` from the type config as a starting point.
 
-6. **Derive task key.** Require every task to have a four-decimal-digit task number. Derive the key deterministically: Jira `1234` (no prefix), UI/user input `UI-1234`, every other source `<EXPLICIT_PREFIX>-1234`. Ask the user to supply a number or use a separately approved deterministic allocator if one is configured; otherwise stop. Never invent or allocate one yourself.
+6. **Derive task key.** Require every task to have a four-decimal-digit task number. Derive the key deterministically: Jira `1234` (no prefix), UI/user input `UI-1234`, every other source `<EXPLICIT_PREFIX>-1234`. Use the number or range authorized by the owner, the [number registry](../../architecture/system/task-number-registry.md), or an approved allocator if configured. If none provides an assignment, prepare the plan and request the number. Never invent or allocate one yourself. Check the registry and disk before writing, for every key in a batch.
 
 7. **Create task.json.** Save one `task.json` with fields: `task_key`, `task_number`, `source`, `title`, `kind`, `intent`, `scope`, `acceptance_criteria`, `target_release`, `project_context_refs`, `constraints`, `assumptions`, `open_questions`, `risk`, `authority`, `approvals`, `task_type`, `flow`, `complexity`, `subtasks`, `depends_on`, `phase`, `rollback_plan`, `related_docs`, `related_tests`, `changed_files`, `owner`, `priority`, `stage_history`. Do not author a separate `task.md`.
 
-8. **Decompose into subtasks (if required by type config).** If the type config has `subtask_policy: required`, create subtasks via `arch task decompose <task_key> --subtask-id NNNN --subtask-title "..."` (repeatable). Each subtask gets its own `task.json` and `stage1/`. Subtasks are always manual — no external source binding.
+8. **Plan and decompose.** Give each acceptance criterion an `AC-N` with an observable result and a check or reviewer. Put steps in `stage1/plan.md`. When planned checks need recording, start `stage1/verification.json` with `status: not_run` and no executed results. Add children for independently verifiable outcomes; obey the type's `subtask_policy`. Record `depends_on` with exact task or child keys. Check duplicates, missing references and cycles before writing. Use `arch task decompose <task_key> --subtask-id NNNN --subtask-title "..."` for scaffolding. The current command can write part of a batch before a later conflict, so preflight all IDs and paths. Complete each child's own record and plan.
 
-9. **Run CLI validation.** Run `arch task validate <task_key>` and `arch docs paths --check`. Do not claim the task is created/executable if validation did not occur.
+9. **Validate and register.** Validate the parent with `arch task validate <task_key>` and each immediate child with `arch task subtask validate <parent> <id>`. Cross-check the parent's child paths against the files. Update the number registry and run `arch docs paths --check`. Report keys and any unresolved blockers. Claim implementation or test results only when separately verified.
 
 ## Subtask closure policy
 
-A task with `close_policy: all_subtasks_required` (all type configs) can be closed only when every subtask has `phase: completed`. Use `arch task diagnose <task_key>` to check subtask status and blockers; use `arch task close <task_key>` to close after all subtasks are completed and approval obtained.
+Use [go-to-task](../go-to-task/SKILL.md) for readiness checks and closing an implemented task.
 
 ## Reading type and flow prompts
 

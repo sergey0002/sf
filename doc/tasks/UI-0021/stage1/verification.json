@@ -1,0 +1,29 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0021",
+  "task_number": "0021",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "AC-1: Настроенный прогон имеет ограниченные ресурсы и восстанавливается после прерывания."
+    },
+    {
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "AC-2: Результат связан с проверенной ревизией и версией проверок; защищённые критерии остаются доступны независимой приёмке."
+    }
+  ],
+  "baseline_commands": [
+    "python3 -m unittest discover -s doc/tools/tests -q",
+    "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
+    "python3 doc/tools/arch/__main__.py scan --scope all --brief",
+    "python3 doc/tools/arch/__main__.py index check"
+  ]
+}

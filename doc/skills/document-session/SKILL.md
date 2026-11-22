@@ -1,7 +1,8 @@
 ---
-name: задокументируй
+name: document-session
 description: Use only when the user explicitly asks to record confirmed decisions, implementation facts or evidence from the current conversation.
-status: draft
+metadata:
+  status: draft
 ---
 
 # Skill: задокументируй
@@ -21,12 +22,12 @@ When recording session results, update `task.json` traceability fields:
 
 - `task_id` — internal stable ID; use for long-term identity separate from source key.
 - `kind` — task type (bug, feature, docs, refactor, security, analysis, scaffold); influences risk and review depth.
-- `scope.in` / `scope.out` / `allowed_files_modules` — record what was actually changed; verify changes stay within allowed scope.
+- `scope.in` / `scope.out` / `allowed_files_modules` — compare the diff against agreed boundaries. Record actual changes in `changed_files`. Update scope only after an explicit scope decision.
 - `current_behavior` / `evidence` — record observed current behavior before changes; attach evidence paths.
 - `contracts_and_invariants` — confirm which contracts/invariants remain true after changes.
 - `source.comments` / `source.attachments` / `source.history` — source-side discussion, files and change history.
 - `changed_files.added` / `changed_files.modified` / `changed_files.deleted` — actual file paths changed in this session; keep them accurate and minimal.
-- `related_tests` — test IDs actually executed, with `suite` and `location`/`command`; do not claim tests that were not run.
+- `related_tests` — links to relevant test definitions. Record executed commands, outcomes and checked revision in the stage's `verification.json`.
 - `related_docs` — architecture document IDs that were confirmed affected; add new IDs only when canonical behavior/decision changed.
 - `owner` — the task owner; resolve scope/ambiguity questions with them.
 - `priority` — task priority.
@@ -48,8 +49,8 @@ Subtasks live in `doc/tasks/<parent_key>/subtasks/<subtask_id>/` with their own 
 - Subtasks are **always manual** — no external source binding.
 - Subtask numbering is unique **only within the parent** (`0001`, `0002`, …).
 - Each subtask has `parent_task_key` linking back to the parent.
-- Subtasks can have their own subtasks (recursive).
-- When recording session results, update `subtasks` array in parent `task.json` with child IDs and their status.
+- The current CLI addresses immediate children. Check deeper layouts against the active path policy before using them.
+- The parent array links the children. Read each child's own `phase` for completion; keep any parent summary consistent.
 
 ## Architectural reflection after task completion
 

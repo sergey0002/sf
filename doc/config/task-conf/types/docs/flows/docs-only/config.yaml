@@ -10,15 +10,15 @@ steps:
   - id: change
     name: Изменение документации
     action: bounded_markdown_diff
-    output: changed .md files under doc/architecture/
+    output: документация или её конфигурация в согласованном scope
     gate: paths_declared_and_frontmatter_valid
   - id: validate
     name: Структурная валидация
     action: run_cli_validation
-    output: stage1/verification.json
+    output: stageN/verification.json
     gate: arch_validate_and_paths_check_passed
   - id: close
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: all_subtasks_closed
+    gate: acceptance_subtasks_and_applicable_approvals_recorded

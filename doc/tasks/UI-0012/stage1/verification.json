@@ -1,0 +1,29 @@
+{
+  "schema_version": "draft-0.1",
+  "task_key": "UI-0012",
+  "task_number": "0012",
+  "stage_id": "stage1",
+  "status": "not_run",
+  "checked_revision": null,
+  "checks": [],
+  "planned_checks": [
+    {
+      "covers": [
+        "AC-1"
+      ],
+      "expected": "AC-1: list/show/index/validate/paths и diagnose работают для стандартного, перенесённого и игнорируемого Git корня."
+    },
+    {
+      "covers": [
+        "AC-2"
+      ],
+      "expected": "AC-2: Повреждённый конфиг и выход за корень дают ошибку до записи; выбор конфига воспроизводится из другого cwd."
+    }
+  ],
+  "baseline_commands": [
+    "python3 -m unittest discover -s doc/tools/tests -q",
+    "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q",
+    "python3 doc/tools/arch/__main__.py scan --scope all --brief",
+    "python3 doc/tools/arch/__main__.py index check"
+  ]
+}

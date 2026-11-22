@@ -14,8 +14,8 @@ steps:
   - id: plan
     name: Планирование
     action: create_plan
-    output: stage1/plan.md
-    gate: plan_approved
+    output: stageN/plan.md
+    gate: plan_ready_and_required_approval_recorded
   - id: fix
     name: Исправление
     action: apply_fix
@@ -24,10 +24,10 @@ steps:
   - id: verify
     name: Верификация
     action: run_tests
-    output: stage1/verification.json
+    output: stageN/verification.json
     gate: tests_passed
   - id: close
     name: Закрытие
     action: close_task
     output: approvals, stage_history
-    gate: all_subtasks_closed_and_approval_obtained
+    gate: acceptance_subtasks_and_owner_approval_recorded

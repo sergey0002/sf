@@ -1,0 +1,144 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0012",
+  "task_number": "0012",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P02",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Проектный YAML и рабочие корни",
+  "kind": "feature",
+  "intent": "Зафиксировать ключи YAML, выбор --config, базу относительных путей и явные ошибки. Перевести потребителей, убрать дубли путей и синхронизировать документацию.",
+  "scope": {
+    "in": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/skills/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/skills/",
+      "doc/architecture/",
+      "README.md"
+    ]
+  },
+  "current_behavior": "Исходные сведения и ограничения: nextplan.md §23. Уточнить baseline в начале выполнения.",
+  "evidence": [
+    "nextplan.md §23",
+    "nextplan.md §24, P02"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: list/show/index/validate/paths и diagnose работают для стандартного, перенесённого и игнорируемого Git корня.",
+    "AC-2: Повреждённый конфиг и выход за корень дают ошибку до записи; выбор конфига воспроизводится из другого cwd."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: v0.1",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "doc/config/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/skills/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Загрузчик проектного YAML",
+      "status": "open",
+      "path": "subtasks/0001/task.json"
+    },
+    {
+      "id": "0002",
+      "title": "Перевод потребителей и проверка переносимости",
+      "status": "open",
+      "path": "subtasks/0002/task.json"
+    }
+  ],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Зафиксировать ключи YAML, выбор --config, базу относительных путей и явные ошибки.",
+    "Перевести потребителей, убрать дубли путей и синхронизировать документацию."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0024",
+  "task_number": "0024",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P14",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Решение о расширениях после пилота",
+  "kind": "planning",
+  "intent": "Оценить аллокатор, workflow engine, каталоги, model routing и расширение автономности по данным пилота. Записать условия включения, владельца решения и метрику.",
+  "scope": {
+    "in": [
+      "doc/tasks/",
+      "doc/architecture/"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "doc/tasks/",
+      "doc/architecture/"
+    ]
+  },
+  "current_behavior": "Исходные сведения и ограничения: nextplan.md §7–10, 20. Уточнить baseline в начале выполнения.",
+  "evidence": [
+    "nextplan.md §7–10, 20",
+    "nextplan.md §24, P14"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: Для каждого расширения есть наблюдаемая предпосылка и решение о постановке или откладывании.",
+    "AC-2: Выбранные расширения имеют измеримую гипотезу, границы и следующую задачу."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: после пилота",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "doc/tasks/",
+      "doc/architecture/"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "planning",
+  "flow": "research-first",
+  "complexity": "medium",
+  "subtasks": [],
+  "depends_on": [
+    "UI-0022"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Оценить аллокатор, workflow engine, каталоги, model routing и расширение автономности по данным пилота.",
+    "Записать условия включения, владельца решения и метрику."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}

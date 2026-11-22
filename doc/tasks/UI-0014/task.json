@@ -1,0 +1,146 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0014",
+  "task_number": "0014",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P04",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Воспроизводимая установка и CI",
+  "kind": "feature",
+  "intent": "Собрать релизный артефакт и проверить установку вне исходного checkout. Отделить read-only проверку индекса от пробной пересборки.",
+  "scope": {
+    "in": [
+      "pyproject.toml",
+      ".github/workflows/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "pyproject.toml",
+      ".github/workflows/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ]
+  },
+  "current_behavior": "Исходные сведения и ограничения: nextplan.md §7, 19. Уточнить baseline в начале выполнения.",
+  "evidence": [
+    "nextplan.md §7, 19",
+    "nextplan.md §24, P04"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: Из установленного пакета доступны CLI и runtime-ресурсы; версия совпадает с метаданными пакета.",
+    "AC-2: CI ловит устаревший индекс до пересборки и проверяет воспроизводимость в отдельном дереве."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: v0.1",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "pyproject.toml",
+      ".github/workflows/",
+      "doc/tools/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "feature",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [
+    {
+      "id": "0001",
+      "title": "Устанавливаемый пакет CLI",
+      "status": "open",
+      "path": "subtasks/0001/task.json"
+    },
+    {
+      "id": "0002",
+      "title": "Проверки CI и свежести индекса",
+      "status": "open",
+      "path": "subtasks/0002/task.json"
+    }
+  ],
+  "depends_on": [
+    "UI-0012"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Собрать релизный артефакт и проверить установку вне исходного checkout.",
+    "Отделить read-only проверку индекса от пробной пересборки."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0011",
+  "task_number": "0011",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P01",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Готовность закрытия",
+  "kind": "bugfix",
+  "intent": "Воспроизвести закрытие при объявленном, но отсутствующем ребёнке на временной записи. Объединить проверку готовности, добавить предпросмотр и согласовать JSON отказа.",
+  "scope": {
+    "in": [
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/architecture/"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/architecture/"
+    ]
+  },
+  "current_behavior": "Закрытие обходит найденные каталоги подзадач. Объявленный, но отсутствующий ребёнок может остаться незамеченным.",
+  "evidence": [
+    "nextplan.md §15, 17, 21–22",
+    "nextplan.md §24, P01"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: diagnose и close указывают один отсутствующий ID; отказ и dry-run сохраняют исходную запись побайтно.",
+    "AC-2: Совместимая валидная задача без обязательных детей закрывается; CLI-тест проверяет код процесса и JSON."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: v0.1",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "doc/tools/arch/",
+      "doc/tests/",
+      "doc/architecture/"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "bugfix",
+  "flow": "standard-implementation",
+  "complexity": "medium",
+  "subtasks": [],
+  "depends_on": [],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Воспроизвести закрытие при объявленном, но отсутствующем ребёнке на временной записи.",
+    "Объединить проверку готовности, добавить предпросмотр и согласовать JSON отказа."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}

@@ -15,8 +15,8 @@ steps:
   - id: plan
     name: Планирование
     action: create_plan
-    output: stage1/plan.md
-    gate: plan_approved
+    output: stageN/plan.md
+    gate: plan_ready_and_required_approval_recorded
   - id: implement
     name: Реализация
     action: bounded_implementation
@@ -25,10 +25,10 @@ steps:
   - id: verify
     name: Проверка
     action: run_validation_and_tests
-    output: stage1/verification.json
+    output: stageN/verification.json
     gate: tests_passed_and_paths_valid
   - id: close
     name: Закрытие
     action: request_approval_and_close
     output: approvals, stage_history
-    gate: all_subtasks_closed_and_approval_obtained
+    gate: acceptance_subtasks_and_owner_approval_recorded

@@ -1,0 +1,127 @@
+{
+  "schema_version": "draft-0.2",
+  "task_id": null,
+  "task_key": "UI-0015",
+  "task_number": "0015",
+  "source": {
+    "type": "ui",
+    "native_id": null,
+    "provenance": "Запрос владельца в чате; nextplan.md §24, P05",
+    "revision": null,
+    "captured_at": "2026-11-22",
+    "attachments": [],
+    "comments": [],
+    "history": []
+  },
+  "title": "Каталог скиллов и исходный прогон",
+  "kind": "docs",
+  "intent": "Сверить каталог с четырьмя действующими SKILL.md и командами CLI. Описать один учебный прогон и зафиксировать способ измерения baseline.",
+  "scope": {
+    "in": [
+      "doc/skills/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "out": [
+      "Работы, закреплённые за другими пакетами",
+      "Правки справочных материалов data/",
+      "Публикация и внешние операции"
+    ],
+    "allowed_files_modules": [
+      "doc/skills/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ]
+  },
+  "current_behavior": "Исходные сведения и ограничения: nextplan.md §8, 18, 20. Уточнить baseline в начале выполнения.",
+  "evidence": [
+    "nextplan.md §8, 18, 20",
+    "nextplan.md §24, P05"
+  ],
+  "contracts_and_invariants": [
+    "Сохранить совместимость действующего task.json и stageN/, если изменение не утверждено отдельно.",
+    "Разделять выводы агента и фактически выполненные проверки."
+  ],
+  "acceptance_criteria": [
+    "AC-1: Все четыре скилла видны из каталога с условиями выбора и ссылками.",
+    "AC-2: Учебный сценарий воспроизводим из чистой сессии; замер и ограничения записаны."
+  ],
+  "target_release": "unset",
+  "project_context_refs": [
+    "nextplan.md",
+    "doc/architecture/system/architecture-contract.md",
+    "doc/config/paths.yaml"
+  ],
+  "constraints": [
+    "Этап дорожной карты: v0.1",
+    "Учитывать зависимости и допустимые пути проекта."
+  ],
+  "assumptions": [],
+  "open_questions": [],
+  "risk": "medium",
+  "authority": {
+    "allowed": [
+      "doc/skills/",
+      "doc/tests/",
+      "doc/architecture/",
+      "README.md"
+    ],
+    "forbidden": [
+      "push",
+      "merge",
+      "deploy",
+      "write-back во внешние источники"
+    ],
+    "approval_required": [
+      "Расширение scope и внешние действия"
+    ]
+  },
+  "approvals": [],
+  "task_type": "docs",
+  "flow": "docs-only",
+  "complexity": "medium",
+  "subtasks": [],
+  "depends_on": [
+    "UI-0011"
+  ],
+  "phase": "intake",
+  "rollback_plan": "Отменить только изменения этого пакета. При изменении данных или поведения сначала проверить восстановление на временной копии и сохранить исходные fixtures.",
+  "implementation_plan": [
+    "Сверить каталог с четырьмя действующими SKILL.md и командами CLI.",
+    "Описать один учебный прогон и зафиксировать способ измерения baseline."
+  ],
+  "related_docs": [
+    "ARCH-contract",
+    "REG-cli-command-map",
+    "REG-cli-validation-rules",
+    "SPEC-cli-testing"
+  ],
+  "related_tests": [
+    {
+      "test_id": "cli-unit",
+      "location": "doc/tools/tests/test_arch.py",
+      "command": "python3 -m unittest discover -s doc/tools/tests -q"
+    },
+    {
+      "test_id": "environment-acceptance",
+      "location": "doc/tests/test_task_identity.py",
+      "command": "python3 -m unittest discover -s doc/tests -p 'test_*.py' -q"
+    }
+  ],
+  "research_docs": [],
+  "changed_files": {
+    "added": [],
+    "modified": [],
+    "deleted": []
+  },
+  "owner": "unset",
+  "priority": "unset",
+  "stage_history": [
+    {
+      "stage_id": "stage1",
+      "status": "planned"
+    }
+  ]
+}
