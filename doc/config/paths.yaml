@@ -50,6 +50,7 @@ allowed_paths:
   - "{architecture}/system/architecture-contract.md"
   - "{architecture}/system/architecture-audit.md"
   - "{architecture}/system/cli-command-map.md"
+  - "{architecture}/system/addressable-contracts.md"
   - "{architecture}/system/cli-package.md"
   - "{architecture}/system/cli-validation-rules.md"
   - "{architecture}/system/components.md"

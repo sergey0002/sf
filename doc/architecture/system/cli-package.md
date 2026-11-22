@@ -5,7 +5,7 @@ title: Структура пакета Arch CLI и ответственност�
 summary: "Модульный Python-пакет под doc/tools/arch/; ответственность каждого модуля и граф зависимостей между ними."
 status: draft
 domain: system
-related: [REG-cli-command-map, SYS-simple-factory, DOM-task-lifecycle]
+related: [REG-cli-command-map, SYS-simple-factory, DOM-task-lifecycle, FLOW-kilo-session-audit]
 implemented: true
 ---
 
@@ -49,11 +49,13 @@ identity.py  schema.py  validation.py  store.py
    │          │          │
 subtask.py (identity, schema)   fs_atomic.py
    ▲                             ▲
-   └──────── task_ops.py ────────┘
-             (identity, schema, subtask, validation, fs_atomic)
-                ▲
-                │
-    cli/commands/ (builtin, task, task_key, session)
+    └──────── task_ops.py ────────┘
+              (identity, schema, subtask, validation, fs_atomic)
+
+ session_audit.py (stdlib sqlite3, read-only)
+                 ▲
+                 │
+     cli/commands/ (builtin, task, task_key, session)
                 ▲
                 │
            cli/app.py
@@ -76,6 +78,7 @@ subtask.py (identity, schema)   fs_atomic.py
 - **Детектор мусора:** `arch docs paths --check` выявляет файлы в `doc/` вне `allowed_paths`.
 - **Обработка ошибок:** все доменные модули возвращают списки ошибок или выбрасывают `ValueError`/`OSError`; `task_ops.TaskOpsError` несёт код, поле и подсказку для команды. `cli.app.run()` конвертирует необработанные ошибки в семантический exit-код и единый JSON-envelope. Структурированные команды в human-режиме печатают свой envelope, а не scan-сводку.
 - **Устойчивая запись:** одиночные записи заменяются атомарно; составная запись decompose использует журнал и возобновляется повторным вызовом. Детали — в [карте команд](cli-command-map.md#запись-и-восстановление).
+- **Журнал Kilo только читается:** `session_audit.py` открывает SQLite с `mode=ro` и `query_only`. Он не изменяет базу, карточки и рабочее дерево; смысловая оценка остаётся в [процедуре аудита](../domains/execution-verification/flows/kilo-session-audit.md).
 
 ## Точки входа
 

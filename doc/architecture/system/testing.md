@@ -234,18 +234,6 @@ EOF
 | cli.py | 85% |
 | body_validation.py | 80% |
 
-## 10. Запуск в CI
+## 10. Запуск в CI (удалено)
 
-CI сначала проверяет свежесть индекса без записи, затем запускает тесты и отдельно подтверждает воспроизводимость двумя пересборками с разными `PYTHONHASHSEED` во временных деревьях. Установка проверяется из собранного wheel в отдельном окружении вне исходного checkout.
-
-```yaml
-steps:
-  - run: python -m pip install -r doc/tools/requirements.txt
-  - run: bash doc/tests/run.sh --ci
-  - run: python -m pip wheel --no-build-isolation --no-deps -w dist .
-  - run: python -m venv "$RUNNER_TEMP/arch-venv"
-  - run: '"$RUNNER_TEMP/arch-venv/bin/pip" install dist/*.whl'
-  - run: cd "$RUNNER_TEMP" && "$RUNNER_TEMP/arch-venv/bin/arch" --version
-```
-
-`bash doc/tests/run.sh --ci` выполняет read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными hash seed, unit/acceptance и fixture. `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. Acceptance-тест собирает wheel, устанавливает его в отдельный target и проверяет `arch --version`, метаданные пакета и чтение проектных ресурсов через `--root`. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую.
+GitHub Actions workflow (`.github/workflows/ci.yml`) был удалён по решению владельца. Локальные проверки выполняются через `bash doc/tests/run.sh --ci` (read-only `index check`, `validate`, `docs paths --check`, две пересборки с разными `PYTHONHASHSEED`, unit/acceptance тесты и fixture). `index build` в проверяемом checkout не запускается; пересборка выполняется только в копиях. `run.sh --in-copy` переносит тот же набор в изолированную копию, если основной checkout нельзя использовать напрямую.

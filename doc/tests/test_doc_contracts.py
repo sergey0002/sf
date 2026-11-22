@@ -314,6 +314,33 @@ class ContextTests(DocContractFixture):
         self.assertIn("document:RULE-close", data["delta"]["changed"])
         self.assertEqual([item["ref"] for item in data["items"]], ["RULE-close"])
 
+    def test_context_reports_unplanned_case_and_trims_to_budget(self):
+        root = self.make_root()
+        self.write_task(root, passing=True)
+        missing = _run(root, "docs", "context", "--task", "UI-9000", "--case", "CASE-404", "--json")
+        data = json.loads(missing.stdout)["data"]
+        self.assertFalse(data["complete"])
+        case = next(item for item in data["items"] if item["ref"] == "CASE-404")
+        self.assertEqual(case["state"], "missing")
+
+        trimmed = _run(root, "docs", "context", "--task", "UI-9000", "--case", "CASE-1",
+                       "--max-bytes", "300", "--json")
+        self.assertEqual(trimmed.returncode, 0, trimmed.stderr)
+        payload = json.loads(trimmed.stdout)["data"]
+        self.assertFalse(payload["complete"])
+        self.assertTrue(payload["omitted"])
+
+    def test_context_marks_stale_evidence_snapshot(self):
+        root = self.make_root()
+        self.write_task(root, passing=True)
+        (root / "check.sh").write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+        result = _run(root, "docs", "context", "--task", "UI-9000", "--case", "CASE-1", "--json")
+        data = json.loads(result.stdout)["data"]
+        case = next(item for item in data["items"] if item["ref"] == "CASE-1")
+        self.assertEqual(case["evidence"]["state"], "passed")
+        self.assertEqual(case["evidence"]["snapshot_state"], "stale")
+        self.assertEqual(case["evidence"]["stale_files"], ["check.sh"])
+
     def test_context_rejects_invalid_snapshot(self):
         root = self.make_root()
         snapshot = root / "snapshot.json"

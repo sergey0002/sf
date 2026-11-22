@@ -5,7 +5,7 @@ title: Отображение команд CLI на модули и функци
 summary: "Сопоставляет каждую команду и подкоманду arch CLI с модулем и функцией, которые её реализуют, для архитектурной прослеживаемости."
 status: draft
 domain: system
-related: [VIEW-cli-package, DOM-task-lifecycle]
+related: [VIEW-cli-package, DOM-task-lifecycle, CAP-addressable-contracts]
 implemented: true
 ---
 
@@ -35,12 +35,18 @@ implemented: true
 | `arch task diagnose <task_key> [--json] [--brief]` | `cli/commands/task` / `task_ops` / `validation` / `acceptance` | `TaskCommand` → `task_ops.diagnose` → `closure_state` | Машинные блокировки и состояние детей, `acceptance_plan_ready` для задач с политикой кейсов. Незавершённая составная запись видна как `incomplete_write` и блокирует закрытие. Краткий режим показывает счётчики и ссылки. |
 | `arch task close <task_key> [--json] [--dry-run]` | `cli/commands/task` / `task_ops` | `TaskCommand` → `task_ops.close` | Предпросмотр без записи. При отказе exit 1 и структурированная ошибка в stderr в JSON-режиме. Успешная запись `phase=completed` атомарна. |
 | `arch task evidence <key> --check` / `--file <path> [--case CASE-N] --run <argv>` | `cli/commands/task` / `evidence` | `TaskCommand` → `task_evidence` | Проверка SHA-256 или запуск с фиксацией реального результата на стабильном снимке текущей стадии. `<key>` принимает и ключ ребёнка (`UI-0014-0001`). |
-| `arch session find --match <text> [--db] [--directory] [--all-projects] [--role] [--limit] [--json]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `find_sessions` | Найти сессии по подстроке диалога; вернуть совпадения, `message_id` и сниппет. |
-| `arch session digest <session_id> [--db] [--max-events] [--full-text] [--no-children]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `digest_session` | Компактный JSON-дайджест: метки flow, скиллов, правил и задач, статистика инструментов, фазы, аномалии, токены и `label_index`. |
-| `arch session events <session_id> [--message] [--part] [--offset] [--limit] [--full]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `session_events` | Точечный срез диалога по `message_id` или `part_id` без перечитывания всей сессии. |
+| `arch session find --match <text> [--db] [--directory] [--all-projects] [--role] [--limit] [--json]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `find_sessions` | Найти сессии по подстроке текста; вернуть совпадения, `message_id`, сниппет и `truncated`. |
+| `arch session digest (<session_id> \| --match <text>) [--db] [--max-events] [--full-text] [--no-children]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `digest_session` | JSON-дайджест: полный `tool_calls`, метки, статистика, фазы, аномалии, токены и `label_index`. Всегда JSON. |
+| `arch session events <session_id> [--message] [--part] [--offset] [--limit] [--full]` | `cli/commands/session` / `session_audit` | `SessionCommand` → `session_events` | JSON-срез по `message_id` или `part_id`; неизвестная сессия возвращает пустой результат. |
 | `arch docs paths --check` | `cli` / `validation` | `validate_paths` | Детектор мусора: файлы вне allowed_paths, frontmatter, типы, статусы |
 | `arch docs paths --resolved` | `cli` / `project_config` | `ProjectConfig` | Выбранный YAML и разрешённые корни в JSON. Запрос без записи. |
 | `arch docs tree` | `cli` / `store` | `DocsPathsCommand` → `ArchitectureStore.load_documents` | JSON-оглавление индексируемой архитектуры по каталогам без тел документов. |
+| `arch docs read <DOC-ID#section-id> [--max-bytes N] [--json]` | `cli/commands/builtin` / `doc_ops` / `sections` | `DocsPathsCommand` → `read_section` | Один адресуемый раздел: путь, диапазон строк, SHA-256 файла и текст. Частичный текст при превышении бюджета не выдаётся. |
+| `arch docs toc <id> [--json]` | `cli/commands/builtin` / `doc_ops` / `sections` | `DocsPathsCommand` → `table_of_contents` | Явные и slug-якоря разделов документа с диапазонами строк. |
+| `arch docs search <query> [--scope product\|reference\|all] [--limit N] [--include-archived] [--json]` | `cli/commands/builtin` / `doc_ops` | `DocsPathsCommand` → `search` | Детерминированный локальный поиск по ID, alias, заголовку, summary, разделам и телу. Справочник подключается явно. |
+| `arch docs check-links [--json]` | `cli/commands/builtin` / `doc_ops` | `DocsPathsCommand` → `check_links` | Битые локальные ссылки, отсутствующие якоря и выход за корень проекта. |
+| `arch docs context --task <key> [--case CASE-N] [--max-bytes N] [--since-snapshot FILE] [--json]` | `cli/commands/builtin` / `doc_ops` | `DocsPathsCommand` → `context` | Ограниченный пакет объявленных ссылок задачи и кейса: причины, авторитет, evidence и дельта снимка. |
+| `arch docs impact --since <rev> [--scope docs\|all] [--json]` | `cli/commands/builtin` / `doc_ops` | `DocsPathsCommand` → `impact` | Изменённые разделы и объявленные потребители; непокрытые изменения перечисляются отдельно. |
 
 ## Запись и восстановление {#write-recovery}
 
@@ -53,9 +59,13 @@ implemented: true
 
 | Код | Значение |
 |-----|----------|
-| 0 | Успех |
-| 1 | Ошибка валидации, отсутствующий файл или коллизия (выводится как `ERROR:` на stderr) |
-| 2 | Необработанная команда / внутренняя ошибка |
+| 0 | Успех, включая пустую выдачу `search` и `context` с `complete: false` |
+| 1 | Ошибка валидации, отсутствующий или неоднозначный документ/якорь, инциденты `check-links`, коллизия |
+| 2 | Неверные аргументы, неизвестная ревизия Git или нечитаемый снимок |
+
+## Документальные контракты {#doc-contracts}
+
+`read`, `toc`, `search`, `check-links`, `context` и `impact` работают с текущим checkout, не пишут в репозиторий и не обращаются к сети. Явный якорь `{#anchor}` стабилен к переносу и переименованию; slug-якорь служит совместимым резервом. `context` включает только объявленные ссылки задачи и кейса, а `impact` — только объявленных потребителей; текстовое совпадение не считается доказанным влиянием. Полный контракт — [Адресуемые контракты документации](addressable-contracts.md).
 
 ## Формат вывода {#output-format}
 

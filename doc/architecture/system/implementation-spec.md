@@ -5,7 +5,7 @@ title: Спецификация реализации Arch CLI
 summary: "Сигнатуры функций, структура argparse, обработка ошибок, форматы файлов и процедуры, необходимые для восстановления CLI из документации без исходного кода."
 status: draft
 domain: system
-related: [REG-cli-command-map, VIEW-cli-package, REG-cli-validation-rules, SPEC-cli-implementation]
+related: [REG-cli-command-map, VIEW-cli-package, REG-cli-validation-rules, SPEC-cli-implementation, CAP-addressable-contracts]
 implemented: false
 ---
 
@@ -590,6 +590,30 @@ arch session events <session_id> [--db <path>] [--message <id>] [--part <id>] [-
 - `events` фильтрует части по `--message`/`--part`, поддерживает `--offset`/`--limit` и по умолчанию обрезает текст и вывод до 4000 символов; `--full` отключает обрезку.
 - Исход вызова: `failure` при `state.status` в `error`/`failed` или ненулевом `metadata.exit`; `success` при `completed`; иначе `unknown`. Токены суммируются по assistant-сообщениям.
 - Команда read-only: не пишет в базу, task records и рабочее дерево. Смысловая оценка сессии остаётся у агента.
+
+### 9.25 Команды адресуемых контрактов
+
+```
+arch docs read <DOC-ID#section-id> [--max-bytes N] [--json]
+arch docs toc <id> [--json]
+arch docs search <query> [--scope product|reference|all] [--limit N] [--include-archived] [--json]
+arch docs check-links [--json]
+arch docs context --task <key> [--case CASE-N] [--max-bytes N] [--since-snapshot FILE] [--json]
+arch docs impact --since <git-revision> [--scope docs|all] [--json]
+```
+
+- Модули: `cli/commands/builtin.py` (`DocsPathsCommand`) → `doc_ops.py` → `sections.py`.
+- `read` возвращает `doc_id`, `path`, `anchor`, `anchor_kind` (`explicit`|`slug`), `stable`, `title`, `heading_path`, `line_start`, `line_end`, `bytes`, `sha256` файла, `doc_status`, `content`. Строки 1-based включительно. `--max-bytes` по умолчанию 32768.
+- `toc` возвращает `doc_id`, `path`, `status` и `sections[]` с `anchor`, `anchor_kind`, `stable`, `level`, `title`, `heading_path`, `line_start`, `line_end`.
+- `search` возвращает `query`, `scope`, `limit`, `total_matched`, `hits[]`, `notes[]`. Хит: `id`, `source` (`product`|`reference`), `type`, `title`, `status`, `path`, `anchor`, `anchor_kind`, `line`, `match` (`id`|`title`|`summary`|`heading`|`body`), `score`, `snippet`. Все термы запроса должны совпасть; порядок стабилен по `-score`, `id`, `path`, `line`.
+- `check-links` возвращает `scanned_documents`, `incident_count`, `incidents[]`. Инцидент: `code` (`DOC-LOAD`|`DOC-LINK`|`DOC-ANCHOR`), `message`, `source`, `line`, `target`, `anchor`. Ссылки в fenced code block игнорируются.
+- `context` возвращает `task_key`, `stage`, `case`, `max_bytes`, `items[]`, `complete`, `notes[]` и при сравнении `delta`. Элемент: `kind` (`document`|`file`|`reference`|`test`|`case`), `ref`, `declared_by[]`, `reason`, `state`, опционально `doc_id`, `authority` (`contract`|`adr`|`reference`|`document`|`file`), `type`, `title`, `status`, `path`, `sha256`, `anchor`, `anchor_kind`, `stable`, `line_start`, `line_end`, `summary`. Для кейса: `expected`, `covers[]`, `acceptance`, `evidence` (`state` `not_run`|`failed`|`passed`, `exit_code`, `command`, `result`, `checked_revision`, `snapshot_state` `current`|`stale`|`unknown`, `stale_files`).
+- `context` объединяет повторные объявления одного документа по `doc_id` или пути и сохраняет все `declared_by`. `complete: false` при пропуске, неразрешённой или устаревшей ссылке, отсутствующем кейсе и усечении по `--max-bytes`. Усечение перечисляется в `omitted[]`.
+- `--since-snapshot` принимает предыдущий JSON (envelope или `data`). `delta.added`, `delta.changed`, `delta.removed` содержат ключи `kind:ref`; неизменённые элементы не повторяются, счётчик — `delta.unchanged_count`.
+- `impact` возвращает `base`, `scope`, `changed_files[]`, `changed_sections[]`, `affected[]`, `unverified_coverage[]`, `notes[]`. `changed_files`: `path`, `status` (`added`|`modified`|`deleted`), `doc_id`, `tracked`. `changed_sections`: `path`, `doc_id`, `added[]`, `changed[]`, `removed[]`, `unchanged_count`, `duplicate_anchors[]`; записи содержат `anchor`, `anchor_kind`, `stable`, `title`, `line_start`. `affected`: `kind` (`document`|`task`), `id`, `path`, `via` (`related`|`link`|`related_docs`|`project_context_refs`), опционально `anchor`.
+- `impact` сравнивает ревизию с рабочим деревом, включает неотслеживаемые файлы как добавленные и не выполняет rename detection. Влияние выводится только по объявленным связям; текстовое совпадение не используется.
+- Коды: 0 — корректная выдача, включая `hits: []` и `context.complete: false`; 1 — неразрешённая/неоднозначная ссылка, отсутствующий документ или якорь, инциденты `check-links`; 2 — неверные аргументы, неизвестная Git-ревизия, нечитаемый снимок. Для `read` отсутствующий документ или якорь даёт exit 1, а не 20, чтобы различать структурный поиск и жизненный цикл задачи.
+- Команды не пишут в репозиторий и не обращаются к сети. Пути в выдаче проект-относительные и переносимые через `--root`/`--config`.
 
 ## 10. Форматы файлов
 

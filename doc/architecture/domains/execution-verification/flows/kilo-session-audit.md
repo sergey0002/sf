@@ -2,10 +2,11 @@
 id: FLOW-kilo-session-audit
 type: flow
 title: Аудит локальных сессий Kilo Code
-summary: "Поиск сессии, проверка выполнения задачи, анализ инструментов и расхода контекста по локальной SQLite."
+summary: "Read-only поиск сессии Kilo, компактный JSON-снимок и оценка результата, процесса и достаточности архитектуры."
 status: draft
 domain: execution-verification
-related: [DOM-execution-verification, FLOW-verify-task, FLOW-document-session]
+related: [DOM-execution-verification, FLOW-verify-task, FLOW-document-session, REG-cli-command-map]
+implemented: true
 ---
 
 # Аудит локальных сессий Kilo Code
@@ -22,18 +23,20 @@ related: [DOM-execution-verification, FLOW-verify-task, FLOW-document-session]
 
 ```bash
 python3 doc/tools/arch/__main__.py session find --match "<фраза>" --json
-python3 doc/tools/arch/__main__.py session digest <session_id> --json
-python3 doc/tools/arch/__main__.py session events <session_id> --message <message_id> --json
+python3 doc/tools/arch/__main__.py session digest <session_id>
+python3 doc/tools/arch/__main__.py session events <session_id> --message <message_id>
 ```
 
-`session find` ищет подстроку в текстовых частях и возвращает сессии с `match_count`, `matched_message_ids`, первым совпадением и сниппетом. По умолчанию область ограничена каталогом проекта; `--directory` и `--all-projects` меняют границу. `--role` фильтрует пользовательские или ответные сообщения.
+`--json` есть только у `session find`. `digest` и `events` всегда печатают JSON-envelope. Глобальный `--json` до имени команды не принимается.
 
-`session digest` возвращает `schema: kilo-session-digest-v1`:
+`session find` ищет подстроку только в тексте части `text`, игнорирует synthetic и ignored части и сравнивает её без учёта регистра ASCII. По умолчанию область — каталог проекта и сессии с тем же `project_id`; путь должен точно совпасть с абсолютным `session.directory`. `--directory` и `--all-projects` меняют границу, `--role` фильтрует роль сообщения. Результат сортируется по времени последнего совпадения и содержит `match_count`, `matched_message_ids`, первое совпадение и сниппет. Не более 2000 совпадений; превышение отмечается `truncated: true`.
+
+`session digest` принимает ID либо `--match` без ID. При нескольких совпадениях выбирается сессия с самым поздним совпадением, а до пяти кандидатов возвращаются в `resolved`. Корень для относительных путей и чтения архитектурных ID — каталог найденной сессии. Команда возвращает `schema: kilo-session-digest-v1`:
 
 | Поле | Содержимое |
 |---|---|
 | `session` | ID, заголовок, каталог, модели, время, счётчики сообщений и вызовов, токены, дочерние сессии |
-| `dialog` | Полные пользовательские сообщения и последний ответ с `message_id` |
+| `dialog` | Пользовательские сообщения и последний ответ с `message_id`; без `--full-text` текст ограничен 4000 символами |
 | `stats` | `tools` — всего вызовов, исходы `success`/`failure`/`unknown`, разбивка по инструментам и объём вывода; `activities` — распределение по `explore`/`edit`/`verify`/`execute` |
 | `tool_calls` | Полный компактный список вызовов с `seq`, `message_id`, `part_id`, инструментом, исходом, целью и метками; не обрезается вместе с `timeline` |
 | `markers` | Скиллы (`skill:`), правила (`rule:`), flow (`flow:`, `flow-step:`), типы, задачи (`task:`, `stage:`), архитектура (`arch:`, `arch-flow:`), CLI и тесты |
@@ -43,7 +46,27 @@ python3 doc/tools/arch/__main__.py session events <session_id> --message <messag
 | `anomalies` | Неуспешные вызовы, крупные выводы, повторные чтения и команды |
 | `drill` | Готовые команды для перехода к сообщению |
 
-`session events` отдаёт срез диалога по `--message`, `--part`, `--offset` и `--limit`; по умолчанию текст и вывод обрезаются, `--full` возвращает полностью. Метки выводятся из подстрок путей (`doc/skills/...`, `doc/config/task-conf/types/<type>/flows/<flow>/...`, `doc/tasks/<key>/stageN/...`, `doc/architecture/...`) и из команд (`arch ...`, тесты, git). Это детерминированные подсказки, а не доказательство смысла действия.
+`session events` отдаёт срез по `--message`, `--part`, `--offset` и `--limit`; по умолчанию текст и вывод ограничены 4000 символами, `--full` отключает ограничение. Неизвестный ID сессии здесь даёт пустой результат и exit 0; отсутствие базы или ошибка SQLite — exit 1. Для `digest` отсутствующая сессия даёт exit 20.
+
+Метки выводятся детерминированно и не доказывают смысл действия:
+
+| Источник | Метка |
+|---|---|
+| вызов `skill` или `doc/skills/<id>/SKILL.md` | `skill:<id>` |
+| `README.md`, `AGENTS.md`, `doc/AGENTS.md`, `doc/skills/README.md` | `rule:<path>` |
+| `doc/config/task-conf/types/<type>/...` | `type:<type>` |
+| `.../flows/<flow>/...` | `flow:<type>/<flow>` |
+| `.../stepsprompt/<step>.md` | `flow-step:<type>/<flow>/<step>` |
+| `doc/tasks/<key>/...` | `task:<key>`, `subtask:`, `stage:`, `artifact:` |
+| файл `doc/architecture/...` | `arch:<path>`, `arch-id:<id>` |
+| `doc/architecture/domains/<domain>/flows/<slug>.md` | `arch-flow:<domain>/<slug>` |
+| команда `arch` или `__main__.py` с известным глаголом | `cli:<command>` |
+| `run.sh`, `unittest`, `pytest`, npm/cargo/go test | `test:<kind>` |
+| `data/...` | `ref:<path>` |
+
+Пути в командах распознаются только по безопасным символам пути. Глаголы CLI ограничены `task`, `index`, `docs`, `session`, `list`, `show`, `validate`, `scan`, `task-key`, `--version`, `--help`. Глобальные `--root` и `--config` перед глаголом текущий распознаватель не обрабатывает. `python3 -m arch` не создаёт CLI-метку.
+
+Исход инструмента: `failure` при статусе `error`/`failed` или ненулевом `metadata.exit`; `unknown` при `pending`/`running`; `success` только при `completed` без ошибки. Токены суммируются по assistant-сообщениям. Порог крупного вывода — 20 000 байт. `timeline` по умолчанию ограничен 1000 событиями и сохраняет первую и последнюю половины; полный перечень вызовов остаётся в `tool_calls`. Значение `--max-events 0` снимает ограничение. Время в JSON — UTC.
 
 SQL-запросы ниже остаются для диагностики полей, которых нет в CLI, и для проверки расхождений. При обычном аудите сначала используйте `arch session` и открывайте SQL только для спорного факта.
 

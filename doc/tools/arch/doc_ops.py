@@ -808,7 +808,8 @@ def _case_item(
         evidence["snapshot_state"] = "unknown"
     item["evidence"] = evidence
     if evidence["state"] == "not_run":
-        item["state"] = "not_run"
+        if item.get("state") == "ok":
+            item["state"] = "not_run"
     elif evidence["state"] == "failed":
         item["state"] = "failed"
     return item, complete
