@@ -650,6 +650,10 @@ class DocsPathsCommand(Command):
             "impact", help="report changed sections and declared consumers since a Git revision"
         )
         impact_parser.add_argument("--since", required=True, help="Git revision to compare with")
+        impact_parser.add_argument(
+            "--scope", choices=("docs", "all"), default="docs",
+            help="compare architecture documents only (default) or every changed file",
+        )
         impact_parser.add_argument("--json", action="store_true", help="JSON envelope output")
 
     def execute(self, args: argparse.Namespace, project_config: ProjectConfig, store: ArchitectureStore) -> int:
@@ -824,7 +828,7 @@ class DocsPathsCommand(Command):
                     return 0
 
                 if args.docs_action == "impact":
-                    data = impact(store, args.since)
+                    data = impact(store, args.since, scope=args.scope)
                     if args.json:
                         print_envelope(ok_envelope(data), json_mode=True)
                     else:

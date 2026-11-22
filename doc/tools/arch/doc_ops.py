@@ -1147,7 +1147,7 @@ def _section_changes(base_body: str | None, current_body: str | None) -> dict[st
     }
 
 
-def impact(store: ArchitectureStore, base: str) -> dict[str, Any]:
+def impact(store: ArchitectureStore, base: str, *, scope: str = "docs") -> dict[str, Any]:
     config = store.project_config
     root = config.root
     inside = _git(root, "rev-parse", "--is-inside-work-tree")
@@ -1162,6 +1162,8 @@ def impact(store: ArchitectureStore, base: str) -> dict[str, Any]:
             "ARGS", f"unknown Git revision {base!r}",
             field="since", suggestion="pass an existing commit, tag or branch", exit_code=2,
         )
+    if scope not in {"docs", "all"}:
+        raise DocOpsError("ARGS", f"unknown scope {scope!r}", field="scope", exit_code=2)
 
     diff = _git(root, "diff", "--name-status", "--relative", base, "--")
     if diff.returncode != 0:
@@ -1183,6 +1185,12 @@ def impact(store: ArchitectureStore, base: str) -> dict[str, Any]:
     docs = _load_documents(store)
     docs_by_path = {_relative(doc.path, config): doc for doc in docs}
     architecture_root = config.architecture_root.resolve()
+    if scope == "docs":
+        status_by_path = {
+            path: status for path, status in status_by_path.items()
+            if path.endswith(".md") and (root / path).resolve().is_relative_to(architecture_root)
+        }
+        untracked_paths = {path for path in untracked_paths if path in status_by_path}
 
     changed_files: list[dict[str, Any]] = []
     changed_sections: list[dict[str, Any]] = []
@@ -1291,6 +1299,7 @@ def impact(store: ArchitectureStore, base: str) -> dict[str, Any]:
         notes.append(f"no changes between {base} and the working tree")
     return {
         "base": base,
+        "scope": scope,
         "changed_files": changed_files,
         "changed_sections": changed_sections,
         "affected": affected,

@@ -160,9 +160,8 @@ allowed_paths:
   - "doc/tools/arch/fs_atomic.py"
   - "doc/tools/arch/task_ops.py"
   - "doc/tools/arch/session_audit.py"
-  - "doc/tools/arch/sections.py"
   - "doc/tools/tests/test_arch.py"
-  - "doc/tools/tests/test_sections.py"
+  - "doc/tools/tests/test_session_audit.py"
   - "doc/tools/tests/test_session_audit.py"
   - "doc/tools/tests/test_sections.py"
 
